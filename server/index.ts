@@ -1,8 +1,9 @@
-import express, { type Request, Response, NextFunction } from "express";
+import express from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 import { log } from "./core/utils/logger";
+import { errorMiddleware } from "./core/middleware/error.middleware";
 
 const app = express();
 const httpServer = createServer(app);
@@ -79,18 +80,7 @@ app.use((req, res, next) => {
 (async () => {
   await registerRoutes(httpServer, app);
 
-  app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
-    if (res.headersSent) {
-      return next(err);
-    }
-    if (err instanceof URIError) {
-      return res.status(400).json({ message: "Bad Request" });
-    }
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-    console.error("Server Error:", err);
-    return res.status(status).json({ message });
-  });
+  app.use(errorMiddleware);
 
   if (process.env.NODE_ENV === "production") {
     serveStatic(app);

@@ -1,66 +1,42 @@
 import { Router } from "express";
-import { z } from "zod";
-import { insertInventorySchema } from "@shared/schema";
+import { AppError } from "../../core/errors/app-error";
 import { requireAuth, requireRole } from "../../core/middleware/auth.middleware";
 import { parseId } from "../../core/utils/parse-id";
-import { inventoryRepository } from "./inventory.repository";
+import { inventoryService } from "./inventory.service";
+import { insertInventorySchema } from "./inventory.schema";
 
 export const inventoryRouter = Router();
 
 // ─── Inventory ───────────────────────────────────────────────────────────────
 inventoryRouter.get("/api/inventory", requireAuth, async (_req, res) => {
-  try {
-    const data = await inventoryRepository.getAll();
-    res.json(data);
-  } catch (err) {
-    res.status(500).json({ message: "Failed to load inventory" });
-  }
+  const data = await inventoryService.getAllInventory();
+  res.json(data);
 });
 
 inventoryRouter.get("/api/inventory/:id", requireAuth, async (req, res) => {
-  try {
-    const id = parseId(req.params.id);
-    if (!id) return res.status(400).json({ message: "Invalid id" });
-    const item = await inventoryRepository.getById(id);
-    if (!item) return res.status(404).json({ message: "Item not found" });
-    res.json(item);
-  } catch (err) {
-    res.status(500).json({ message: "Failed to load item" });
-  }
+  const id = parseId(req.params.id);
+  if (!id) throw new AppError("Invalid id", 400);
+  const item = await inventoryService.getInventoryById(id);
+  res.json(item);
 });
 
 inventoryRouter.post("/api/inventory", requireRole("admin", "dispatcher"), async (req, res) => {
-  try {
-    const data = insertInventorySchema.parse(req.body);
-    const item = await inventoryRepository.create(data);
-    res.status(201).json(item);
-  } catch (err) {
-    if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors });
-    res.status(500).json({ message: "Failed to create inventory item" });
-  }
+  const data = insertInventorySchema.parse(req.body);
+  const item = await inventoryService.createInventoryItem(data);
+  res.status(201).json(item);
 });
 
 inventoryRouter.put("/api/inventory/:id", requireRole("admin", "dispatcher"), async (req, res) => {
-  try {
-    const id = parseId(req.params.id);
-    if (!id) return res.status(400).json({ message: "Invalid id" });
-    const data = insertInventorySchema.partial().parse(req.body);
-    const item = await inventoryRepository.update(id, data);
-    if (!item) return res.status(404).json({ message: "Item not found" });
-    res.json(item);
-  } catch (err) {
-    if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors });
-    res.status(500).json({ message: "Failed to update inventory item" });
-  }
+  const id = parseId(req.params.id);
+  if (!id) throw new AppError("Invalid id", 400);
+  const data = insertInventorySchema.partial().parse(req.body);
+  const item = await inventoryService.updateInventoryItem(id, data);
+  res.json(item);
 });
 
 inventoryRouter.delete("/api/inventory/:id", requireRole("admin"), async (req, res) => {
-  try {
-    const id = parseId(req.params.id);
-    if (!id) return res.status(400).json({ message: "Invalid id" });
-    await inventoryRepository.delete(id);
-    res.json({ message: "Item deleted" });
-  } catch (err) {
-    res.status(500).json({ message: "Failed to delete inventory item" });
-  }
+  const id = parseId(req.params.id);
+  if (!id) throw new AppError("Invalid id", 400);
+  await inventoryService.deleteInventoryItem(id);
+  res.json({ message: "Item deleted" });
 });
