@@ -1,0 +1,705 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   Tailwind (utilities still used for page layout)
+   ───────────────────────────────────────────────────────────────────────────── */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   DESIGN TOKENS — mapped to Atlantis foundation + orange brand override
+   ───────────────────────────────────────────────────────────────────────────── */
+:root {
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* ── Brand / Primary (orange) — FusePro override of Atlantis blue ── */
+  --primary: 25 95% 53%;
+  --primary-foreground: 0 0% 100%;
+  --primary-hover: 25 95% 46%;
+
+  /* ── Neutrals ── */
+  --background: 220 14% 96%;
+  --foreground: 215 25% 12%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 215 25% 12%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 215 25% 12%;
+
+  --secondary: 220 13% 91%;
+  --secondary-foreground: 215 25% 20%;
+
+  --muted: 220 13% 94%;
+  --muted-foreground: 215 16% 47%;
+
+  --accent: 25 100% 95%;
+  --accent-foreground: 25 95% 35%;
+
+  --destructive: 4 74% 49%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 220 13% 88%;
+  --input: 220 13% 88%;
+  --ring: 25 95% 53%;
+
+  /* ── Sidebar ── */
+  --sidebar: 222 39% 12%;
+  --sidebar-foreground: 215 20% 75%;
+  --sidebar-border: 222 39% 18%;
+
+  /* ── Radius ── */
+  --radius: 0.5rem;
+  --radius-sm: 0.25rem;
+  --radius-lg: 0.75rem;
+
+  /* ── Shadows ── */
+  --shadow-low:  0 1px 2px rgba(0,0,0,.08), 0 0 1px rgba(0,0,0,.10);
+  --shadow-base: 0 2px 8px rgba(0,0,0,.08), 0 0 1px rgba(0,0,0,.06);
+  --shadow-high: 0 8px 24px rgba(0,0,0,.10), 0 0 1px rgba(0,0,0,.06);
+
+  /* ── Spacing ── */
+  --space-tiny:   0.25rem;
+  --space-small:  0.5rem;
+  --space-base:   1rem;
+  --space-large:  1.5rem;
+  --space-larger: 2rem;
+
+  /* ── Timing ── */
+  --timing-quick: 100ms;
+  --timing-base:  200ms;
+  --timing-slow:  300ms;
+
+  /* ── Chart ── */
+  --chart-1: 25 95% 53%;
+  --chart-2: 221 83% 53%;
+  --chart-3: 142 76% 36%;
+  --chart-4: 4 74% 49%;
+  --chart-5: 271 81% 56%;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   BASE
+   ───────────────────────────────────────────────────────────────────────────── */
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html {
+    font-size: 14px;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: var(--font-sans);
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 700;
+    color: hsl(var(--foreground));
+    line-height: 1.25;
+  }
+
+  a {
+    color: hsl(var(--primary));
+    text-decoration: none;
+  }
+  a:hover { text-decoration: underline; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 99px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.4);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   TAILWIND COLOUR BRIDGE (maps bg-card etc. for page layouts)
+   ───────────────────────────────────────────────────────────────────────────── */
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+  .shadow-low  { box-shadow: var(--shadow-low); }
+  .shadow-base { box-shadow: var(--shadow-base); }
+  .shadow-high { box-shadow: var(--shadow-high); }
+  .brand-ring  { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   FLOATING LABEL FIELD SYSTEM
+   MUI Outlined pattern: label floats onto the top border with a notch cut.
+
+   Class map on the wrapper <div>:
+     .field           — always present
+     .field-focused   — added by JS when input has focus
+     .field-filled    — added by JS when input has a value
+     .field-error     — added by JS when validation error present
+     .field-textarea  — added for <textarea> to adjust resting label position
+     .field-select    — added for Radix Select variant
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* ── Wrapper ── */
+.field {
+  position: relative;
+}
+
+/* ── Input chrome ── */
+.field-input {
+  display: block;
+  width: 100%;
+  height: 3.5rem;              /* 56 px — Jobber mobile sizing */
+  padding: 0 0.75rem;
+  font-size: 1.0625rem;        /* 17 px — min 16px prevents Safari zoom */
+  line-height: 1.5;
+  color: hsl(var(--foreground));
+  background: transparent;
+  border: 1.5px solid hsl(var(--input));
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  outline: none;
+  transition: border-color 0.15s ease;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* The placeholder=" " trick lets CSS :not(:placeholder-shown) detect a value;
+   keep the text invisible — the label IS the visual placeholder. */
+.field-input::placeholder {
+  color: transparent;
+}
+
+.field-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Label — resting state: sits centred inside the field ── */
+.field-label {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.0625rem;        /* 17 px — matches input text size in resting state */
+  font-weight: 400;
+  line-height: 1;
+  color: hsl(var(--muted-foreground));
+  background: transparent;
+  padding: 0;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+  /* Animate every relevant property for a clean 150 ms slide */
+  transition:
+    top          0.15s ease,
+    font-size    0.15s ease,
+    font-weight  0.15s ease,
+    color        0.15s ease,
+    background   0.15s ease,
+    padding      0.15s ease,
+    left         0.15s ease,
+    transform    0.15s ease;
+}
+
+/* ── Floating state ─────────────────────────────────────────────────────────
+   Triggered by four independent mechanisms (all produce the same visual result):
+     1. .field-focused  — JS class when input has focus
+     2. .field-filled   — JS class when value is not empty
+     3. :has(:focus)    — CSS-native focus detection (zero-JS path)
+     4. :has(:not(:placeholder-shown)) — CSS-native fill detection (covers
+        browser autofill and RHF reset without any JS value tracking)
+   ──────────────────────────────────────────────────────────────────────── */
+.field-focused   .field-label,
+.field-filled    .field-label,
+.field:has(.field-input:focus) .field-label,
+.field:has(.field-input:not(:placeholder-shown)) .field-label {
+  top: 0;
+  transform: translateY(-50%);     /* centres label on the top border line   */
+  font-size: 0.8125rem;            /* 13 px — Jobber floating label size */
+  font-weight: 600;
+  background: hsl(var(--card));    /* notch: erases border under the label    */
+  padding: 0 0.3rem;
+  left: 0.5rem;
+}
+
+/* Focus tint on border */
+.field-focused .field-input,
+.field:has(.field-input:focus) .field-input {
+  border-color: hsl(var(--primary));
+}
+
+/* Focus tint on label */
+.field-focused .field-label,
+.field:has(.field-input:focus) .field-label {
+  color: hsl(var(--primary));
+}
+
+/* Filled-but-unfocused label stays muted */
+.field-filled:not(.field-focused) .field-label,
+.field:has(.field-input:not(:placeholder-shown)):not(:has(.field-input:focus)) .field-label {
+  color: hsl(var(--muted-foreground));
+}
+
+/* ── Error state ─────────────────────────────────────────────────────────── */
+.field-error .field-input {
+  border-color: hsl(var(--destructive));
+}
+
+/* Error overrides both resting and floating label colour */
+.field-error .field-label {
+  color: hsl(var(--destructive)) !important;
+}
+
+/* Error overrides focus border colour */
+.field-error.field-focused .field-input,
+.field-error:has(.field-input:focus) .field-input {
+  border-color: hsl(var(--destructive));
+}
+
+/* ── Textarea variant ────────────────────────────────────────────────────── */
+/* The label rests near the top (not centred) since textarea height is variable */
+.field-textarea .field-input {
+  height: auto;
+  min-height: 5rem;
+  padding-top: 1.625rem;       /* more room for 17px resting label */
+  padding-bottom: 0.5rem;
+  resize: none;
+}
+
+.field-textarea .field-label {
+  top: 1.3rem;
+  transform: translateY(-50%);
+}
+
+/* Floating position same as other fields — sits on top border */
+.field-textarea.field-focused   .field-label,
+.field-textarea.field-filled    .field-label,
+.field-textarea:has(.field-input:focus) .field-label,
+.field-textarea:has(.field-input:not(:placeholder-shown)) .field-label {
+  top: 0;
+}
+
+/* ── Browser autofill detection ──────────────────────────────────────────── */
+/* An invisible animation fires on autofill; components listen via onAnimationStart */
+@keyframes fieldAutoFillStart  { from { opacity: 1; } to { opacity: 1; } }
+@keyframes fieldAutoFillCancel { from { opacity: 1; } to { opacity: 1; } }
+
+.field-input:-webkit-autofill  { animation-name: fieldAutoFillStart;  animation-duration: 0.001s; }
+.field-input:not(:-webkit-autofill) { animation-name: fieldAutoFillCancel; animation-duration: 0.001s; }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   COMPONENT CLASSES (pure CSS — no @apply)
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* ── Metric / KPI card ── */
+.metric-card {
+  background-color: hsl(var(--card));
+  border-radius: var(--radius);
+  border: 1px solid hsl(var(--border));
+  padding: 0.875rem 1rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  box-shadow: var(--shadow-low);
+  transition: box-shadow var(--timing-base) ease;
+}
+.metric-card:hover { box-shadow: var(--shadow-base); }
+.metric-card__label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: hsl(var(--muted-foreground));
+}
+.metric-card__value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: hsl(var(--foreground));
+  margin-top: 0.125rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.metric-card__sub {
+  font-size: 0.6875rem;
+  color: hsl(var(--muted-foreground));
+  margin-top: 0.25rem;
+}
+.metric-card__icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ── Panel ── */
+.panel {
+  background-color: hsl(var(--card));
+  border-radius: var(--radius);
+  border: 1px solid hsl(var(--border));
+  overflow: hidden;
+  box-shadow: var(--shadow-low);
+}
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid hsl(var(--border));
+}
+.panel-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+.panel-body { padding: 1rem; }
+
+/* ── Data table ── */
+.data-table { width: 100%; font-size: 0.875rem; }
+.data-table thead tr {
+  border-bottom: 1px solid hsl(var(--border));
+  background-color: hsl(var(--muted) / 0.4);
+}
+.data-table thead th {
+  padding: 0.625rem 1rem;
+  text-align: left;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: hsl(var(--muted-foreground));
+  white-space: nowrap;
+}
+.data-table tbody tr {
+  border-bottom: 1px solid hsl(var(--border) / 0.6);
+  transition: background-color var(--timing-quick);
+}
+.data-table tbody tr:last-child { border-bottom: none; }
+.data-table tbody tr:hover { background-color: hsl(var(--muted) / 0.3); }
+.data-table tbody td { padding: 0.75rem 1rem; color: hsl(var(--foreground)); }
+
+/* ── Toolbar ── */
+.toolbar { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+
+/* ── Status badge ── */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+.status-badge--draft    { background-color: hsl(var(--muted) / 0.6); color: hsl(var(--muted-foreground)); }
+.status-badge--sent     { background-color: hsl(221 83% 92%); color: hsl(221 83% 35%); }
+.status-badge--approved { background-color: hsl(142 50% 90%); color: hsl(142 76% 28%); }
+.status-badge--paid     { background-color: hsl(142 50% 90%); color: hsl(142 76% 28%); }
+.status-badge--overdue  { background-color: hsl(4 74% 92%);  color: hsl(4 74% 38%); }
+.status-badge--rejected { background-color: hsl(4 74% 92%);  color: hsl(4 74% 38%); }
+.status-badge--pending  { background-color: hsl(38 90% 90%); color: hsl(38 90% 35%); }
+.status-badge--active   { background-color: hsl(25 95% 92%); color: hsl(25 95% 35%); }
+.status-badge--converted{ background-color: hsl(271 50% 92%); color: hsl(271 81% 40%); }
+.status-badge--archived { background-color: hsl(var(--muted) / 0.6); color: hsl(var(--muted-foreground)); }
+
+/* ── Empty state ── */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 1rem;
+  text-align: center;
+}
+.empty-state__icon {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 1rem;
+  background-color: hsl(var(--muted));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+  color: hsl(var(--muted-foreground));
+}
+.empty-state__title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  margin-bottom: 0.25rem;
+}
+.empty-state__desc {
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
+  max-width: 20rem;
+}
+
+/* ── Form section ── */
+.form-section { display: flex; flex-direction: column; gap: 1rem; }
+.form-section + .form-section {
+  padding-top: 1rem;
+  border-top: 1px solid hsl(var(--border));
+}
+.form-section__title {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: hsl(var(--muted-foreground));
+  margin-bottom: 0.75rem;
+}
+
+/* ── Avatar initials ── */
+.avatar-initials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background-color: hsl(25 100% 94%);
+  color: hsl(25 95% 40%);
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   ATLANTIS COMPONENT OVERRIDES — orange brand
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Override Atlantis "work" (green) to our orange brand */
+[class*="button"][class*="base_primary"],
+[class*="button_primary"],
+[class*="Button_button__"],
+[class*="button--primary"] {
+  --color-interactive: hsl(25, 95%, 53%) !important;
+  --color-interactive--hover: hsl(25, 95%, 46%) !important;
+  --color-interactive--active: hsl(25, 95%, 40%) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   SIDEBAR DARK THEME
+   ───────────────────────────────────────────────────────────────────────────── */
+.sidebar-dark {
+  background-color: hsl(var(--card));
+  color: hsl(var(--foreground));
+  border-right: 1px solid hsl(var(--border));
+}
+.sidebar-dark .nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: hsl(var(--muted-foreground));
+  transition: background-color var(--timing-quick), color var(--timing-quick);
+  cursor: pointer;
+  text-decoration: none;
+}
+.sidebar-dark .nav-item:hover {
+  background-color: hsl(var(--muted));
+  color: hsl(var(--foreground));
+  text-decoration: none;
+}
+.sidebar-dark .nav-item.active {
+  background-color: hsl(25 95% 53% / 0.12);
+  color: hsl(25, 95%, 45%);
+  font-weight: 600;
+}
+.sidebar-dark .nav-item.active:hover {
+  background-color: hsl(25 95% 53% / 0.18);
+}
+.sidebar-dark .sidebar-section-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: hsl(var(--muted-foreground) / 0.6);
+  padding: 0 10px;
+  margin-bottom: 2px;
+  margin-top: 12px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   CUSTOM DIALOG (Atlantis-styled, portal-based)
+   ───────────────────────────────────────────────────────────────────────────── */
+.atl-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.45);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: atl-overlay-in var(--timing-base) ease;
+}
+@keyframes atl-overlay-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.atl-dialog-box {
+  background-color: hsl(var(--card));
+  border-radius: var(--radius-lg);
+  border: 1px solid hsl(var(--border));
+  box-shadow: var(--shadow-high);
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: atl-dialog-in var(--timing-base) ease;
+  display: flex;
+  flex-direction: column;
+}
+@keyframes atl-dialog-in {
+  from { opacity: 0; transform: scale(0.97) translateY(4px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.atl-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid hsl(var(--border));
+  flex-shrink: 0;
+}
+.atl-dialog-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: hsl(var(--foreground));
+  line-height: 1.25;
+}
+.atl-dialog-body {
+  padding: 1.25rem;
+  overflow-y: auto;
+  flex: 1;
+}
+.atl-dialog-footer {
+  padding: 0.875rem 1.25rem;
+  border-top: 1px solid hsl(var(--border));
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  background-color: hsl(var(--muted) / 0.3);
+}
+
+/* ── Sheet (SideDrawer) overlay ── */
+.atl-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.35);
+  z-index: 50;
+  animation: atl-overlay-in var(--timing-base) ease;
+}
+.atl-sheet-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100%;
+  background-color: hsl(var(--card));
+  border-left: 1px solid hsl(var(--border));
+  box-shadow: var(--shadow-high);
+  z-index: 51;
+  display: flex;
+  flex-direction: column;
+  animation: atl-sheet-in var(--timing-slow) ease;
+  overflow: hidden;
+}
+@keyframes atl-sheet-in {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+.atl-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid hsl(var(--border));
+  flex-shrink: 0;
+}
+.atl-sheet-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: hsl(var(--foreground));
+}
+.atl-sheet-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.25rem;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   LEAFLET
+   ───────────────────────────────────────────────────────────────────────────── */
+.leaflet-pane,
+.leaflet-top,
+.leaflet-bottom { z-index: 10 !important; }
+.leaflet-control  { z-index: 10 !important; }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   IOS / MOBILE
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Prevent iOS from zooming into inputs (requires font-size >= 16px) */
+@media (max-width: 768px) {
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+}
+
+/* Safe-area padding for iPhone notch / home bar */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   GOOGLE MAPS — PlaceAutocompleteElement (new API) + pac-container (legacy)
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* New PlaceAutocompleteElement custom element */
+gmp-placeautocomplete {
+  width: 100%;
+  display: block;
+}
+
+.pac-container {
+  z-index: 9999 !important;
+  font-family: var(--font-sans) !important;
+  border-radius: 0.5rem !important;
+  border: 1px solid hsl(var(--border)) !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,.12) !important;
+  margin-top: 2px !important;
+}
+.pac-item {
+  padding: 6px 12px !important;
+  font-size: 13px !important;
+  cursor: pointer !important;
+  border-top: 1px solid hsl(var(--border)) !important;
+}
+.pac-item:hover, .pac-item-selected {
+  background: hsl(var(--accent)) !important;
+}
+.pac-item:first-child { border-top: none !important; }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   PRINT
+   ───────────────────────────────────────────────────────────────────────────── */
+@media print {
+  @page { margin: 0; }
+  body  { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
