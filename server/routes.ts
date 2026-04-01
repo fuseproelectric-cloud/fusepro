@@ -21,6 +21,7 @@ import { estimateConversionRouter } from "./modules/estimates/estimate-conversio
 import { invoicesRouter } from "./modules/invoices/invoices.routes";
 import { conversationsRouter } from "./modules/conversations/conversations.routes";
 import { jobNotesRouter } from "./modules/jobs/notes/job-notes.routes";
+import { jobMaterialsRouter } from "./modules/jobs/materials/job-materials.routes";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import { pool } from "./db";
@@ -34,7 +35,7 @@ import { requireAuth, requireRole, requireJobAccess } from "./core/middleware/au
 import {
   insertUserSchema,
   insertJobSchema,
-  insertTimesheetSchema, insertJobMaterialSchema,
+  insertTimesheetSchema,
 } from "@shared/schema";
 import { z } from "zod";
 import {
@@ -121,6 +122,7 @@ export async function registerRoutes(httpServer: Server, app: Express) {
   app.use(invoicesRouter);
   app.use(conversationsRouter);
   app.use(jobNotesRouter);
+  app.use(jobMaterialsRouter);
 
   // ─── Technician-specific routes ──────────────────────────────────────────────
   app.get("/api/jobs/my", requireAuth, async (req, res) => {
@@ -595,35 +597,4 @@ export async function registerRoutes(httpServer: Server, app: Express) {
   });
 
   // ─── Job Materials routes ─────────────────────────────────────────────────────
-  app.get("/api/jobs/:id/materials", requireAuth, requireJobAccess, async (req, res) => {
-    try {
-      const materials = await storage.getJobMaterials(parseId(req.params.id));
-      res.json(materials);
-    } catch (err) {
-      res.status(500).json({ message: "Failed to load materials" });
-    }
-  });
-
-  app.post("/api/jobs/:id/materials", requireAuth, requireJobAccess, async (req, res) => {
-    try {
-      const data = insertJobMaterialSchema.parse({ ...req.body, jobId: parseId(req.params.id) });
-      const mat = await storage.createJobMaterial(data);
-      res.status(201).json(mat);
-    } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors });
-      res.status(500).json({ message: "Failed to create material" });
-    }
-  });
-
-  app.delete("/api/jobs/:id/materials/:materialId", requireAuth, requireJobAccess, async (req, res) => {
-    try {
-      const materialId = parseId(req.params.materialId);
-      if (!materialId) return res.status(400).json({ message: "Invalid material id" });
-      await storage.deleteJobMaterial(materialId);
-      res.json({ message: "Material deleted" });
-    } catch (err) {
-      res.status(500).json({ message: "Failed to delete material" });
-    }
-  });
-
 }

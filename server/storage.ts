@@ -15,9 +15,10 @@ import { estimatesRepository } from "./modules/estimates/estimates.repository";
 import { invoicesRepository } from "./modules/invoices/invoices.repository";
 import { conversationsRepository } from "./modules/conversations/conversations.repository";
 import { jobNotesRepository } from "./modules/jobs/notes/job-notes.repository";
+import { jobMaterialsRepository } from "./modules/jobs/materials/job-materials.repository";
 import {
   users, customers, technicians, jobs,
-  inventory, adminSettings, timesheets, jobMaterials, notifications,
+  inventory, adminSettings, timesheets, notifications,
   timesheetApprovals,
   type User, type InsertUser,
   type Customer, type InsertCustomer,
@@ -572,16 +573,15 @@ export class Storage {
 
   // ─── Job Materials ───────────────────────────────────────────────────────────
   async getJobMaterials(jobId: number): Promise<JobMaterial[]> {
-    return db.select().from(jobMaterials).where(eq(jobMaterials.jobId, jobId)).orderBy(jobMaterials.createdAt);
+    return jobMaterialsRepository.getJobMaterials(jobId);
   }
 
   async createJobMaterial(data: InsertJobMaterial): Promise<JobMaterial> {
-    const [mat] = await db.insert(jobMaterials).values(data).returning();
-    return mat;
+    return jobMaterialsRepository.createJobMaterial(data);
   }
 
   async deleteJobMaterial(id: number): Promise<void> {
-    await db.delete(jobMaterials).where(eq(jobMaterials.id, id));
+    return jobMaterialsRepository.deleteJobMaterial(id);
   }
 
   // ─── Technician-specific job queries ────────────────────────────────────────
