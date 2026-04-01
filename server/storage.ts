@@ -14,9 +14,10 @@ import { requestsRepository } from "./modules/requests/requests.repository";
 import { estimatesRepository } from "./modules/estimates/estimates.repository";
 import { invoicesRepository } from "./modules/invoices/invoices.repository";
 import { conversationsRepository } from "./modules/conversations/conversations.repository";
+import { jobNotesRepository } from "./modules/jobs/notes/job-notes.repository";
 import {
   users, customers, technicians, jobs,
-  inventory, jobNotes, adminSettings, timesheets, jobMaterials, notifications, jobNoteReads,
+  inventory, adminSettings, timesheets, jobMaterials, notifications,
   timesheetApprovals,
   type User, type InsertUser,
   type Customer, type InsertCustomer,
@@ -263,18 +264,11 @@ export class Storage {
 
   // ─── Job Notes ──────────────────────────────────────────────────────────────
   async getJobNotes(jobId: number): Promise<(JobNote & { user?: User })[]> {
-    const rows = await db
-      .select()
-      .from(jobNotes)
-      .leftJoin(users, eq(jobNotes.userId, users.id))
-      .where(eq(jobNotes.jobId, jobId))
-      .orderBy(desc(jobNotes.createdAt));
-    return rows.map((r) => ({ ...r.job_notes, user: r.users ?? undefined }));
+    return jobNotesRepository.getJobNotes(jobId);
   }
 
   async createJobNote(data: InsertJobNote): Promise<JobNote> {
-    const [note] = await db.insert(jobNotes).values(data).returning();
-    return note;
+    return jobNotesRepository.createJobNote(data);
   }
 
   // ─── Admin Settings ─────────────────────────────────────────────────────────
@@ -747,12 +741,7 @@ export class Storage {
   }
 
   async markJobNoteRead(userId: number, jobId: number, lastNoteId: number): Promise<void> {
-    await db.insert(jobNoteReads)
-      .values({ userId, jobId, lastReadNoteId: lastNoteId })
-      .onConflictDoUpdate({
-        target: [jobNoteReads.userId, jobNoteReads.jobId],
-        set: { lastReadNoteId: lastNoteId },
-      });
+    return jobNotesRepository.markJobNoteRead(userId, jobId, lastNoteId);
   }
 
   async getTechnicianEarnings(technicianId: number, fromStr: string, toStr: string): Promise<{

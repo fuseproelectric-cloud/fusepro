@@ -20,6 +20,7 @@ import { estimatesRouter } from "./modules/estimates/estimates.routes";
 import { estimateConversionRouter } from "./modules/estimates/estimate-conversion.routes";
 import { invoicesRouter } from "./modules/invoices/invoices.routes";
 import { conversationsRouter } from "./modules/conversations/conversations.routes";
+import { jobNotesRouter } from "./modules/jobs/notes/job-notes.routes";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import { pool } from "./db";
@@ -33,7 +34,6 @@ import { requireAuth, requireRole, requireJobAccess } from "./core/middleware/au
 import {
   insertUserSchema,
   insertJobSchema,
-  insertJobNoteSchema,
   insertTimesheetSchema, insertJobMaterialSchema,
 } from "@shared/schema";
 import { z } from "zod";
@@ -120,6 +120,7 @@ export async function registerRoutes(httpServer: Server, app: Express) {
   app.use(estimateConversionRouter);
   app.use(invoicesRouter);
   app.use(conversationsRouter);
+  app.use(jobNotesRouter);
 
   // ─── Technician-specific routes ──────────────────────────────────────────────
   app.get("/api/jobs/my", requireAuth, async (req, res) => {
@@ -230,55 +231,6 @@ export async function registerRoutes(httpServer: Server, app: Express) {
       res.status(500).json({ message: "Failed to load timesheet entries" });
     }
   });
-
-  app.get("/api/jobs/:id/notes", requireAuth, requireJobAccess, async (req, res) => {
-    try {
-      const notes = await storage.getJobNotes(parseId(req.params.id));
-      res.json(notes);
-    } catch (err) {
-      res.status(500).json({ message: "Failed to load notes" });
-    }
-  });
-
-  app.put("/api/jobs/:id/notes/read", requireAuth, requireJobAccess, async (req, res) => {
-    try {
-      const { lastNoteId } = req.body;
-      await storage.markJobNoteRead(req.session.userId!, parseId(req.params.id), Number(lastNoteId));
-      res.json({ ok: true });
-    } catch (err) {
-      res.status(500).json({ message: "Failed to mark read" });
-    }
-  });
-
-  app.post("/api/jobs/:id/notes", requireAuth, requireJobAccess, async (req, res) => {
-    try {
-      const data = insertJobNoteSchema.parse({
-        ...req.body,
-        jobId: parseId(req.params.id),
-        userId: req.session.userId,
-      });
-      const note = await storage.createJobNote(data);
-      const sender = await storage.getUserById(req.session.userId!);
-      const enriched = { ...note, user: sender ? { id: sender.id, name: sender.name } : null };
-      const io: SocketServer = (req.app as any).io;
-      io?.to(`job:${data.jobId}`).emit("job:note", enriched);
-
-      // Delegate all notification creation (DB persistence + realtime) to service
-      await notificationService.notifyJobNote({
-        jobId:   data.jobId,
-        noteId:  note.id,
-        content: data.content as string,
-        sender:  sender ? { id: sender.id, name: sender.name } : null,
-        io,
-      });
-
-      res.status(201).json(enriched);
-    } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors });
-      res.status(500).json({ message: "Failed to create note" });
-    }
-  });
-
 
   // ─── Timesheet routes ────────────────────────────────────────────────────────
   app.get("/api/timesheet/today", requireAuth, async (req, res) => {
