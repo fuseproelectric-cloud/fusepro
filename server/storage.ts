@@ -1,7 +1,6 @@
 import { eq, desc, and, gte, lt, inArray, asc } from "drizzle-orm";
 import { db } from "./db";
 import { dayBoundsCT, weekBoundsCT, dateStrCT } from "./lib/time";
-import { numberingService } from "./services/numbering.service";
 import { customerAddressService } from "./services/customer-address.service";
 import { inventoryRepository } from "./modules/inventory/inventory.repository";
 import { catalogRepository } from "./modules/catalog/catalog.repository";
@@ -16,8 +15,9 @@ import { invoicesRepository } from "./modules/invoices/invoices.repository";
 import { conversationsRepository } from "./modules/conversations/conversations.repository";
 import { jobNotesRepository } from "./modules/jobs/notes/job-notes.repository";
 import { jobMaterialsRepository } from "./modules/jobs/materials/job-materials.repository";
+import { jobsRepository } from "./modules/jobs/jobs.repository";
 import {
-  users, customers, technicians, jobs,
+  users, technicians, jobs,
   inventory, adminSettings, timesheets, notifications,
   timesheetApprovals,
   type User, type InsertUser,
@@ -131,59 +131,42 @@ export class Storage {
 
   // ─── Jobs ───────────────────────────────────────────────────────────────────
   async getAllJobs(): Promise<Job[]> {
-    return db.select().from(jobs).orderBy(desc(jobs.createdAt));
+    return jobsRepository.getAll();
   }
 
   async getJobById(id: number): Promise<Job | undefined> {
-    const [job] = await db.select().from(jobs).where(eq(jobs.id, id));
-    return job;
+    return jobsRepository.getById(id);
   }
 
   /** Returns the job created from a given request, or undefined if none exists. */
   async getJobByRequestId(requestId: number): Promise<Job | undefined> {
-    const [job] = await db.select().from(jobs).where(eq(jobs.requestId, requestId));
-    return job ?? undefined;
+    return jobsRepository.getByRequestId(requestId);
   }
 
   async getJobByIdWithCustomerSummary(id: number): Promise<(Job & {
     customerSummary: { name: string; phone: string | null } | null;
   }) | undefined> {
-    const [row] = await db
-      .select({ job: jobs, customerName: customers.name, customerPhone: customers.phone })
-      .from(jobs)
-      .leftJoin(customers, eq(jobs.customerId, customers.id))
-      .where(eq(jobs.id, id));
-    if (!row) return undefined;
-    return {
-      ...row.job,
-      customerSummary: row.customerName ? { name: row.customerName, phone: row.customerPhone ?? null } : null,
-    };
+    return jobsRepository.getByIdWithCustomerSummary(id);
   }
 
   async getJobsByCustomer(customerId: number): Promise<Job[]> {
-    return customersRepository.getJobsByCustomer(customerId);
+    return jobsRepository.getByCustomer(customerId);
   }
 
   async getJobsByTechnician(technicianId: number): Promise<Job[]> {
-    return db.select().from(jobs).where(eq(jobs.technicianId, technicianId)).orderBy(desc(jobs.scheduledAt));
+    return jobsRepository.getByTechnician(technicianId);
   }
 
   async createJob(data: InsertJob): Promise<Job> {
-    const [job] = await db.insert(jobs).values({ ...data, updatedAt: new Date() }).returning();
-    return job;
+    return jobsRepository.create(data);
   }
 
   async updateJob(id: number, data: Partial<InsertJob>): Promise<Job | undefined> {
-    const [job] = await db
-      .update(jobs)
-      .set({ ...data, updatedAt: new Date() })
-      .where(eq(jobs.id, id))
-      .returning();
-    return job;
+    return jobsRepository.update(id, data);
   }
 
   async deleteJob(id: number): Promise<void> {
-    await db.delete(jobs).where(eq(jobs.id, id));
+    return jobsRepository.delete(id);
   }
 
   // ─── Estimates ──────────────────────────────────────────────────────────────
@@ -586,16 +569,7 @@ export class Storage {
 
   // ─── Technician-specific job queries ────────────────────────────────────────
   async getJobsByTechnicianWithCustomer(technicianId: number): Promise<(Job & { customerName?: string | null })[]> {
-    const rows = await db
-      .select({
-        job: jobs,
-        customerName: customers.name,
-      })
-      .from(jobs)
-      .leftJoin(customers, eq(jobs.customerId, customers.id))
-      .where(eq(jobs.technicianId, technicianId))
-      .orderBy(desc(jobs.scheduledAt));
-    return rows.map((r) => ({ ...r.job, customerName: r.customerName ?? null }));
+    return jobsRepository.getByTechnicianWithCustomer(technicianId);
   }
 
   async getTechnicianMyStats(technicianId: number): Promise<{
@@ -893,7 +867,7 @@ export class Storage {
 
   // ─── Job number generation ────────────────────────────────────────────────────
   async getNextJobNumber(): Promise<string> {
-    return numberingService.nextJobNumber();
+    return jobsRepository.getNextJobNumber();
   }
 
 }

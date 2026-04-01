@@ -22,6 +22,7 @@ import { invoicesRouter } from "./modules/invoices/invoices.routes";
 import { conversationsRouter } from "./modules/conversations/conversations.routes";
 import { jobNotesRouter } from "./modules/jobs/notes/job-notes.routes";
 import { jobMaterialsRouter } from "./modules/jobs/materials/job-materials.routes";
+import { jobsRouter } from "./modules/jobs/jobs.routes";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import { pool } from "./db";
@@ -31,10 +32,9 @@ import { log } from "./core/utils/logger";
 import { parseId } from "./core/utils/parse-id";
 import { checkLoginRateLimit } from "./core/middleware/rate-limit.middleware";
 import { UPLOADS_DIR, upload } from "./core/middleware/upload.middleware";
-import { requireAuth, requireRole, requireJobAccess } from "./core/middleware/auth.middleware";
+import { requireAuth, requireRole } from "./core/middleware/auth.middleware";
 import {
   insertUserSchema,
-  insertJobSchema,
   insertTimesheetSchema,
 } from "@shared/schema";
 import { z } from "zod";
@@ -123,116 +123,7 @@ export async function registerRoutes(httpServer: Server, app: Express) {
   app.use(conversationsRouter);
   app.use(jobNotesRouter);
   app.use(jobMaterialsRouter);
-
-  // ─── Technician-specific routes ──────────────────────────────────────────────
-  app.get("/api/jobs/my", requireAuth, async (req, res) => {
-    try {
-      const user = await storage.getUserById(req.session.userId!);
-      if (!user) return res.status(401).json({ message: "Unauthorized" });
-      const tech = await storage.getTechnicianByUserId(user.id);
-      if (!tech) return res.status(404).json({ message: "No technician profile found" });
-      const myJobs = await storage.getJobsByTechnicianWithCustomer(tech.id);
-      res.json(myJobs);
-    } catch (err) {
-      res.status(500).json({ message: "Failed to load jobs" });
-    }
-  });
-
-  // ─── Jobs ────────────────────────────────────────────────────────────────────
-  app.get("/api/jobs", requireAuth, async (_req, res) => {
-    try {
-      const data = await storage.getAllJobs();
-      res.json(data);
-    } catch (err) {
-      res.status(500).json({ message: "Failed to load jobs" });
-    }
-  });
-
-  app.get("/api/jobs/:id", requireAuth, requireJobAccess, async (req, res) => {
-    try {
-      const job = await storage.getJobByIdWithCustomerSummary(parseId(req.params.id));
-      if (!job) return res.status(404).json({ message: "Job not found" });
-      const notes = await storage.getJobNotes(job.id);
-      res.json({ ...job, notes });
-    } catch (err) {
-      res.status(500).json({ message: "Failed to load job" });
-    }
-  });
-
-  app.post("/api/jobs", requireRole("admin", "dispatcher"), async (req, res) => {
-    try {
-      const data = insertJobSchema.parse(req.body);
-      const jobNumber = await storage.getNextJobNumber();
-      const job = await storage.createJob({ ...data, jobNumber });
-      const io: SocketServer = (req.app as any).io;
-      io?.to("staff:notifications").emit("job:created", job);
-      res.status(201).json(job);
-    } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors });
-      res.status(500).json({ message: "Failed to create job" });
-    }
-  });
-
-  app.put("/api/jobs/:id", requireAuth, async (req, res) => {
-    try {
-      const user = await storage.getUserById(req.session.userId!);
-      if (!user) return res.status(401).json({ message: "Unauthorized" });
-
-      if (user.role === "technician") {
-        // Technicians can only update status and notes on their own jobs
-        const tech = await storage.getTechnicianByUserId(user.id);
-        if (!tech) return res.status(403).json({ message: "Forbidden" });
-        const job = await storage.getJobById(parseId(req.params.id));
-        if (!job) return res.status(404).json({ message: "Job not found" });
-        if (job.technicianId !== tech.id) return res.status(403).json({ message: "Forbidden" });
-        const { status, notes } = req.body;
-        const allowedData: any = {};
-        if (status !== undefined) allowedData.status = status;
-        if (notes !== undefined) allowedData.notes = notes;
-        if (allowedData.status === "completed" && !allowedData.completedAt) {
-          allowedData.completedAt = new Date();
-        }
-        const updated = await storage.updateJob(parseId(req.params.id), allowedData);
-        if (!updated) return res.status(404).json({ message: "Job not found" });
-        const io: SocketServer = (req.app as any).io;
-        io?.to("staff:notifications").emit("job:updated", updated);
-        io?.to(`job:${updated.id}`).emit("job:updated", updated);
-        return res.json(updated);
-      }
-
-      const data = insertJobSchema.partial().parse(req.body);
-      if (data.status === "completed" && !data.completedAt) {
-        (data as any).completedAt = new Date();
-      }
-      const job = await storage.updateJob(parseId(req.params.id), data);
-      if (!job) return res.status(404).json({ message: "Job not found" });
-      const io: SocketServer = (req.app as any).io;
-      io?.to("staff:notifications").emit("job:updated", job);
-      io?.to(`job:${job.id}`).emit("job:updated", job);
-      res.json(job);
-    } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors });
-      res.status(500).json({ message: "Failed to update job" });
-    }
-  });
-
-  app.delete("/api/jobs/:id", requireRole("admin", "dispatcher"), async (req, res) => {
-    try {
-      await storage.deleteJob(parseId(req.params.id));
-      res.json({ message: "Job deleted" });
-    } catch (err) {
-      res.status(500).json({ message: "Failed to delete job" });
-    }
-  });
-
-  app.get("/api/jobs/:id/timesheet", requireAuth, requireJobAccess, async (req, res) => {
-    try {
-      const entries = await storage.getTimesheetEntriesByJob(parseId(req.params.id));
-      res.json(entries);
-    } catch (err) {
-      res.status(500).json({ message: "Failed to load timesheet entries" });
-    }
-  });
+  app.use(jobsRouter);
 
   // ─── Timesheet routes ────────────────────────────────────────────────────────
   app.get("/api/timesheet/today", requireAuth, async (req, res) => {
