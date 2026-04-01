@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
+import { log } from "./core/utils/logger";
 
 const app = express();
 const httpServer = createServer(app);
@@ -48,15 +49,7 @@ app.use((_req, res, next) => {
   next();
 });
 
-export function log(message: string, source = "express") {
-  const formattedTime = new Date().toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: true,
-  });
-  console.log(`${formattedTime} [${source}] ${message}`);
-}
+export { log };
 
 app.use((req, res, next) => {
   const start = Date.now();

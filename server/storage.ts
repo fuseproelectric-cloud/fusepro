@@ -1,13 +1,17 @@
-import { eq, desc, and, gte, lt, sql, count, inArray, ne, asc } from "drizzle-orm";
+import { eq, desc, and, gte, lt, sql, inArray, ne, asc } from "drizzle-orm";
 import { db } from "./db";
-import { dayBoundsCT, weekBoundsCT, monthStartCT, dateStrCT } from "./lib/time";
+import { dayBoundsCT, weekBoundsCT, dateStrCT } from "./lib/time";
 import { numberingService } from "./services/numbering.service";
 import { customerAddressService } from "./services/customer-address.service";
+import { inventoryRepository } from "./modules/inventory/inventory.repository";
+import { catalogRepository } from "./modules/catalog/catalog.repository";
+import { notificationsRepository } from "./modules/notifications/notifications.repository";
+import { dashboardRepository } from "./modules/dashboard/dashboard.repository";
 import {
   users, customers, technicians, jobs, estimates, invoices,
   inventory, jobNotes, adminSettings, timesheets, jobMaterials, notifications, jobNoteReads,
   conversations, conversationMembers, convMessages, timesheetApprovals,
-  requests, services,
+  requests,
   type User, type InsertUser,
   type Customer, type InsertCustomer,
   type CustomerAddress, type InsertCustomerAddress,
@@ -261,26 +265,23 @@ export class Storage {
 
   // ─── Inventory ──────────────────────────────────────────────────────────────
   async getAllInventory(): Promise<InventoryItem[]> {
-    return db.select().from(inventory).orderBy(inventory.name);
+    return inventoryRepository.getAll();
   }
 
   async getInventoryById(id: number): Promise<InventoryItem | undefined> {
-    const [item] = await db.select().from(inventory).where(eq(inventory.id, id));
-    return item;
+    return inventoryRepository.getById(id);
   }
 
   async createInventoryItem(data: InsertInventoryItem): Promise<InventoryItem> {
-    const [item] = await db.insert(inventory).values({ ...data, updatedAt: new Date() }).returning();
-    return item;
+    return inventoryRepository.create(data);
   }
 
   async updateInventoryItem(id: number, data: Partial<InsertInventoryItem>): Promise<InventoryItem | undefined> {
-    const [item] = await db.update(inventory).set({ ...data, updatedAt: new Date() }).where(eq(inventory.id, id)).returning();
-    return item;
+    return inventoryRepository.update(id, data);
   }
 
   async deleteInventoryItem(id: number): Promise<void> {
-    await db.delete(inventory).where(eq(inventory.id, id));
+    return inventoryRepository.delete(id);
   }
 
   // ─── Job Notes ──────────────────────────────────────────────────────────────
@@ -633,165 +634,17 @@ export class Storage {
     myCompletedThisMonth: number;
     upcomingJobs: (Job & { customerName?: string | null })[];
   }> {
-    const { start: startOfDay, end: endOfDay } = dayBoundsCT();
-    const startOfMonth = monthStartCT();
-
-    const [todayRes] = await db
-      .select({ cnt: count() })
-      .from(jobs)
-      .where(and(
-        eq(jobs.technicianId, technicianId),
-        gte(jobs.scheduledAt, startOfDay),
-        lt(jobs.scheduledAt, endOfDay)
-      ));
-
-    const [inProgressRes] = await db
-      .select({ cnt: count() })
-      .from(jobs)
-      .where(and(eq(jobs.technicianId, technicianId), eq(jobs.status, "in_progress")));
-
-    const [completedRes] = await db
-      .select({ cnt: count() })
-      .from(jobs)
-      .where(and(eq(jobs.technicianId, technicianId), eq(jobs.status, "completed")));
-
-    const [completedMonthRes] = await db
-      .select({ cnt: count() })
-      .from(jobs)
-      .where(and(
-        eq(jobs.technicianId, technicianId),
-        eq(jobs.status, "completed"),
-        gte(jobs.completedAt, startOfMonth)
-      ));
-
-    const upcomingRows = await db
-      .select({ job: jobs, customerName: customers.name })
-      .from(jobs)
-      .leftJoin(customers, eq(jobs.customerId, customers.id))
-      .where(and(
-        eq(jobs.technicianId, technicianId),
-        gte(jobs.scheduledAt, new Date())
-      ))
-      .orderBy(jobs.scheduledAt)
-      .limit(5);
-
-    return {
-      myJobsToday: todayRes?.cnt ?? 0,
-      myInProgress: inProgressRes?.cnt ?? 0,
-      myCompleted: completedRes?.cnt ?? 0,
-      myCompletedThisMonth: completedMonthRes?.cnt ?? 0,
-      upcomingJobs: upcomingRows.map((r) => ({ ...r.job, customerName: r.customerName ?? null })),
-    };
+    return dashboardRepository.getMyStats(technicianId);
   }
 
   // ─── Dashboard ──────────────────────────────────────────────────────────────
   async getDashboardStats(): Promise<DashboardStats> {
-    const { start: startOfDay, end: endOfDay } = dayBoundsCT();
-    const startOfMonth = monthStartCT();
-
-    const [totalJobsRes] = await db.select({ cnt: count() }).from(jobs);
-    const totalJobs = totalJobsRes?.cnt ?? 0;
-
-    const [pendingRes] = await db.select({ cnt: count() }).from(jobs).where(eq(jobs.status, "pending"));
-    const pendingJobs = pendingRes?.cnt ?? 0;
-
-    const [inProgressRes] = await db.select({ cnt: count() }).from(jobs).where(eq(jobs.status, "in_progress"));
-    const inProgressJobs = inProgressRes?.cnt ?? 0;
-
-    const [completedTodayRes] = await db
-      .select({ cnt: count() })
-      .from(jobs)
-      .where(and(eq(jobs.status, "completed"), gte(jobs.completedAt, startOfDay), lt(jobs.completedAt, endOfDay)));
-    const completedJobsToday = completedTodayRes?.cnt ?? 0;
-
-    const [totalTechRes] = await db.select({ cnt: count() }).from(technicians);
-    const totalTechnicians = totalTechRes?.cnt ?? 0;
-
-    // Reads the admin-managed availability label, not a live computed state.
-    // technicians.status is set manually by dispatchers; 'on_job' is never auto-set.
-    const [activeTechRes] = await db
-      .select({ cnt: count() })
-      .from(technicians)
-      .where(eq(technicians.status, "available"));
-    const activeTechnicians = activeTechRes?.cnt ?? 0;
-
-    const [totalCustRes] = await db.select({ cnt: count() }).from(customers);
-    const totalCustomers = totalCustRes?.cnt ?? 0;
-
-    const paidInvoices = await db
-      .select({ total: invoices.total })
-      .from(invoices)
-      .where(and(eq(invoices.status, "paid"), gte(invoices.paidAt, startOfMonth)));
-    const revenueThisMonth = paidInvoices.reduce((sum, inv) => sum + parseFloat(inv.total ?? "0"), 0);
-
-    // Jobs by status counts
-    const statusGroups = await db
-      .select({ status: jobs.status, cnt: count() })
-      .from(jobs)
-      .groupBy(jobs.status);
-    const jobsByStatus = statusGroups.map((row) => ({ status: row.status, count: row.cnt }));
-
-    // Recent jobs with customer + technician names
-    const recentJobRows = await db
-      .select({
-        id: jobs.id,
-        title: jobs.title,
-        status: jobs.status,
-        priority: jobs.priority,
-        scheduledAt: jobs.scheduledAt,
-        createdAt: jobs.createdAt,
-        customerName: customers.name,
-        techUserId: technicians.userId,
-      })
-      .from(jobs)
-      .leftJoin(customers, eq(jobs.customerId, customers.id))
-      .leftJoin(technicians, eq(jobs.technicianId, technicians.id))
-      .orderBy(desc(jobs.createdAt))
-      .limit(5);
-
-    // Fetch technician names
-    const techUserIds = recentJobRows
-      .map((r) => r.techUserId)
-      .filter((id): id is number => id !== null && id !== undefined);
-
-    const techUsers = techUserIds.length > 0
-      ? await db.select({ id: users.id, name: users.name }).from(users).where(inArray(users.id, techUserIds))
-      : [];
-
-    const techUserMap = new Map(techUsers.map((u) => [u.id, u.name]));
-
-    const recentJobs = recentJobRows.map((r) => ({
-      id: r.id,
-      title: r.title,
-      status: r.status,
-      priority: r.priority,
-      customerName: r.customerName ?? "Unknown",
-      technicianName: r.techUserId ? (techUserMap.get(r.techUserId) ?? null) : null,
-      scheduledAt: r.scheduledAt ? r.scheduledAt.toISOString() : null,
-      createdAt: r.createdAt.toISOString(),
-    }));
-
-    return {
-      totalJobs,
-      pendingJobs,
-      inProgressJobs,
-      completedJobsToday,
-      totalTechnicians,
-      activeTechnicians,
-      totalCustomers,
-      revenueThisMonth,
-      jobsByStatus,
-      recentJobs,
-    };
+    return dashboardRepository.getStats();
   }
 
   // ─── Notifications ──────────────────────────────────────────────────────────
   async getUnreadNotifications(userId: number): Promise<Notification[]> {
-    return db
-      .select()
-      .from(notifications)
-      .where(and(eq(notifications.userId, userId), eq(notifications.isRead, false)))
-      .orderBy(desc(notifications.timestamp));
+    return notificationsRepository.getUnread(userId);
   }
 
   // Upsert for chat messages: one unread row per (userId, jobId), increment count
@@ -858,22 +711,11 @@ export class Storage {
   }
 
   async markNotificationRead(id: number, userId?: number): Promise<boolean> {
-    const where = userId
-      ? and(eq(notifications.id, id), eq(notifications.userId, userId))
-      : eq(notifications.id, id);
-    const result = await db.update(notifications).set({ isRead: true }).where(where).returning({ id: notifications.id });
-    return result.length > 0;
+    return notificationsRepository.markRead(id, userId);
   }
 
   async markJobNotificationsRead(userId: number, jobId: number): Promise<void> {
-    await db
-      .update(notifications)
-      .set({ isRead: true })
-      .where(and(
-        eq(notifications.userId, userId),
-        eq(notifications.jobId, jobId),
-        eq(notifications.isRead, false),
-      ));
+    return notificationsRepository.markJobRead(userId, jobId);
   }
 
   async getAdminAndDispatcherUserIds(): Promise<number[]> {
@@ -1285,21 +1127,19 @@ export class Storage {
 
   // ─── Services (Products & Services catalog) ───────────────────────────────────
   async getAllServices(): Promise<Service[]> {
-    return db.select().from(services).orderBy(services.name);
+    return catalogRepository.getAll();
   }
 
   async createService(data: InsertService): Promise<Service> {
-    const [svc] = await db.insert(services).values(data).returning();
-    return svc;
+    return catalogRepository.create(data);
   }
 
   async updateService(id: number, data: Partial<InsertService>): Promise<Service | undefined> {
-    const [svc] = await db.update(services).set(data).where(eq(services.id, id)).returning();
-    return svc;
+    return catalogRepository.update(id, data);
   }
 
   async deleteService(id: number): Promise<void> {
-    await db.delete(services).where(eq(services.id, id));
+    return catalogRepository.delete(id);
   }
 
   // ─── Job number generation ────────────────────────────────────────────────────

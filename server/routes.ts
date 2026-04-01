@@ -1,24 +1,32 @@
 import express from "express";
-import type { Express, Request, Response, NextFunction } from "express";
+import type { Express } from "express";
 import type { Server } from "http";
 import { Server as SocketServer } from "socket.io";
+import { createSocketServer } from "./core/realtime/socket";
+import { authRouter } from "./modules/auth/auth.routes";
+import { settingsRouter } from "./modules/settings/settings.routes";
+import { connecteamRouter } from "./modules/integrations/connecteam/connecteam.routes";
+import { inventoryRouter } from "./modules/inventory/inventory.routes";
+import { catalogRouter } from "./modules/catalog/catalog.routes";
+import { notificationsRouter } from "./modules/notifications/notifications.routes";
+import { dashboardRouter } from "./modules/dashboard/dashboard.routes";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import bcrypt from "bcryptjs";
-import multer from "multer";
-import path from "path";
-import fs from "fs";
-import { randomBytes } from "crypto";
 import { pool } from "./db";
 import { storage } from "./storage";
 import { weekBoundsCT, dayBoundsCT, todayStrCT } from "./lib/time";
-import { log } from "./index";
+import { log } from "./core/utils/logger";
+import { parseId } from "./core/utils/parse-id";
+import { checkLoginRateLimit } from "./core/middleware/rate-limit.middleware";
+import { UPLOADS_DIR, upload } from "./core/middleware/upload.middleware";
+import { requireAuth, requireRole, requireJobAccess } from "./core/middleware/auth.middleware";
 import {
   insertUserSchema, insertCustomerSchema, insertCustomerAddressSchema, insertTechnicianSchema,
   insertJobSchema, insertEstimateSchema, insertInvoiceSchema,
-  insertInventorySchema, insertJobNoteSchema,
+  insertJobNoteSchema,
   insertTimesheetSchema, insertJobMaterialSchema,
-  insertRequestSchema, insertServiceSchema,
+  insertRequestSchema,
 } from "@shared/schema";
 import { z } from "zod";
 import {
@@ -47,61 +55,6 @@ import {
 } from "./services/customer-address.service";
 import { notificationService } from "./services/notification.service";
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-/** Parse a route/body param as a positive integer. Returns null if invalid. */
-function parseId(val: unknown): number | null {
-  const n = Number(val);
-  return Number.isInteger(n) && n > 0 ? n : null;
-}
-
-// Simple in-memory login rate limiter: max 10 attempts per IP per 15 minutes
-const loginAttempts = new Map<string, { count: number; resetAt: number }>();
-function checkLoginRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const entry = loginAttempts.get(ip);
-  if (!entry || now > entry.resetAt) {
-    loginAttempts.set(ip, { count: 1, resetAt: now + 15 * 60 * 1000 });
-    return true;
-  }
-  if (entry.count >= 10) return false;
-  entry.count++;
-  return true;
-}
-// Cleanup stale entries every 15 minutes
-setInterval(() => {
-  const now = Date.now();
-  for (const [ip, entry] of loginAttempts) {
-    if (now > entry.resetAt) loginAttempts.delete(ip);
-  }
-}, 15 * 60 * 1000);
-
-// ─── File upload setup ────────────────────────────────────────────────────────
-const UPLOADS_DIR = path.join(process.cwd(), "uploads");
-if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
-
-// Explicit whitelist of accepted image extensions.
-// Both conditions must pass — MIME type alone is client-controlled and cannot be trusted.
-// Add extensions here only when the rest of the app is confirmed to handle that format.
-const ALLOWED_UPLOAD_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp", ".gif"]);
-
-const upload = multer({
-  storage: multer.diskStorage({
-    destination: (_req, _file, cb) => cb(null, UPLOADS_DIR),
-    filename: (_req, file, cb) => {
-      const ext = path.extname(file.originalname).toLowerCase();
-      cb(null, `${Date.now()}-${randomBytes(8).toString("hex")}${ext}`);
-    },
-  }),
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
-  fileFilter: (_req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    const mimeOk = file.mimetype.startsWith("image/");
-    const extOk  = ALLOWED_UPLOAD_EXTENSIONS.has(ext);
-    // Reject if either check fails — prevents MIME spoofing and non-image extensions.
-    cb(null, mimeOk && extOk);
-  },
-});
-
 // ─── Session setup ───────────────────────────────────────────────────────────
 const PgSession = connectPgSimple(session);
 
@@ -109,46 +62,6 @@ declare module "express-session" {
   interface SessionData {
     userId?: number;
   }
-}
-
-// ─── Middleware ───────────────────────────────────────────────────────────────
-export function requireAuth(req: Request, res: Response, next: NextFunction) {
-  if (!req.session?.userId) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-  next();
-}
-
-export function requireRole(...roles: string[]) {
-  return async (req: Request, res: Response, next: NextFunction) => {
-    if (!req.session?.userId) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-    const user = await storage.getUserById(req.session.userId);
-    if (!user || !roles.includes(user.role)) {
-      return res.status(403).json({ message: "Forbidden" });
-    }
-    next();
-  };
-}
-
-/** Allows admin/dispatcher through unconditionally.
- *  For technicians: verifies the job in :id param is assigned to them. */
-export async function requireJobAccess(req: Request, res: Response, next: NextFunction) {
-  if (!req.session?.userId) return res.status(401).json({ message: "Unauthorized" });
-  const user = await storage.getUserById(req.session.userId);
-  if (!user) return res.status(401).json({ message: "Unauthorized" });
-  if (user.role === "admin" || user.role === "dispatcher") return next();
-  if (user.role === "technician") {
-    const tech = await storage.getTechnicianByUserId(user.id);
-    if (!tech) return res.status(403).json({ message: "Forbidden" });
-    const jobId = parseId(req.params.id);
-    if (!jobId) return res.status(400).json({ message: "Invalid job id" });
-    const job = await storage.getJobById(jobId);
-    if (!job || job.technicianId !== tech.id) return res.status(403).json({ message: "Forbidden" });
-    return next();
-  }
-  return res.status(403).json({ message: "Forbidden" });
 }
 
 // ─── Register all routes ──────────────────────────────────────────────────────
@@ -191,145 +104,15 @@ export async function registerRoutes(httpServer: Server, app: Express) {
   });
   app.use(sessionMiddleware);
 
-  // Socket.IO
-  const io = new SocketServer(httpServer, {
-    cors: { origin: false },
-    path: "/socket.io",
-  });
+  const io = createSocketServer(httpServer, app, sessionMiddleware);
 
-  // Run the Express session middleware on every Socket.IO handshake so that
-  // socket.request.session is populated and socket handlers can read userId.
-  io.use((socket, next) => {
-    sessionMiddleware(socket.request as any, {} as any, next);
-  });
-
-  io.on("connection", (socket) => {
-    const sessionUserId: number | undefined = (socket.request as any).session?.userId;
-    log(`Socket connected: ${socket.id}`, "socket.io");
-
-    socket.on("disconnect", () => {
-      log(`Socket disconnected: ${socket.id}`, "socket.io");
-    });
-
-    // ── join:staff ────────────────────────────────────────────────────────────
-    // Only admin and dispatcher may subscribe to the staff-wide notification room.
-    // Technicians must not join this room — events there include cross-job and
-    // cross-technician operational data not scoped to a single user.
-    socket.on("join:staff", async () => {
-      if (!sessionUserId) return;
-      const user = await storage.getUserById(sessionUserId);
-      if (!user || (user.role !== "admin" && user.role !== "dispatcher")) return;
-      socket.join("staff:notifications");
-      log(`Socket ${socket.id} joined staff:notifications (user:${sessionUserId})`, "socket.io");
-    });
-
-    // ── join:user ─────────────────────────────────────────────────────────────
-    // A user may only subscribe to their own notification room.
-    socket.on("join:user", (userId: number) => {
-      if (sessionUserId && sessionUserId === Number(userId)) {
-        socket.join(`user:${sessionUserId}`);
-        log(`Socket ${socket.id} joined user:${sessionUserId}`, "socket.io");
-      }
-    });
-
-    // ── join:job ──────────────────────────────────────────────────────────────
-    // Admin and dispatcher: unrestricted access to any job room.
-    // Technician: may only join the room for a job they are assigned to.
-    // Unauthenticated sockets or unrecognised roles are silently refused.
-    socket.on("join:job", async (jobId: number) => {
-      if (!sessionUserId) return;
-      const id = parseId(jobId);
-      if (!id) return;
-      const user = await storage.getUserById(sessionUserId);
-      if (!user) return;
-      if (user.role === "admin" || user.role === "dispatcher") {
-        socket.join(`job:${id}`);
-        return;
-      }
-      if (user.role === "technician") {
-        const tech = await storage.getTechnicianByUserId(user.id);
-        if (!tech) return;
-        const job = await storage.getJobById(id);
-        if (!job || job.technicianId !== tech.id) return;
-        socket.join(`job:${id}`);
-      }
-    });
-
-    // ── join:conv ─────────────────────────────────────────────────────────────
-    // A user may only subscribe to a conversation room if they are a member of
-    // that conversation. Membership is verified against the DB on every join.
-    socket.on("join:conv", async (convId: number) => {
-      if (!sessionUserId) return;
-      const id = parseId(convId);
-      if (!id) return;
-      const members = await storage.getConvMembers(id);
-      if (members.some(m => m.id === sessionUserId)) {
-        socket.join(`conv:${id}`);
-        log(`Socket ${socket.id} joined conv:${id} (user:${sessionUserId})`, "socket.io");
-      }
-    });
-
-    // ── leave:conv ────────────────────────────────────────────────────────────
-    socket.on("leave:conv", (convId: number) => {
-      if (!sessionUserId) return;
-      const id = parseId(convId);
-      if (id) socket.leave(`conv:${id}`);
-    });
-  });
-
-  // Expose io for use in route handlers
-  (app as any).io = io;
-
-  // ─── Auth routes ────────────────────────────────────────────────────────────
-  app.post("/api/auth/login", async (req, res) => {
-    try {
-      const ip = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
-      if (!checkLoginRateLimit(ip)) {
-        return res.status(429).json({ message: "Too many login attempts. Try again in 15 minutes." });
-      }
-      const { email, password } = req.body;
-      if (!email || !password) {
-        return res.status(400).json({ message: "Email and password are required" });
-      }
-      const user = await storage.getUserByEmail(email.toLowerCase().trim());
-      // Always run bcrypt.compare() regardless of whether the user was found.
-      // Returning early on a missing user would create a measurable timing difference
-      // (~100 ms for bcrypt vs ~1 ms for a DB miss) that leaks whether an email is registered.
-      // The dummy hash is a real bcrypt digest; compare() takes the same time as a real check.
-      const DUMMY_HASH = "$2b$12$vK7ozzC9hE2Gafr3WqZXzOgARFG2k1AMn50VfACTFP5tupX7h3ruy";
-      const valid = await bcrypt.compare(password, user?.password ?? DUMMY_HASH);
-      if (!user || !valid) {
-        return res.status(401).json({ message: "Invalid credentials" });
-      }
-      req.session.userId = user.id;
-      await new Promise<void>((resolve, reject) => {
-        req.session.save((err) => (err ? reject(err) : resolve()));
-      });
-      return res.json({ id: user.id, email: user.email, name: user.name, role: user.role });
-    } catch (err) {
-      console.error("Login error:", err);
-      return res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  app.post("/api/auth/logout", (req, res) => {
-    req.session.destroy((err) => {
-      if (err) console.error("Session destroy error:", err);
-      res.clearCookie("connect.sid");
-      res.json({ message: "Logged out" });
-    });
-  });
-
-  app.get("/api/auth/me", async (req, res) => {
-    if (!req.session?.userId) {
-      return res.status(200).json(null);
-    }
-    const user = await storage.getUserById(req.session.userId);
-    if (!user) {
-      return res.status(200).json(null);
-    }
-    return res.json({ id: user.id, email: user.email, name: user.name, role: user.role });
-  });
+  app.use(authRouter);
+  app.use(settingsRouter);
+  app.use(connecteamRouter);
+  app.use(inventoryRouter);
+  app.use(catalogRouter);
+  app.use(notificationsRouter);
+  app.use(dashboardRouter);
 
   // ─── Conversations ──────────────────────────────────────────────────────────
   app.get("/api/conversations/job-list", requireAuth, async (req, res) => {
@@ -467,46 +250,6 @@ export async function registerRoutes(httpServer: Server, app: Express) {
       res.json(users.map(u => ({ id: u.id, name: u.name, role: u.role })));
     } catch (err) {
       res.status(500).json({ message: "Failed to load users" });
-    }
-  });
-
-  // ─── Notifications ──────────────────────────────────────────────────────────
-  app.get("/api/notifications", requireAuth, async (req, res) => {
-    try {
-      const notifs = await storage.getUnreadNotifications(req.session.userId!);
-      res.json(notifs);
-    } catch (err) {
-      res.status(500).json({ message: "Failed to load notifications" });
-    }
-  });
-
-  app.put("/api/notifications/:id/read", requireAuth, async (req, res) => {
-    try {
-      const updated = await storage.markNotificationRead(parseId(req.params.id), req.session.userId!);
-      if (!updated) return res.status(404).json({ message: "Notification not found" });
-      res.json({ ok: true });
-    } catch (err) {
-      res.status(500).json({ message: "Failed to mark notification read" });
-    }
-  });
-
-  app.put("/api/notifications/read-job/:jobId", requireAuth, async (req, res) => {
-    try {
-      await storage.markJobNotificationsRead(req.session.userId!, parseId(req.params.jobId));
-      res.json({ ok: true });
-    } catch (err) {
-      res.status(500).json({ message: "Failed to mark notifications read" });
-    }
-  });
-
-  // ─── Dashboard ──────────────────────────────────────────────────────────────
-  app.get("/api/dashboard/stats", requireAuth, async (_req, res) => {
-    try {
-      const stats = await storage.getDashboardStats();
-      res.json(stats);
-    } catch (err) {
-      console.error("Dashboard stats error:", err);
-      res.status(500).json({ message: "Failed to load dashboard stats" });
     }
   });
 
@@ -648,17 +391,6 @@ export async function registerRoutes(httpServer: Server, app: Express) {
       res.json(tech);
     } catch (err) {
       res.status(500).json({ message: "Failed to load technician profile" });
-    }
-  });
-
-  app.get("/api/dashboard/my-stats", requireAuth, async (req, res) => {
-    try {
-      const tech = await storage.getTechnicianByUserId(req.session.userId!);
-      if (!tech) return res.status(404).json({ message: "No technician profile found" });
-      const stats = await storage.getTechnicianMyStats(tech.id);
-      res.json(stats);
-    } catch (err) {
-      res.status(500).json({ message: "Failed to load stats" });
     }
   });
 
@@ -1073,48 +805,6 @@ export async function registerRoutes(httpServer: Server, app: Express) {
     }
   });
 
-  // ─── Services (Products & Services catalog) ───────────────────────────────────
-  app.get("/api/services", requireAuth, async (_req, res) => {
-    try {
-      const data = await storage.getAllServices();
-      res.json(data);
-    } catch (err) {
-      res.status(500).json({ message: "Failed to load services" });
-    }
-  });
-
-  app.post("/api/services", requireRole("admin", "dispatcher"), async (req, res) => {
-    try {
-      const data = insertServiceSchema.parse(req.body);
-      const svc = await storage.createService(data);
-      res.status(201).json(svc);
-    } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors });
-      res.status(500).json({ message: "Failed to create service" });
-    }
-  });
-
-  app.put("/api/services/:id", requireRole("admin", "dispatcher"), async (req, res) => {
-    try {
-      const data = insertServiceSchema.partial().parse(req.body);
-      const svc = await storage.updateService(parseId(req.params.id), data);
-      if (!svc) return res.status(404).json({ message: "Service not found" });
-      res.json(svc);
-    } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors });
-      res.status(500).json({ message: "Failed to update service" });
-    }
-  });
-
-  app.delete("/api/services/:id", requireRole("admin"), async (req, res) => {
-    try {
-      await storage.deleteService(parseId(req.params.id));
-      res.json({ message: "Service deleted" });
-    } catch (err) {
-      res.status(500).json({ message: "Failed to delete service" });
-    }
-  });
-
   // ─── Invoices ────────────────────────────────────────────────────────────────
   app.get("/api/invoices", requireRole("admin", "dispatcher"), async (_req, res) => {
     try {
@@ -1190,80 +880,6 @@ export async function registerRoutes(httpServer: Server, app: Express) {
       res.json({ message: "Invoice deleted" });
     } catch (err) {
       res.status(500).json({ message: "Failed to delete invoice" });
-    }
-  });
-
-  // ─── Inventory ───────────────────────────────────────────────────────────────
-  app.get("/api/inventory", requireAuth, async (_req, res) => {
-    try {
-      const data = await storage.getAllInventory();
-      res.json(data);
-    } catch (err) {
-      res.status(500).json({ message: "Failed to load inventory" });
-    }
-  });
-
-  app.get("/api/inventory/:id", requireAuth, async (req, res) => {
-    try {
-      const item = await storage.getInventoryById(parseId(req.params.id));
-      if (!item) return res.status(404).json({ message: "Item not found" });
-      res.json(item);
-    } catch (err) {
-      res.status(500).json({ message: "Failed to load item" });
-    }
-  });
-
-  app.post("/api/inventory", requireRole("admin", "dispatcher"), async (req, res) => {
-    try {
-      const data = insertInventorySchema.parse(req.body);
-      const item = await storage.createInventoryItem(data);
-      res.status(201).json(item);
-    } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors });
-      res.status(500).json({ message: "Failed to create inventory item" });
-    }
-  });
-
-  app.put("/api/inventory/:id", requireRole("admin", "dispatcher"), async (req, res) => {
-    try {
-      const data = insertInventorySchema.partial().parse(req.body);
-      const item = await storage.updateInventoryItem(parseId(req.params.id), data);
-      if (!item) return res.status(404).json({ message: "Item not found" });
-      res.json(item);
-    } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors });
-      res.status(500).json({ message: "Failed to update inventory item" });
-    }
-  });
-
-  app.delete("/api/inventory/:id", requireRole("admin"), async (req, res) => {
-    try {
-      await storage.deleteInventoryItem(parseId(req.params.id));
-      res.json({ message: "Item deleted" });
-    } catch (err) {
-      res.status(500).json({ message: "Failed to delete inventory item" });
-    }
-  });
-
-  // ─── Settings ────────────────────────────────────────────────────────────────
-  app.get("/api/settings", requireRole("admin"), async (_req, res) => {
-    try {
-      const data = await storage.getAllSettings();
-      const map: Record<string, string> = {};
-      data.forEach((s) => { if (s.key && s.value) map[s.key] = s.value; });
-      res.json(map);
-    } catch (err) {
-      res.status(500).json({ message: "Failed to load settings" });
-    }
-  });
-
-  app.put("/api/settings/:key", requireRole("admin"), async (req, res) => {
-    try {
-      const { value } = req.body;
-      const setting = await storage.upsertSetting(req.params.key, value);
-      res.json(setting);
-    } catch (err) {
-      res.status(500).json({ message: "Failed to update setting" });
     }
   });
 
@@ -1737,204 +1353,4 @@ export async function registerRoutes(httpServer: Server, app: Express) {
     }
   });
 
-  // Change own password
-  app.put("/api/auth/password", requireAuth, async (req, res) => {
-    try {
-      const { currentPassword, newPassword } = req.body;
-      if (!currentPassword || !newPassword) {
-        return res.status(400).json({ message: "Current and new passwords are required" });
-      }
-      const user = await storage.getUserById(req.session.userId!);
-      if (!user) return res.status(404).json({ message: "User not found" });
-      const valid = await bcrypt.compare(currentPassword, user.password);
-      if (!valid) return res.status(401).json({ message: "Current password is incorrect" });
-      const hashed = await bcrypt.hash(newPassword, 12);
-      await storage.updateUser(user.id, { password: hashed });
-      // Regenerate session to invalidate old tokens
-      const userId = user.id;
-      req.session.regenerate((err) => {
-        if (err) return res.status(500).json({ message: "Failed to update password" });
-        req.session.userId = userId;
-        req.session.save(() => res.json({ message: "Password updated" }));
-      });
-    } catch (err) {
-      res.status(500).json({ message: "Failed to update password" });
-    }
-  });
-
-  // ─── Connecteam Integration ───────────────────────────────────────────────────
-
-  async function connecteamToken(clientId: string, clientSecret: string): Promise<string> {
-    const creds = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
-    const res = await fetch("https://api.connecteam.com/oauth/v1/token", {
-      method: "POST",
-      headers: {
-        "Authorization": `Basic ${creds}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: "grant_type=client_credentials",
-    });
-    if (!res.ok) throw new Error("Invalid Connecteam credentials");
-    const data: any = await res.json();
-    return data.access_token;
-  }
-
-  // GET status + settings (credentials masked)
-  app.get("/api/integrations/connecteam", requireRole("admin"), async (_req, res) => {
-    try {
-      const settings = await storage.getAllSettings();
-      const map: Record<string, string> = {};
-      settings.forEach(s => { if (s.key && s.value) map[s.key] = s.value; });
-      const clientId     = map["connecteam_client_id"]     || "";
-      const clientSecret = map["connecteam_client_secret"] || "";
-      const lastSync     = map["connecteam_last_sync"]     || null;
-      const enabled      = map["connecteam_enabled"]       === "true";
-      res.json({
-        clientId,
-        clientSecretMasked: clientSecret ? "●".repeat(8) + clientSecret.slice(-4) : "",
-        hasCredentials: !!(clientId && clientSecret),
-        enabled,
-        lastSync,
-      });
-    } catch (err) {
-      res.status(500).json({ message: "Failed to load Connecteam settings" });
-    }
-  });
-
-  // PUT save credentials
-  app.put("/api/integrations/connecteam", requireRole("admin"), async (req, res) => {
-    try {
-      const { clientId, clientSecret, enabled } = req.body;
-      if (clientId   !== undefined) await storage.upsertSetting("connecteam_client_id",     clientId);
-      if (clientSecret !== undefined) await storage.upsertSetting("connecteam_client_secret", clientSecret);
-      if (enabled    !== undefined) await storage.upsertSetting("connecteam_enabled",        String(enabled));
-      res.json({ message: "Settings saved" });
-    } catch (err) {
-      res.status(500).json({ message: "Failed to save Connecteam settings" });
-    }
-  });
-
-  // POST test connection
-  app.post("/api/integrations/connecteam/test", requireRole("admin"), async (req, res) => {
-    try {
-      const settings = await storage.getAllSettings();
-      const map: Record<string, string> = {};
-      settings.forEach(s => { if (s.key && s.value) map[s.key] = s.value; });
-      const clientId     = map["connecteam_client_id"]     || "";
-      const clientSecret = map["connecteam_client_secret"] || "";
-      if (!clientId || !clientSecret) return res.status(400).json({ message: "Credentials not configured" });
-      const token = await connecteamToken(clientId, clientSecret);
-      // Fetch company info to confirm access
-      const infoRes = await fetch("https://api.connecteam.com/users/v1/users?limit=1", {
-        headers: { "Authorization": `Bearer ${token}` },
-      });
-      if (!infoRes.ok) throw new Error("API call failed");
-      res.json({ message: "Connection successful", token: token.slice(0, 20) + "..." });
-    } catch (err: any) {
-      console.error("[connecteam] test connection error:", err);
-      res.status(400).json({ message: "Connection failed. Check your Connecteam credentials and try again." });
-    }
-  });
-
-  // GET users from Connecteam
-  app.get("/api/integrations/connecteam/users", requireRole("admin"), async (_req, res) => {
-    try {
-      const settings = await storage.getAllSettings();
-      const map: Record<string, string> = {};
-      settings.forEach(s => { if (s.key && s.value) map[s.key] = s.value; });
-      const token = await connecteamToken(map["connecteam_client_id"], map["connecteam_client_secret"]);
-      const r = await fetch("https://api.connecteam.com/users/v1/users?limit=50", {
-        headers: { "Authorization": `Bearer ${token}` },
-      });
-      const data: any = await r.json();
-      res.json(data.data?.users ?? []);
-    } catch (err: any) {
-      console.error("[connecteam] fetch users error:", err);
-      res.status(500).json({ message: "Failed to fetch Connecteam users." });
-    }
-  });
-
-  // GET jobs from Connecteam
-  app.get("/api/integrations/connecteam/jobs", requireRole("admin"), async (_req, res) => {
-    try {
-      const settings = await storage.getAllSettings();
-      const map: Record<string, string> = {};
-      settings.forEach(s => { if (s.key && s.value) map[s.key] = s.value; });
-      const token = await connecteamToken(map["connecteam_client_id"], map["connecteam_client_secret"]);
-      const r = await fetch("https://api.connecteam.com/jobs/v1/jobs?limit=100", {
-        headers: { "Authorization": `Bearer ${token}` },
-      });
-      const data: any = await r.json();
-      res.json(data.data?.jobs ?? []);
-    } catch (err: any) {
-      console.error("[connecteam] fetch jobs error:", err);
-      res.status(500).json({ message: "Failed to fetch Connecteam jobs." });
-    }
-  });
-
-  // GET time activities from Connecteam
-  app.get("/api/integrations/connecteam/time", requireRole("admin"), async (req, res) => {
-    try {
-      const settings = await storage.getAllSettings();
-      const map: Record<string, string> = {};
-      settings.forEach(s => { if (s.key && s.value) map[s.key] = s.value; });
-      const token = await connecteamToken(map["connecteam_client_id"], map["connecteam_client_secret"]);
-      const { startDate, endDate } = req.query as any;
-      const params = new URLSearchParams({ limit: "100" });
-      if (startDate) params.set("startDate", startDate);
-      if (endDate)   params.set("endDate",   endDate);
-      const r = await fetch(`https://api.connecteam.com/time_clock/v1/time_activities?${params}`, {
-        headers: { "Authorization": `Bearer ${token}` },
-      });
-      const data: any = await r.json();
-      res.json(data.data ?? []);
-    } catch (err: any) {
-      console.error("[connecteam] fetch time activities error:", err);
-      res.status(500).json({ message: "Failed to fetch Connecteam time activities." });
-    }
-  });
-
-  // POST sync employees → create as technicians in FusPro
-  app.post("/api/integrations/connecteam/sync-employees", requireRole("admin"), async (req, res) => {
-    try {
-      const settings = await storage.getAllSettings();
-      const map: Record<string, string> = {};
-      settings.forEach(s => { if (s.key && s.value) map[s.key] = s.value; });
-      const token = await connecteamToken(map["connecteam_client_id"], map["connecteam_client_secret"]);
-      const r = await fetch("https://api.connecteam.com/users/v1/users?limit=50", {
-        headers: { "Authorization": `Bearer ${token}` },
-      });
-      const data: any = await r.json();
-      const ctUsers: any[] = data.data?.users ?? [];
-
-      // Get existing FusPro users by email
-      const existingUsers = await storage.getAllUsers();
-      const existingEmails = new Set(existingUsers.map(u => u.email.toLowerCase()));
-
-      let created = 0; let skipped = 0;
-      for (const u of ctUsers) {
-        if (u.userType === "owner") { skipped++; continue; }
-        const email = (u.email || "").toLowerCase();
-        if (!email || existingEmails.has(email)) { skipped++; continue; }
-        // Create user as technician
-        const hashedPw = await bcrypt.hash("FusePro123!", 12);
-        const newUser = await storage.createUser({
-          email,
-          password: hashedPw,
-          name: `${u.firstName} ${u.lastName}`.trim(),
-          role: "technician",
-        });
-        // Create technician profile and add to team conversation
-        await storage.createTechnician({ userId: newUser.id, status: "available" });
-        await storage.ensureTeamMember(newUser.id).catch(() => {});
-        created++;
-      }
-
-      await storage.upsertSetting("connecteam_last_sync", new Date().toISOString());
-      res.json({ message: `Sync complete: ${created} created, ${skipped} skipped`, created, skipped });
-    } catch (err: any) {
-      console.error("[connecteam] sync-employees error:", err);
-      res.status(500).json({ message: "Employee sync failed." });
-    }
-  });
 }
