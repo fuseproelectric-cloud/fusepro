@@ -3,29 +3,27 @@
  *
  * Tests cover:
  *   - DomainEventBus: handler registration and dispatch
- *   - handleTimesheetEntryCreated: delegates to notificationService.notifyDayActivity()
- *   - handleJobStatusChanged: socket emits + conditional notifyJobActivity()
+ *   - handleTimesheetEntryCreated: enqueues NOTIFY_TIMESHEET_ACTIVITY job
+ *   - handleJobStatusChanged: socket emits + enqueues NOTIFY_JOB_ACTIVITY job
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-// ─── Mock notificationService before importing handlers ───────────────────────
+// ─── Mock jobQueue before importing handlers ──────────────────────────────────
 
-const notifMock = vi.hoisted(() => ({
-  notifyDayActivity:  vi.fn(),
-  notifyJobActivity:  vi.fn(),
-  notifyJobNote:      vi.fn(),
+const jobQueueMock = vi.hoisted(() => ({
+  enqueue: vi.fn(),
 }));
 
-vi.mock("../../server/services/notification.service", () => ({
-  notificationService: notifMock,
+vi.mock("../../server/core/queue/job-queue", () => ({
+  jobQueue: jobQueueMock,
 }));
 
 // ─── Imports ──────────────────────────────────────────────────────────────────
 
 import { DomainEventBus } from "../../server/core/events/domain-event-bus";
 import { TIMESHEET_ENTRY_CREATED } from "../../server/core/events/timesheet.events";
-import { JOB_STATUS_CHANGED }        from "../../server/core/events/job.events";
+import { NOTIFY_TIMESHEET_ACTIVITY, NOTIFY_JOB_ACTIVITY } from "../../server/core/queue/job-types";
 import { handleTimesheetEntryCreated } from "../../server/core/events/handlers/timesheet-notification.handler";
 import { handleJobStatusChanged }      from "../../server/core/events/handlers/job-notification.handler";
 
@@ -96,19 +94,19 @@ describe("DomainEventBus", () => {
 // ─── handleTimesheetEntryCreated ──────────────────────────────────────────────
 
 describe("handleTimesheetEntryCreated", () => {
-  beforeEach(() => notifMock.notifyDayActivity.mockReset());
+  beforeEach(() => jobQueueMock.enqueue.mockReset());
 
-  it("calls notifyDayActivity with all event fields", async () => {
+  it("enqueues NOTIFY_TIMESHEET_ACTIVITY with all event fields", () => {
     const ts = new Date("2025-06-01T08:00:00Z");
-    await handleTimesheetEntryCreated({
+    handleTimesheetEntryCreated({
       entryType: "day_start",
       user:      sampleUser,
       timestamp: ts,
       notes:     "Morning shift",
       io:        undefined,
     });
-    expect(notifMock.notifyDayActivity).toHaveBeenCalledOnce();
-    expect(notifMock.notifyDayActivity).toHaveBeenCalledWith({
+    expect(jobQueueMock.enqueue).toHaveBeenCalledOnce();
+    expect(jobQueueMock.enqueue).toHaveBeenCalledWith(NOTIFY_TIMESHEET_ACTIVITY, {
       entryType: "day_start",
       user:      sampleUser,
       timestamp: ts,
@@ -117,26 +115,28 @@ describe("handleTimesheetEntryCreated", () => {
     });
   });
 
-  it("coerces null notes correctly", async () => {
-    await handleTimesheetEntryCreated({
+  it("coerces undefined notes to null in the enqueued payload", () => {
+    handleTimesheetEntryCreated({
       entryType: "break_start",
       user:      sampleUser,
       timestamp: new Date(),
     });
-    expect(notifMock.notifyDayActivity).toHaveBeenCalledWith(
+    expect(jobQueueMock.enqueue).toHaveBeenCalledWith(
+      NOTIFY_TIMESHEET_ACTIVITY,
       expect.objectContaining({ notes: null }),
     );
   });
 
-  it("forwards the io instance to notifyDayActivity", async () => {
+  it("forwards the io instance in the enqueued payload", () => {
     const io: any = { to: vi.fn().mockReturnThis(), emit: vi.fn() };
-    await handleTimesheetEntryCreated({
+    handleTimesheetEntryCreated({
       entryType: "day_end",
       user:      sampleUser,
       timestamp: new Date(),
       io,
     });
-    expect(notifMock.notifyDayActivity).toHaveBeenCalledWith(
+    expect(jobQueueMock.enqueue).toHaveBeenCalledWith(
+      NOTIFY_TIMESHEET_ACTIVITY,
       expect.objectContaining({ io }),
     );
   });
@@ -145,31 +145,30 @@ describe("handleTimesheetEntryCreated", () => {
 // ─── handleJobStatusChanged ───────────────────────────────────────────────────
 
 describe("handleJobStatusChanged", () => {
-  beforeEach(() => notifMock.notifyJobActivity.mockReset());
+  beforeEach(() => jobQueueMock.enqueue.mockReset());
 
-  it("emits job:updated to staff:notifications and job:{id} rooms", async () => {
+  it("emits job:updated to staff:notifications and job:{id} rooms", () => {
     const io: any = { to: vi.fn().mockReturnThis(), emit: vi.fn() };
-    await handleJobStatusChanged({ job: sampleJob, io });
+    handleJobStatusChanged({ job: sampleJob, io });
     expect(io.to).toHaveBeenCalledWith("staff:notifications");
     expect(io.to).toHaveBeenCalledWith("job:10");
     expect(io.emit).toHaveBeenCalledWith("job:updated", sampleJob);
   });
 
-  it("does not emit when io is absent", async () => {
-    // Should not throw and notifyJobActivity not called either
-    await expect(handleJobStatusChanged({ job: sampleJob })).resolves.toBeUndefined();
-    expect(notifMock.notifyJobActivity).not.toHaveBeenCalled();
+  it("does not emit when io is absent", () => {
+    expect(() => handleJobStatusChanged({ job: sampleJob })).not.toThrow();
+    expect(jobQueueMock.enqueue).not.toHaveBeenCalled();
   });
 
-  it("calls notifyJobActivity when notificationEntryType is present", async () => {
-    await handleJobStatusChanged({
+  it("enqueues NOTIFY_JOB_ACTIVITY when notificationEntryType is present", () => {
+    handleJobStatusChanged({
       job:                   sampleJob,
       notificationEntryType: "travel_start",
       technicianName:        "Bob Smith",
       technicianUserId:      3,
     });
-    expect(notifMock.notifyJobActivity).toHaveBeenCalledOnce();
-    expect(notifMock.notifyJobActivity).toHaveBeenCalledWith({
+    expect(jobQueueMock.enqueue).toHaveBeenCalledOnce();
+    expect(jobQueueMock.enqueue).toHaveBeenCalledWith(NOTIFY_JOB_ACTIVITY, {
       entryType:        "travel_start",
       jobId:            10,
       jobTitle:         "HVAC Job",
@@ -179,30 +178,31 @@ describe("handleJobStatusChanged", () => {
     });
   });
 
-  it("does NOT call notifyJobActivity for admin overrides (no notificationEntryType)", async () => {
-    await handleJobStatusChanged({ job: sampleJob, io: undefined });
-    expect(notifMock.notifyJobActivity).not.toHaveBeenCalled();
+  it("does NOT enqueue for admin overrides (no notificationEntryType)", () => {
+    handleJobStatusChanged({ job: sampleJob, io: undefined });
+    expect(jobQueueMock.enqueue).not.toHaveBeenCalled();
   });
 
-  it("does NOT call notifyJobActivity when technicianName is missing", async () => {
-    await handleJobStatusChanged({
+  it("does NOT enqueue when technicianName is missing", () => {
+    handleJobStatusChanged({
       job:                   sampleJob,
       notificationEntryType: "work_start",
       // technicianName intentionally omitted
       technicianUserId:      3,
     });
-    expect(notifMock.notifyJobActivity).not.toHaveBeenCalled();
+    expect(jobQueueMock.enqueue).not.toHaveBeenCalled();
   });
 
-  it("handles null job title gracefully", async () => {
+  it("handles null job title gracefully in the enqueued payload", () => {
     const jobNoTitle = { ...sampleJob, title: null };
-    await handleJobStatusChanged({
+    handleJobStatusChanged({
       job:                   jobNoTitle,
       notificationEntryType: "work_end",
       technicianName:        "Eve",
       technicianUserId:      7,
     });
-    expect(notifMock.notifyJobActivity).toHaveBeenCalledWith(
+    expect(jobQueueMock.enqueue).toHaveBeenCalledWith(
+      NOTIFY_JOB_ACTIVITY,
       expect.objectContaining({ jobTitle: null }),
     );
   });

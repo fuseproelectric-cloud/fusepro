@@ -37,6 +37,8 @@ import { AuthError, ValidationError, ForbiddenError } from "./core/errors/app-er
 import { canTechnicianTransitionJob, canOverrideJobStatus } from "./core/policies/jobs.policy";
 // Register domain event handlers (timesheet notifications, job realtime updates)
 import "./core/events";
+// Register background job handlers (notification fan-out)
+import "./core/queue";
 
 // ─── Session setup ───────────────────────────────────────────────────────────
 const PgSession = connectPgSimple(session);
