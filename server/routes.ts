@@ -35,6 +35,8 @@ import { requireAuth } from "./core/middleware/auth.middleware";
 import { jobExecutionService } from "./services/job-execution.service";
 import { AuthError, ValidationError, ForbiddenError } from "./core/errors/app-error";
 import { canTechnicianTransitionJob, canOverrideJobStatus } from "./core/policies/jobs.policy";
+// Register domain event handlers (timesheet notifications, job realtime updates)
+import "./core/events";
 
 // ─── Session setup ───────────────────────────────────────────────────────────
 const PgSession = connectPgSimple(session);

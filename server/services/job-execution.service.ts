@@ -23,7 +23,6 @@ import { db } from "../db";
 import { storage } from "../storage";
 import { jobs, timesheets } from "@shared/schema";
 import type { Job, Timesheet, InsertTimesheet } from "@shared/schema";
-import { notificationService } from "./notification.service";
 import { AppError } from "../core/errors/app-error";
 import {
   type JobStatus,
@@ -31,6 +30,8 @@ import {
   isTerminalForTechnician,
   TRANSITION_NOTIFICATION_ENTRY,
 } from "../modules/jobs/job-status.lifecycle";
+import { domainEventBus } from "../core/events/domain-event-bus";
+import { JOB_STATUS_CHANGED } from "../core/events/job.events";
 
 // ─── Error ────────────────────────────────────────────────────────────────────
 
@@ -276,24 +277,14 @@ export const jobExecutionService = {
       committedJob = updatedRows[0] as Job;
     });
 
-    // ── Post-commit: socket emits ────────────────────────────────────────────
-    if (io) {
-      io.to("staff:notifications").emit("job:updated", committedJob);
-      io.to(`job:${committedJob.id}`).emit("job:updated", committedJob);
-    }
-
-    // ── Post-commit: activity notification ──────────────────────────────────
-    const entryTypeForNotif = TRANSITION_NOTIFICATION_ENTRY[newStatus as JobStatus];
-    if (entryTypeForNotif) {
-      await notificationService.notifyJobActivity({
-        entryType:        entryTypeForNotif,
-        jobId,
-        jobTitle:         committedJob.title ?? null,
-        technicianName:   userName,
-        technicianUserId: userId,
-        io,
-      });
-    }
+    // ── Post-commit: publish domain event (socket emits + activity notification) ─
+    await domainEventBus.emit(JOB_STATUS_CHANGED, {
+      job:                    committedJob,
+      notificationEntryType:  TRANSITION_NOTIFICATION_ENTRY[newStatus as JobStatus],
+      technicianName:         userName,
+      technicianUserId:       userId,
+      io,
+    });
 
     return { job: committedJob, timesheetEntries: committedEntries };
   },
@@ -325,10 +316,13 @@ export const jobExecutionService = {
 
     if (!updated) throw new TransitionError("Job not found.", 404);
 
-    if (io) {
-      io.to("staff:notifications").emit("job:updated", updated);
-      io.to(`job:${updated.id}`).emit("job:updated", updated);
-    }
+    // ── Post-commit: publish domain event (socket emits only — no notification) ─
+    await domainEventBus.emit(JOB_STATUS_CHANGED, {
+      job: updated as Job,
+      io,
+      // notificationEntryType intentionally absent: admin overrides do not
+      // generate activity notifications
+    });
 
     return { job: updated as Job, timesheetEntries: [] };
   },

@@ -16,7 +16,8 @@ import {
   timesheetService,
   JOB_LIFECYCLE_ENTRY_TYPES,
 } from "../../services/timesheet.service";
-import { notificationService } from "../../services/notification.service";
+import { domainEventBus } from "../../core/events/domain-event-bus";
+import { TIMESHEET_ENTRY_CREATED } from "../../core/events/timesheet.events";
 import {
   AuthError,
   NotFoundError,
@@ -145,9 +146,10 @@ timesheetsRouter.post("/api/timesheet", requireAuth, async (req: Request, res: R
         return next(new ValidationError(`Unknown entry type: ${data.entryType}`));
     }
 
-    // Delegate all notification creation (DB persistence + realtime) to service
+    // Publish domain event — side effects (notification + realtime) are
+    // handled by the registered handler in core/events/handlers/.
     const io: SocketServer = (req.app as any).io;
-    await notificationService.notifyDayActivity({
+    await domainEventBus.emit(TIMESHEET_ENTRY_CREATED, {
       entryType: data.entryType,
       user,
       timestamp: entry.timestamp,
