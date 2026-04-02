@@ -5,6 +5,7 @@ import { createServer } from "http";
 import { log, logger } from "./core/utils/logger";
 import { errorMiddleware } from "./core/middleware/error.middleware";
 import { runMigrations } from "./lib/run-migrations";
+import { startHealthMonitor } from "./core/health/health.monitor";
 
 const app = express();
 const httpServer = createServer(app);
@@ -115,6 +116,9 @@ app.use((req, res, next) => {
     { port, host: "0.0.0.0", reusePort: true },
     () => {
       log(`Fuse Pro Cloud serving on port ${port}`);
+      // Start background health monitor after the server is listening.
+      // Runs an initial check immediately, then on HEALTHCHECK_INTERVAL_MS cadence.
+      startHealthMonitor();
     }
   );
 })();

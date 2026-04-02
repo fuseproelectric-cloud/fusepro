@@ -1,12 +1,12 @@
 import express from "express";
-import { pool } from "../../db";
-import { logger } from "../../core/utils/logger";
+import { healthService } from "../../core/health/health.service";
 
 export const healthRouter = express.Router();
 
 /**
  * GET /api/health
  * Liveness probe — always 200 while the process is running.
+ * No dependency checks; used to confirm the process is alive.
  */
 healthRouter.get("/api/health", (_req, res) => {
   res.json({ status: "ok" });
@@ -14,16 +14,24 @@ healthRouter.get("/api/health", (_req, res) => {
 
 /**
  * GET /api/ready
- * Readiness probe — returns 200 when the DB is reachable, 503 when degraded.
- * Suitable for load-balancer and orchestration health checks.
+ * Readiness probe — runs all dependency checks and returns a structured report.
+ *
+ * 200 when overall status is "ok"
+ * 503 when overall status is "degraded" or "error"
+ *
+ * Response shape:
+ * {
+ *   "status": "ok" | "degraded" | "error",
+ *   "checks": {
+ *     "db":    { "status": "ok", "message": "...", "latencyMs": 12, "checkedAt": "..." },
+ *     "redis": { "status": "not_configured", "message": "...", "checkedAt": "..." },
+ *     "queue": { "status": "ok", "message": "...", "checkedAt": "..." }
+ *   },
+ *   "checkedAt": "ISO timestamp"
+ * }
  */
 healthRouter.get("/api/ready", async (_req, res) => {
-  try {
-    await pool.query("SELECT 1");
-    res.json({ status: "ok", checks: { db: "ok" } });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    logger.error("Readiness check failed", { source: "health", check: "db", message });
-    res.status(503).json({ status: "degraded", checks: { db: "error" } });
-  }
+  const report = await healthService.checkAll();
+  const httpStatus = report.status === "ok" ? 200 : 503;
+  res.status(httpStatus).json(report);
 });

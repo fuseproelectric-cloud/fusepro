@@ -30,6 +30,11 @@ export class JobQueue {
     this.handlers.set(type, handler as JobHandler);
   }
 
+  /** Number of registered handlers. Used by health monitoring. */
+  get registeredHandlerCount(): number {
+    return this.handlers.size;
+  }
+
   /**
    * Schedule a job for async execution.
    * Returns immediately — the handler runs in the next event loop iteration.
