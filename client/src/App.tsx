@@ -3,30 +3,10 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import React from "react";
-import { AppLayout } from "@/components/layout/AppLayout";
 import { LoginPage } from "@/pages/LoginPage";
-import { DashboardPage } from "@/pages/DashboardPage";
-import { JobsPage } from "@/pages/JobsPage";
-import { SchedulePage } from "@/pages/SchedulePage";
-import { TechniciansPage } from "@/pages/TechniciansPage";
-import { CustomersPage } from "@/pages/CustomersPage";
-import { CustomerDetailPage } from "@/pages/CustomerDetailPage";
-import { CustomerAddressPage } from "@/pages/CustomerAddressPage";
-import { EstimatesPage } from "@/pages/EstimatesPage";
-import { InvoicesPage } from "@/pages/InvoicesPage";
-import { InventoryPage } from "@/pages/InventoryPage";
-import { SettingsPage } from "@/pages/SettingsPage";
-import { MyJobsPage } from "@/pages/MyJobsPage";
-import { MySchedulePage } from "@/pages/MySchedulePage";
-import { JobDetailPage } from "@/pages/JobDetailPage";
-import { TimesheetPage } from "@/pages/TimesheetPage";
-import { AdminTimesheetPage } from "@/pages/AdminTimesheetPage";
-import { ChatPage } from "@/pages/ChatPage";
-import { DocsPage } from "@/pages/DocsPage";
-import { RequestsPage } from "@/pages/RequestsPage";
-import { ServicesPage } from "@/pages/ServicesPage";
-import { ConnecteamPage } from "@/pages/ConnecteamPage";
 import { Toaster } from "@/components/ui/toaster";
+import { ProtectedRoute } from "@/components/routing/ProtectedRoute";
+import { APP_ROUTES, getHomeRoute, type UserRole } from "@/lib/routeConfig";
 
 class ErrorBoundary extends React.Component<
   { children: React.ReactNode },
@@ -71,24 +51,6 @@ function LoadingScreen() {
   );
 }
 
-function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
-  const { isAuthenticated, isLoading } = useAuth();
-
-  if (isLoading) {
-    return <LoadingScreen />;
-  }
-
-  if (!isAuthenticated) {
-    return <Redirect to="/login" />;
-  }
-
-  return (
-    <AppLayout>
-      <Component />
-    </AppLayout>
-  );
-}
-
 function AppRoutes() {
   const { isAuthenticated, isLoading, user } = useAuth();
 
@@ -96,83 +58,23 @@ function AppRoutes() {
     return <LoadingScreen />;
   }
 
-  // Determine home route based on role
-  const homeRedirect = user?.role === "technician" ? "/my-jobs" : "/";
+  const homeRedirect = user ? getHomeRoute(user.role as UserRole) : "/login";
 
   return (
     <Switch>
+      {/* Login: authenticated users are redirected to their role-appropriate home */}
       <Route path="/login">
         {isAuthenticated ? <Redirect to={homeRedirect} /> : <LoginPage />}
       </Route>
-      {/* Technician-specific routes */}
-      <Route path="/my-jobs">
-        <ProtectedRoute component={MyJobsPage} />
-      </Route>
-      <Route path="/my-schedule">
-        <ProtectedRoute component={MySchedulePage} />
-      </Route>
-      <Route path="/timesheet">
-        <ProtectedRoute component={TimesheetPage} />
-      </Route>
-      {/* Job detail (all roles) */}
-      <Route path="/job/:id">
-        <ProtectedRoute component={JobDetailPage} />
-      </Route>
-      {/* Admin/dispatcher routes */}
-      <Route path="/admin/timesheets">
-        <ProtectedRoute component={AdminTimesheetPage} />
-      </Route>
-      <Route path="/docs">
-        <ProtectedRoute component={DocsPage} />
-      </Route>
-      <Route path="/">
-        <ProtectedRoute component={DashboardPage} />
-      </Route>
-      <Route path="/jobs">
-        <ProtectedRoute component={JobsPage} />
-      </Route>
-      <Route path="/schedule">
-        <ProtectedRoute component={SchedulePage} />
-      </Route>
-      <Route path="/technicians">
-        <ProtectedRoute component={TechniciansPage} />
-      </Route>
-      <Route path="/customers">
-        <ProtectedRoute component={CustomersPage} />
-      </Route>
-      <Route path="/customers/:id/addresses/:addrId">
-        <ProtectedRoute component={CustomerAddressPage} />
-      </Route>
-      <Route path="/customers/:id">
-        <ProtectedRoute component={CustomerDetailPage} />
-      </Route>
-      <Route path="/estimates">
-        <ProtectedRoute component={EstimatesPage} />
-      </Route>
-      <Route path="/invoices">
-        <ProtectedRoute component={InvoicesPage} />
-      </Route>
-      <Route path="/inventory">
-        <ProtectedRoute component={InventoryPage} />
-      </Route>
-      <Route path="/settings">
-        <ProtectedRoute component={SettingsPage} />
-      </Route>
-      <Route path="/chat/:id">
-        <ProtectedRoute component={ChatPage} />
-      </Route>
-      <Route path="/chat">
-        <ProtectedRoute component={ChatPage} />
-      </Route>
-      <Route path="/requests">
-        <ProtectedRoute component={RequestsPage} />
-      </Route>
-      <Route path="/services">
-        <ProtectedRoute component={ServicesPage} />
-      </Route>
-      <Route path="/integrations/connecteam">
-        <ProtectedRoute component={ConnecteamPage} />
-      </Route>
+
+      {/* All protected routes are generated from the centralized route config */}
+      {APP_ROUTES.map(({ path, component, allowedRoles }) => (
+        <Route key={path} path={path}>
+          <ProtectedRoute component={component} allowedRoles={allowedRoles} />
+        </Route>
+      ))}
+
+      {/* Catch-all: redirect to role-appropriate home (or login if not authenticated) */}
       <Route>
         <Redirect to={homeRedirect} />
       </Route>

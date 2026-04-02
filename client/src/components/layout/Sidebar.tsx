@@ -5,28 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
-import {
-  type LucideIcon,
-  LayoutDashboard,
-  Briefcase,
-  Calendar,
-  Users,
-  UserCheck,
-  FileText,
-  Receipt,
-  Package,
-  Settings,
-  X,
-  User,
-  Clock,
-  ClipboardList,
-  MessageSquare,
-  BookOpen,
-  Inbox,
-  Plus,
-  ChevronDown,
-  Zap,
-} from "lucide-react";
+import { X, Plus, ChevronDown } from "lucide-react";
 import { Icon } from "@/components/ui/Icon";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,40 +14,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-interface NavItem {
-  href: string;
-  label: string;
-  icon: LucideIcon;
-  roles?: string[];
-  section?: string;
-}
-
-const adminDispatcherNavItems: NavItem[] = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard, section: "main" },
-  { href: "/requests", label: "Requests", icon: Inbox, section: "workflow" },
-  { href: "/estimates", label: "Estimates", icon: FileText, section: "workflow" },
-  { href: "/jobs", label: "Jobs", icon: Briefcase, section: "workflow" },
-  { href: "/schedule", label: "Schedule", icon: Calendar, section: "workflow" },
-  { href: "/invoices", label: "Invoices", icon: Receipt, section: "workflow", roles: ["admin"] },
-  { href: "/customers", label: "Customers", icon: Users, section: "manage" },
-  { href: "/technicians", label: "Technicians", icon: UserCheck, section: "manage" },
-  { href: "/admin/timesheets", label: "Timesheets", icon: ClipboardList, section: "manage" },
-  { href: "/inventory", label: "Inventory", icon: Package, section: "manage" },
-  { href: "/chat", label: "Team Chat", icon: MessageSquare, section: "manage" },
-  { href: "/settings", label: "Settings", icon: Settings, section: "manage", roles: ["admin"] },
-  { href: "/integrations/connecteam", label: "Connecteam", icon: Zap, section: "manage", roles: ["admin"] },
-  { href: "/docs", label: "Docs", icon: BookOpen, section: "manage", roles: ["admin"] },
-];
-
-const technicianNavItems: NavItem[] = [
-  { href: "/my-jobs", label: "My Jobs", icon: Briefcase },
-  { href: "/my-schedule", label: "My Schedule", icon: Calendar },
-  { href: "/timesheet", label: "Timesheet", icon: Clock },
-  { href: "/inventory", label: "Inventory", icon: Package },
-  { href: "/chat", label: "Team Chat", icon: MessageSquare },
-  { href: "/settings", label: "Profile", icon: User },
-];
+import { getNavItems, type SidebarNavItem, type UserRole } from "@/lib/routeConfig";
 
 interface SidebarProps {
   mobileOpen?: boolean;
@@ -108,30 +54,29 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
     staleTime: 60 * 1000,
   });
 
-  const navItems = isTechnician
-    ? technicianNavItems
-    : adminDispatcherNavItems.filter(
-        (item) => !item.roles || item.roles.includes(user?.role ?? "")
-      );
+  // Nav items derived from the centralized route config — single source of truth
+  const navItems: SidebarNavItem[] = user?.role
+    ? getNavItems(user.role as UserRole)
+    : [];
 
-  const isActive = (href: string) => {
-    if (href === "/" && !isTechnician) return location === "/";
-    if (href === "/my-jobs") return location === "/my-jobs";
-    if (href === "/my-schedule") return location === "/my-schedule";
-    return location.startsWith(href);
+  const isActive = (path: string) => {
+    if (path === "/" && !isTechnician) return location === "/";
+    if (path === "/my-jobs")     return location === "/my-jobs";
+    if (path === "/my-schedule") return location === "/my-schedule";
+    return location.startsWith(path);
   };
 
-  // Group items by section
-  const mainItems = navItems.filter(i => !i.section || i.section === "main");
+  // Group items by section (only relevant for admin/dispatcher)
+  const mainItems     = navItems.filter(i => !i.section || i.section === "main");
   const workflowItems = navItems.filter(i => i.section === "workflow");
-  const manageItems = navItems.filter(i => i.section === "manage");
+  const manageItems   = navItems.filter(i => i.section === "manage");
 
-  const renderNavItem = (item: NavItem) => {
-    const active = isActive(item.href);
+  const renderNavItem = (item: SidebarNavItem) => {
+    const active = isActive(item.path);
     return (
       <Link
-        key={item.href}
-        href={item.href}
+        key={item.path}
+        href={item.path}
         onClick={onMobileClose}
         className={cn(
           "nav-item",
@@ -140,12 +85,12 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
       >
         <Icon icon={item.icon} size={15} className="flex-shrink-0 opacity-90" />
         <span className="flex-1 truncate">{item.label}</span>
-        {totalUnread > 0 && (item.href === "/jobs" || item.href === "/my-jobs") && (
+        {totalUnread > 0 && (item.path === "/jobs" || item.path === "/my-jobs") && (
           <span className="min-w-[18px] h-[18px] rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center px-1">
             {totalUnread > 99 ? "99+" : totalUnread}
           </span>
         )}
-        {chatUnreadTotal > 0 && item.href === "/chat" && (
+        {chatUnreadTotal > 0 && item.path === "/chat" && (
           <span className="min-w-[18px] h-[18px] rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center px-1">
             {chatUnreadTotal > 99 ? "99+" : chatUnreadTotal}
           </span>
@@ -169,7 +114,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
         )}
       </div>
 
-      {/* Quick Create */}
+      {/* Quick Create (admin/dispatcher only) */}
       {!isTechnician && (
         <div className="px-3 pt-3 pb-1">
           <DropdownMenu>
