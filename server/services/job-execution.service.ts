@@ -20,15 +20,16 @@ import { storage } from "../storage";
 import { jobs, timesheets } from "@shared/schema";
 import type { Job, Timesheet, InsertTimesheet } from "@shared/schema";
 import { notificationService } from "./notification.service";
+import { AppError } from "../core/errors/app-error";
 
 // ─── Error ────────────────────────────────────────────────────────────────────
 
-export class TransitionError extends Error {
+export class TransitionError extends AppError {
   constructor(
     message: string,
     public readonly statusCode: 400 | 403 | 404 | 409 | 422 | 500,
   ) {
-    super(message);
+    super(message, statusCode, "JOB_TRANSITION_ERROR");
     this.name = "TransitionError";
   }
 }

@@ -22,15 +22,16 @@ import { db } from "../db";
 import { storage } from "../storage";
 import { timesheets, technicians } from "@shared/schema";
 import type { Timesheet, InsertTimesheet } from "@shared/schema";
+import { AppError } from "../core/errors/app-error";
 
 // ─── Error ────────────────────────────────────────────────────────────────────
 
-export class TimesheetValidationError extends Error {
+export class TimesheetValidationError extends AppError {
   constructor(
     message: string,
     public readonly statusCode: 409 | 422,
   ) {
-    super(message);
+    super(message, statusCode, statusCode === 409 ? "TIMESHEET_CONFLICT" : "TIMESHEET_INVALID");
     this.name = "TimesheetValidationError";
   }
 }
