@@ -27,7 +27,10 @@
  */
 
 import type { Server as SocketServer } from "socket.io";
-import { storage } from "../storage";
+import { jobsRepository } from "../modules/jobs/jobs.repository";
+import { notificationsRepository } from "../modules/notifications/notifications.repository";
+import { techniciansRepository } from "../modules/technicians/technicians.repository";
+import { usersRepository } from "../modules/users/users.repository";
 
 // ─── Label maps (canonical, single definition) ────────────────────────────────
 
@@ -104,12 +107,12 @@ export const notificationService = {
     const senderName = sender?.name ?? "Unknown";
 
     // Resolve job and assigned technician
-    const job = await storage.getJobById(jobId);
+    const job = await jobsRepository.getById(jobId);
     const jobTitle = job?.title ?? `Job #${jobId}`;
 
     let technicianUserId: number | null = null;
     if (job?.technicianId) {
-      const assignedTech = await storage.getTechnicianById(job.technicianId);
+      const assignedTech = await techniciansRepository.getById(job.technicianId);
       technicianUserId = assignedTech?.userId ?? null;
     }
 
@@ -137,16 +140,16 @@ export const notificationService = {
     }
 
     // ── DB persistence ─────────────────────────────────────────────────────────
-    const recipientIds = await storage.getAdminAndDispatcherUserIds();
+    const recipientIds = await usersRepository.getAdminAndDispatcherUserIds();
     if (technicianUserId && !recipientIds.includes(technicianUserId)) {
       recipientIds.push(technicianUserId);
     }
 
     await Promise.all(
       recipientIds
-        .filter(uid => uid !== senderId)
-        .map(uid =>
-          storage.upsertMessageNotification(uid, jobId, {
+        .filter((uid: number) => uid !== senderId)
+        .map((uid: number) =>
+          notificationsRepository.upsertMessage(uid, jobId, {
             fromName:  senderName,
             jobTitle,
             text:      messagePreview,
@@ -194,10 +197,10 @@ export const notificationService = {
     }
 
     // ── DB persistence ─────────────────────────────────────────────────────────
-    const adminIds = await storage.getAdminAndDispatcherUserIds();
+    const adminIds = await usersRepository.getAdminAndDispatcherUserIds();
     await Promise.all(
-      adminIds.map(uid =>
-        storage.createActivityNotification(uid, {
+      adminIds.map((uid: number) =>
+        notificationsRepository.createActivity(uid, {
           fromName:  technicianName,
           jobId,
           jobTitle,
@@ -245,10 +248,10 @@ export const notificationService = {
     }
 
     // ── DB persistence ─────────────────────────────────────────────────────────
-    const adminIds = await storage.getAdminAndDispatcherUserIds();
+    const adminIds = await usersRepository.getAdminAndDispatcherUserIds();
     await Promise.all(
-      adminIds.map(uid =>
-        storage.createActivityNotification(uid, {
+      adminIds.map((uid: number) =>
+        notificationsRepository.createActivity(uid, {
           fromName:  user.name,
           jobId:     null,
           jobTitle:  null,

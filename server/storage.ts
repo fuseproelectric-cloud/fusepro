@@ -1,11 +1,9 @@
-import { eq, desc, and, gte, lt, inArray, asc } from "drizzle-orm";
-import { db } from "./db";
-import { dayBoundsCT, weekBoundsCT, dateStrCT } from "./lib/time";
-import { timesheetsDomainService } from "./modules/timesheets/timesheets.domain-service";
 import { customerAddressService } from "./services/customer-address.service";
 import { inventoryRepository } from "./modules/inventory/inventory.repository";
 import { catalogRepository } from "./modules/catalog/catalog.repository";
 import { notificationsRepository } from "./modules/notifications/notifications.repository";
+import { settingsRepository } from "./modules/settings/settings.repository";
+import { timesheetsRepository } from "./modules/timesheets/timesheets.repository";
 import { dashboardRepository } from "./modules/dashboard/dashboard.repository";
 import { usersRepository } from "./modules/users/users.repository";
 import { techniciansRepository } from "./modules/technicians/technicians.repository";
@@ -18,9 +16,6 @@ import { jobNotesRepository } from "./modules/jobs/notes/job-notes.repository";
 import { jobMaterialsRepository } from "./modules/jobs/materials/job-materials.repository";
 import { jobsRepository } from "./modules/jobs/jobs.repository";
 import {
-  users, technicians, jobs,
-  inventory, adminSettings, timesheets, notifications,
-  timesheetApprovals,
   type User, type InsertUser,
   type Customer, type InsertCustomer,
   type CustomerAddress, type InsertCustomerAddress,
@@ -30,7 +25,7 @@ import {
   type Invoice, type InsertInvoice,
   type InventoryItem, type InsertInventoryItem,
   type JobNote, type InsertJobNote,
-  type AdminSetting, type InsertAdminSetting,
+  type AdminSetting,
   type Timesheet, type InsertTimesheet,
   type JobMaterial, type InsertJobMaterial,
   type Notification,
@@ -258,135 +253,60 @@ export class Storage {
 
   // ─── Admin Settings ─────────────────────────────────────────────────────────
   async getAllSettings(): Promise<AdminSetting[]> {
-    return db.select().from(adminSettings);
+    return settingsRepository.getAll();
   }
 
   async getSetting(key: string): Promise<AdminSetting | undefined> {
-    const [setting] = await db.select().from(adminSettings).where(eq(adminSettings.key, key));
-    return setting;
+    return settingsRepository.getByKey(key);
   }
 
   async upsertSetting(key: string, value: string): Promise<AdminSetting> {
-    const [setting] = await db
-      .insert(adminSettings)
-      .values({ key, value })
-      .onConflictDoUpdate({ target: adminSettings.key, set: { value } })
-      .returning();
-    return setting;
+    return settingsRepository.upsert(key, value);
   }
 
   // ─── Timesheets ─────────────────────────────────────────────────────────────
   async getTodayTimesheets(technicianId: number): Promise<(Timesheet & { jobTitle?: string | null })[]> {
-    const { start: startOfDay, end: endOfDay } = dayBoundsCT();
-    const rows = await db
-      .select({
-        ts: timesheets,
-        jobTitle: jobs.title,
-      })
-      .from(timesheets)
-      .leftJoin(jobs, eq(timesheets.jobId, jobs.id))
-      .where(
-        and(
-          eq(timesheets.technicianId, technicianId),
-          gte(timesheets.timestamp, startOfDay),
-          lt(timesheets.timestamp, endOfDay)
-        )
-      )
-      .orderBy(timesheets.timestamp);
-    return rows.map((r) => ({ ...r.ts, jobTitle: r.jobTitle ?? null }));
+    return timesheetsRepository.getTodayEntries(technicianId);
   }
 
   async getWeekTimesheets(technicianId: number, weekOf?: string): Promise<(Timesheet & { jobTitle?: string | null })[]> {
-    const { start: startOfWeek, end: endOfWeek } = weekBoundsCT(weekOf);
-    const rows = await db
-      .select({
-        ts: timesheets,
-        jobTitle: jobs.title,
-      })
-      .from(timesheets)
-      .leftJoin(jobs, eq(timesheets.jobId, jobs.id))
-      .where(
-        and(
-          eq(timesheets.technicianId, technicianId),
-          gte(timesheets.timestamp, startOfWeek),
-          lt(timesheets.timestamp, endOfWeek)
-        )
-      )
-      .orderBy(timesheets.timestamp);
-    return rows.map((r) => ({ ...r.ts, jobTitle: r.jobTitle ?? null }));
+    return timesheetsRepository.getWeekEntries(technicianId, weekOf);
   }
 
   async approveTimesheetDay(technicianId: number, date: string, approvedBy: number): Promise<void> {
-    // Read the technician's current hourlyRate and freeze it on the approval record.
-    // This prevents future rate changes from retroactively altering approved earnings.
-    const [tech] = await db.select({ hourlyRate: technicians.hourlyRate })
-      .from(technicians).where(eq(technicians.id, technicianId));
-    const snapshotRate = tech?.hourlyRate ?? "25.00";
-
-    await db.insert(timesheetApprovals)
-      .values({ technicianId, date, approvedBy, snapshotRate })
-      .onConflictDoUpdate({
-        target: [timesheetApprovals.technicianId, timesheetApprovals.date],
-        // Re-approving refreshes both the approver identity and the rate snapshot.
-        set: { approvedBy, approvedAt: new Date(), snapshotRate },
-      });
+    return timesheetsRepository.approveDay(technicianId, date, approvedBy);
   }
 
   async unapproveTimesheetDay(technicianId: number, date: string): Promise<void> {
-    await db.delete(timesheetApprovals)
-      .where(and(eq(timesheetApprovals.technicianId, technicianId), eq(timesheetApprovals.date, date)));
+    return timesheetsRepository.unapproveDay(technicianId, date);
   }
 
   async getTimesheetApprovals(technicianId: number, dates: string[]): Promise<Record<string, { approvedBy: number; approvedAt: Date; snapshotRate: string | null }>> {
-    if (dates.length === 0) return {};
-    const rows = await db.select().from(timesheetApprovals)
-      .where(and(eq(timesheetApprovals.technicianId, technicianId), inArray(timesheetApprovals.date, dates)));
-    const result: Record<string, { approvedBy: number; approvedAt: Date; snapshotRate: string | null }> = {};
-    for (const r of rows) result[r.date] = { approvedBy: r.approvedBy, approvedAt: r.approvedAt, snapshotRate: r.snapshotRate ?? null };
-    return result;
+    return timesheetsRepository.getApprovals(technicianId, dates);
   }
 
   async createTimesheetEntry(data: InsertTimesheet): Promise<Timesheet> {
-    const [entry] = await db.insert(timesheets).values(data).returning();
-    return entry;
+    return timesheetsRepository.create(data);
   }
 
   async getTimesheetEntryById(id: number): Promise<Timesheet | null> {
-    const [entry] = await db.select().from(timesheets).where(eq(timesheets.id, id));
-    return entry ?? null;
+    return timesheetsRepository.getById(id);
   }
 
   async updateTimesheetEntry(id: number, data: { entryType?: string; timestamp?: Date; notes?: string | null }): Promise<Timesheet | null> {
-    const [entry] = await db.update(timesheets).set(data).where(eq(timesheets.id, id)).returning();
-    return entry ?? null;
+    return timesheetsRepository.update(id, data);
   }
 
   async deleteTimesheetEntry(id: number): Promise<void> {
-    await db.delete(timesheets).where(eq(timesheets.id, id));
+    return timesheetsRepository.delete(id);
   }
 
   async getTimesheetEntriesByJob(jobId: number): Promise<(Timesheet & { technicianName?: string | null })[]> {
-    const rows = await db
-      .select({ ts: timesheets, techName: users.name })
-      .from(timesheets)
-      .leftJoin(technicians, eq(timesheets.technicianId, technicians.id))
-      .leftJoin(users, eq(technicians.userId, users.id))
-      .where(eq(timesheets.jobId, jobId))
-      .orderBy(timesheets.timestamp);
-    return rows.map((r) => ({ ...r.ts, technicianName: r.techName ?? null }));
+    return timesheetsRepository.getEntriesByJob(jobId);
   }
 
   async getLastTimesheetEntry(technicianId: number, entryType?: string): Promise<Timesheet | null> {
-    const conditions = entryType
-      ? and(eq(timesheets.technicianId, technicianId), eq(timesheets.entryType, entryType))
-      : eq(timesheets.technicianId, technicianId);
-    const [entry] = await db
-      .select()
-      .from(timesheets)
-      .where(conditions)
-      .orderBy(desc(timesheets.timestamp))
-      .limit(1);
-    return entry ?? null;
+    return timesheetsRepository.getLastEntry(technicianId, entryType);
   }
 
   async getTechnicianCurrentStatus(technicianId: number): Promise<{
@@ -397,8 +317,7 @@ export class Storage {
     totalWorkMinutesToday: number;
     totalTravelMinutesToday: number;
   }> {
-    const todayEntries = await this.getTodayTimesheets(technicianId);
-    return timesheetsDomainService.computeCurrentStatus(todayEntries);
+    return timesheetsRepository.getCurrentStatus(technicianId);
   }
 
   // ─── Admin Timesheet (all technicians) ──────────────────────────────────────
@@ -408,52 +327,7 @@ export class Storage {
     technicianColor: string;
     entries: (Timesheet & { jobTitle?: string | null })[];
   }[]> {
-    const ctStr = typeof dateStrOrDate === "string" ? dateStrOrDate : dateStrCT(dateStrOrDate);
-    const { start: startOfDay, end: endOfDay } = dayBoundsCT(ctStr);
-
-    const rows = await db
-      .select({
-        ts: timesheets,
-        jobTitle: jobs.title,
-        userName: users.name,
-        techColor: technicians.color,
-      })
-      .from(timesheets)
-      .leftJoin(jobs, eq(timesheets.jobId, jobs.id))
-      .leftJoin(technicians, eq(timesheets.technicianId, technicians.id))
-      .leftJoin(users, eq(technicians.userId, users.id))
-      .where(and(gte(timesheets.timestamp, startOfDay), lt(timesheets.timestamp, endOfDay)))
-      .orderBy(timesheets.technicianId, timesheets.timestamp);
-
-    // Group by technician
-    const map = new Map<number, { technicianId: number; technicianName: string; technicianColor: string; entries: (Timesheet & { jobTitle?: string | null })[] }>();
-    for (const row of rows) {
-      const tid = row.ts.technicianId;
-      if (!map.has(tid)) {
-        map.set(tid, {
-          technicianId: tid,
-          technicianName: row.userName ?? `Tech #${tid}`,
-          technicianColor: row.techColor ?? "#f97316",
-          entries: [],
-        });
-      }
-      map.get(tid)!.entries.push({ ...row.ts, jobTitle: row.jobTitle ?? null });
-    }
-
-    // Also include technicians with no entries (so admin can see all)
-    const allTechs = await this.getAllTechnicians();
-    for (const tech of allTechs) {
-      if (!map.has(tech.id)) {
-        map.set(tech.id, {
-          technicianId: tech.id,
-          technicianName: tech.user?.name ?? `Tech #${tech.id}`,
-          technicianColor: tech.color ?? "#f97316",
-          entries: [],
-        });
-      }
-    }
-
-    return Array.from(map.values()).sort((a, b) => a.technicianName.localeCompare(b.technicianName));
+    return timesheetsRepository.getAllByDate(dateStrOrDate);
   }
 
   async getAllTimesheetsByRange(fromStr: string, toStr: string): Promise<{
@@ -462,29 +336,7 @@ export class Storage {
     technicianColor: string;
     entries: (Timesheet & { jobTitle?: string | null })[];
   }[]> {
-    const { start } = dayBoundsCT(fromStr);
-    const { end } = dayBoundsCT(toStr);
-
-    const rows = await db
-      .select({ ts: timesheets, jobTitle: jobs.title, userName: users.name, techColor: technicians.color })
-      .from(timesheets)
-      .leftJoin(jobs, eq(timesheets.jobId, jobs.id))
-      .leftJoin(technicians, eq(timesheets.technicianId, technicians.id))
-      .leftJoin(users, eq(technicians.userId, users.id))
-      .where(and(gte(timesheets.timestamp, start), lt(timesheets.timestamp, end)))
-      .orderBy(timesheets.technicianId, timesheets.timestamp);
-
-    const map = new Map<number, { technicianId: number; technicianName: string; technicianColor: string; entries: (Timesheet & { jobTitle?: string | null })[] }>();
-    for (const row of rows) {
-      const tid = row.ts.technicianId;
-      if (!map.has(tid)) map.set(tid, { technicianId: tid, technicianName: row.userName ?? `Tech #${tid}`, technicianColor: row.techColor ?? "#f97316", entries: [] });
-      map.get(tid)!.entries.push({ ...row.ts, jobTitle: row.jobTitle ?? null });
-    }
-    const allTechs = await this.getAllTechnicians();
-    for (const tech of allTechs) {
-      if (!map.has(tech.id)) map.set(tech.id, { technicianId: tech.id, technicianName: tech.user?.name ?? `Tech #${tech.id}`, technicianColor: tech.color ?? "#f97316", entries: [] });
-    }
-    return Array.from(map.values()).sort((a, b) => a.technicianName.localeCompare(b.technicianName));
+    return timesheetsRepository.getAllByRange(fromStr, toStr);
   }
 
   // ─── Job Materials ───────────────────────────────────────────────────────────
@@ -532,39 +384,7 @@ export class Storage {
     text: string;
     timestamp: Date;
   }): Promise<void> {
-    const [existing] = await db
-      .select()
-      .from(notifications)
-      .where(and(
-        eq(notifications.userId, userId),
-        eq(notifications.type, "message"),
-        eq(notifications.jobId, jobId),
-        eq(notifications.isRead, false),
-      ));
-
-    if (existing) {
-      await db
-        .update(notifications)
-        .set({
-          fromName: data.fromName,
-          text: data.text,
-          timestamp: data.timestamp,
-          messageCount: (existing.messageCount ?? 1) + 1,
-        })
-        .where(eq(notifications.id, existing.id));
-    } else {
-      await db.insert(notifications).values({
-        userId,
-        type: "message",
-        jobId,
-        jobTitle: data.jobTitle,
-        fromName: data.fromName,
-        text: data.text,
-        timestamp: data.timestamp,
-        messageCount: 1,
-        isRead: false,
-      });
-    }
+    return notificationsRepository.upsertMessage(userId, jobId, data);
   }
 
   async createActivityNotification(userId: number, data: {
@@ -575,17 +395,7 @@ export class Storage {
     timestamp: Date;
     entryType: string;
   }): Promise<void> {
-    await db.insert(notifications).values({
-      userId,
-      type: "activity",
-      jobId: data.jobId,
-      jobTitle: data.jobTitle,
-      fromName: data.fromName,
-      text: data.text,
-      timestamp: data.timestamp,
-      entryType: data.entryType,
-      isRead: false,
-    });
+    return notificationsRepository.createActivity(userId, data);
   }
 
   async markNotificationRead(id: number, userId?: number): Promise<boolean> {
@@ -659,29 +469,7 @@ export class Storage {
     jobs: Array<{ jobId: number | null; jobTitle: string; workMinutes: number; travelMinutes: number; earnings: number; date: string }>;
     daily: Array<{ date: string; workMinutes: number; travelMinutes: number; earnings: number }>;
   }> {
-    const { start } = dayBoundsCT(fromStr);
-    const { end } = dayBoundsCT(toStr);
-
-    const [tech] = await db.select({ hourlyRate: technicians.hourlyRate })
-      .from(technicians).where(eq(technicians.id, technicianId));
-    const currentRate = Number(tech?.hourlyRate ?? 25);
-
-    const rows = await db
-      .select({ ts: timesheets, jobTitle: jobs.title })
-      .from(timesheets)
-      .leftJoin(jobs, eq(timesheets.jobId, jobs.id))
-      .where(and(eq(timesheets.technicianId, technicianId), gte(timesheets.timestamp, start), lt(timesheets.timestamp, end)))
-      .orderBy(timesheets.timestamp);
-
-    // Fetch approvals for every date in the result set so the domain service
-    // can apply the frozen snapshotRate on approved days.
-    const allDates = [...new Set(rows.map((r) => r.ts.timestamp.toISOString().slice(0, 10)))];
-    const approvalsMap = allDates.length > 0
-      ? await this.getTimesheetApprovals(technicianId, allDates)
-      : {} as Record<string, { approvedBy: number; approvedAt: Date; snapshotRate: string | null }>;
-
-    const result = timesheetsDomainService.computeEarnings(rows, currentRate, approvalsMap);
-    return { hourlyRate: currentRate, ...result };
+    return timesheetsRepository.getEarnings(technicianId, fromStr, toStr);
   }
 
   async getJobChatList(userId: number, role: string) {

@@ -19,7 +19,7 @@
 
 import { eq } from "drizzle-orm";
 import { db } from "../db";
-import { storage } from "../storage";
+import { timesheetsRepository } from "../modules/timesheets/timesheets.repository";
 import { timesheets, technicians } from "@shared/schema";
 import type { Timesheet, InsertTimesheet } from "@shared/schema";
 import { AppError } from "../core/errors/app-error";
@@ -86,7 +86,7 @@ export const timesheetService = {
     await db.transaction(async (tx) => {
       await lockTechnician(tx as unknown as typeof db, data.technicianId);
       // State read happens after lock is acquired — guaranteed to see committed state
-      const status = await storage.getTechnicianCurrentStatus(data.technicianId);
+      const status = await timesheetsRepository.getCurrentStatus(data.technicianId);
       if (status.isDayStarted) {
         throw new TimesheetValidationError("Day is already started.", 409);
       }
@@ -107,7 +107,7 @@ export const timesheetService = {
     let result: Timesheet | undefined;
     await db.transaction(async (tx) => {
       await lockTechnician(tx as unknown as typeof db, data.technicianId);
-      const status = await storage.getTechnicianCurrentStatus(data.technicianId);
+      const status = await timesheetsRepository.getCurrentStatus(data.technicianId);
       if (!status.isDayStarted) {
         throw new TimesheetValidationError("No active day to end.", 409);
       }
@@ -143,7 +143,7 @@ export const timesheetService = {
     let result: Timesheet | undefined;
     await db.transaction(async (tx) => {
       await lockTechnician(tx as unknown as typeof db, data.technicianId);
-      const status = await storage.getTechnicianCurrentStatus(data.technicianId);
+      const status = await timesheetsRepository.getCurrentStatus(data.technicianId);
       if (!status.isDayStarted) {
         throw new TimesheetValidationError("Start your day before taking a break.", 422);
       }
@@ -173,7 +173,7 @@ export const timesheetService = {
     let result: Timesheet | undefined;
     await db.transaction(async (tx) => {
       await lockTechnician(tx as unknown as typeof db, data.technicianId);
-      const status = await storage.getTechnicianCurrentStatus(data.technicianId);
+      const status = await timesheetsRepository.getCurrentStatus(data.technicianId);
       if (!status.isOnBreak) {
         throw new TimesheetValidationError("No active break to end.", 409);
       }
