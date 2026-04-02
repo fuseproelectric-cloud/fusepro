@@ -1,10 +1,11 @@
 import { Router } from "express";
-import { z } from "zod";
+import type { NextFunction, Request, Response } from "express";
 import { insertInvoiceSchema } from "@shared/schema";
 import { requireRole } from "../../core/middleware/auth.middleware";
 import { parseId } from "../../core/utils/parse-id";
 import { invoicesRepository } from "./invoices.repository";
 import { lifecycleService, LifecycleError } from "../../services/lifecycle.service";
+import { ValidationError, NotFoundError, ConflictError } from "../../core/errors/app-error";
 
 // PostgreSQL unique violation error code
 const PG_UNIQUE_VIOLATION = "23505";
@@ -34,7 +35,7 @@ invoicesRouter.get("/api/invoices/:id", requireRole("admin", "dispatcher"), asyn
   }
 });
 
-invoicesRouter.post("/api/invoices", requireRole("admin", "dispatcher"), async (req, res) => {
+invoicesRouter.post("/api/invoices", requireRole("admin", "dispatcher"), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const invoiceNumber = await invoicesRepository.getNextInvoiceNumber();
     const body = { ...req.body, invoiceNumber };
@@ -57,47 +58,45 @@ invoicesRouter.post("/api/invoices", requireRole("admin", "dispatcher"), async (
     const inv = await invoicesRepository.create(data);
     res.status(201).json(inv);
   } catch (err: any) {
-    if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors });
     // Sequence-backed numbering (invoice_number_seq) makes this collision essentially
     // impossible in normal operation. If it fires anyway (e.g. data patched externally),
     // surface a clear retryable message rather than a generic server error.
     if (err?.code === PG_UNIQUE_VIOLATION && err?.constraint === "invoices_invoice_number_unique") {
-      return res.status(500).json({ message: "Invoice number conflict — please retry." });
+      return next(new ConflictError("Invoice number conflict — please retry."));
     }
-    res.status(500).json({ message: "Failed to create invoice" });
+    next(err);
   }
 });
 
-invoicesRouter.put("/api/invoices/:id", requireRole("admin", "dispatcher"), async (req, res) => {
+invoicesRouter.put("/api/invoices/:id", requireRole("admin", "dispatcher"), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = parseId(req.params.id);
-    if (!id) return res.status(400).json({ message: "Invalid invoice id" });
+    if (!id) return next(new ValidationError("Invalid invoice id"));
     const data = insertInvoiceSchema.partial().parse(req.body);
     if (data.status !== undefined) {
       const current = await invoicesRepository.getById(id);
-      if (!current) return res.status(404).json({ message: "Invoice not found" });
+      if (!current) return next(new NotFoundError("Invoice not found"));
       lifecycleService.validateInvoiceTransition(current.status, data.status);
     }
     if (data.status === "paid" && !(data as any).paidAt) {
       (data as any).paidAt = new Date();
     }
     const inv = await invoicesRepository.update(id, data);
-    if (!inv) return res.status(404).json({ message: "Invoice not found" });
+    if (!inv) return next(new NotFoundError("Invoice not found"));
     res.json(inv);
   } catch (err) {
-    if (err instanceof LifecycleError) return res.status(err.statusCode).json({ message: err.message });
-    if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors });
-    res.status(500).json({ message: "Failed to update invoice" });
+    // LifecycleError has .statusCode — handled by error middleware generic branch
+    next(err);
   }
 });
 
-invoicesRouter.delete("/api/invoices/:id", requireRole("admin"), async (req, res) => {
+invoicesRouter.delete("/api/invoices/:id", requireRole("admin"), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = parseId(req.params.id);
-    if (!id) return res.status(400).json({ message: "Invalid invoice id" });
+    if (!id) return next(new ValidationError("Invalid invoice id"));
     await invoicesRepository.delete(id);
     res.json({ message: "Invoice deleted" });
   } catch (err) {
-    res.status(500).json({ message: "Failed to delete invoice" });
+    next(err);
   }
 });

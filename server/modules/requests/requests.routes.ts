@@ -1,10 +1,11 @@
 import { Router } from "express";
-import { z } from "zod";
+import type { NextFunction, Request, Response } from "express";
 import { insertRequestSchema } from "@shared/schema";
 import { requireRole } from "../../core/middleware/auth.middleware";
 import { parseId } from "../../core/utils/parse-id";
 import { requestsRepository } from "./requests.repository";
 import { lifecycleService, LifecycleError } from "../../services/lifecycle.service";
+import { ValidationError, NotFoundError, ConflictError } from "../../core/errors/app-error";
 
 export const requestsRouter = Router();
 
@@ -30,7 +31,7 @@ requestsRouter.get("/api/requests/:id", requireRole("admin", "dispatcher"), asyn
   }
 });
 
-requestsRouter.post("/api/requests", requireRole("admin", "dispatcher"), async (req, res) => {
+requestsRouter.post("/api/requests", requireRole("admin", "dispatcher"), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = insertRequestSchema.parse(req.body);
     const reqItem = await requestsRepository.create({
@@ -40,43 +41,41 @@ requestsRouter.post("/api/requests", requireRole("admin", "dispatcher"), async (
     });
     res.status(201).json(reqItem);
   } catch (err) {
-    if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors });
-    res.status(500).json({ message: "Failed to create request" });
+    next(err);
   }
 });
 
-requestsRouter.put("/api/requests/:id", requireRole("admin", "dispatcher"), async (req, res) => {
+requestsRouter.put("/api/requests/:id", requireRole("admin", "dispatcher"), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = parseId(req.params.id);
-    if (!id) return res.status(400).json({ message: "Invalid request id" });
+    if (!id) return next(new ValidationError("Invalid request id"));
     const current = await requestsRepository.getById(id);
-    if (!current) return res.status(404).json({ message: "Request not found" });
+    if (!current) return next(new NotFoundError("Request not found"));
     // Block all writes on terminal statuses
     if (["converted", "closed", "archived"].includes(current.status)) {
-      return res.status(409).json({ message: `Request is ${current.status} and cannot be modified.` });
+      return next(new ConflictError(`Request is ${current.status} and cannot be modified.`));
     }
     const data = insertRequestSchema.partial().parse(req.body);
     if (data.status !== undefined) {
       lifecycleService.validateRequestTransition(current.status, data.status);
     }
     const reqItem = await requestsRepository.update(id, data);
-    if (!reqItem) return res.status(404).json({ message: "Request not found" });
+    if (!reqItem) return next(new NotFoundError("Request not found"));
     res.json(reqItem);
   } catch (err) {
-    if (err instanceof LifecycleError) return res.status(err.statusCode).json({ message: err.message });
-    if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors });
-    res.status(500).json({ message: "Failed to update request" });
+    // LifecycleError has .statusCode — handled by error middleware generic branch
+    next(err);
   }
 });
 
-requestsRouter.delete("/api/requests/:id", requireRole("admin", "dispatcher"), async (req, res) => {
+requestsRouter.delete("/api/requests/:id", requireRole("admin", "dispatcher"), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = parseId(req.params.id);
-    if (!id) return res.status(400).json({ message: "Invalid request id" });
+    if (!id) return next(new ValidationError("Invalid request id"));
     await requestsRepository.delete(id);
     res.json({ message: "Request deleted" });
   } catch (err) {
-    res.status(500).json({ message: "Failed to delete request" });
+    next(err);
   }
 });
 
