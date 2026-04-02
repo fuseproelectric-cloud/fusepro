@@ -19,7 +19,11 @@ export const upload = multer({
       cb(null, `${Date.now()}-${randomBytes(8).toString("hex")}${ext}`);
     },
   }),
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10 MB per file
+    files:    10,               // max files per request (also enforced at the call-site)
+    fields:   20,               // max non-file form fields per request
+  },
   fileFilter: (_req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
     const mimeOk = file.mimetype.startsWith("image/");

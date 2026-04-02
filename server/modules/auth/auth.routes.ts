@@ -2,7 +2,7 @@ import { Router } from "express";
 import bcrypt from "bcryptjs";
 import { storage } from "../../storage";
 import { requireAuth } from "../../core/middleware/auth.middleware";
-import { checkLoginRateLimit } from "../../core/middleware/rate-limit.middleware";
+import { checkLoginRateLimit, checkPasswordChangeRateLimit } from "../../core/middleware/rate-limit.middleware";
 
 export const authRouter = Router();
 
@@ -60,6 +60,11 @@ authRouter.get("/api/auth/me", async (req, res) => {
 // Change own password
 authRouter.put("/api/auth/password", requireAuth, async (req, res) => {
   try {
+    // Rate limit per user ID — keyed by user so multi-IP attacks on the same
+    // account are still blocked.
+    if (!checkPasswordChangeRateLimit(String(req.session.userId!))) {
+      return res.status(429).json({ message: "Too many password change attempts. Try again later." });
+    }
     const { currentPassword, newPassword } = req.body;
     if (!currentPassword || !newPassword) {
       return res.status(400).json({ message: "Current and new passwords are required" });

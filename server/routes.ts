@@ -29,7 +29,7 @@ import connectPgSimple from "connect-pg-simple";
 import { pool } from "./db";
 import { storage } from "./storage";
 import { parseId } from "./core/utils/parse-id";
-import { checkLoginRateLimit } from "./core/middleware/rate-limit.middleware";
+import { checkUploadRateLimit } from "./core/middleware/rate-limit.middleware";
 import { UPLOADS_DIR, upload } from "./core/middleware/upload.middleware";
 import { requireAuth } from "./core/middleware/auth.middleware";
 import { jobExecutionService } from "./services/job-execution.service";
@@ -53,12 +53,26 @@ export async function registerRoutes(httpServer: Server, app: Express) {
   app.use("/uploads", express.static(UPLOADS_DIR));
 
   // Upload photos endpoint
-  app.post("/api/upload", requireAuth, upload.array("photos", 10), (req, res) => {
-    const files = req.files as Express.Multer.File[];
-    if (!files?.length) return res.status(400).json({ message: "No files uploaded" });
-    const urls = files.map(f => `/uploads/${f.filename}`);
-    res.json({ urls });
-  });
+  app.post(
+    "/api/upload",
+    requireAuth,
+    // Rate limit before multer processes the multipart body to avoid wasted disk writes.
+    (req, res, next) => {
+      const ip = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim()
+        || req.socket.remoteAddress || "unknown";
+      if (!checkUploadRateLimit(ip)) {
+        return res.status(429).json({ message: "Too many upload requests. Please try again later." });
+      }
+      next();
+    },
+    upload.array("photos", 10),
+    (req, res) => {
+      const files = req.files as Express.Multer.File[];
+      if (!files?.length) return res.status(400).json({ message: "No files uploaded" });
+      const urls = files.map(f => `/uploads/${f.filename}`);
+      res.json({ urls });
+    },
+  );
 
   // Session middleware — extracted so it can be shared with Socket.IO
   //

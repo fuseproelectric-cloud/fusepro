@@ -17,15 +17,19 @@ declare module "http" {
   }
 }
 
+// Explicit body-size limits reduce DoS surface.
+// 100 kb is generous for all API payloads in this app (JSON only; file uploads use multipart).
+// Oversized requests are rejected with HTTP 413 before reaching route handlers.
 app.use(
   express.json({
+    limit: "100kb",
     verify: (req, _res, buf) => {
       req.rawBody = buf;
     },
   })
 );
 
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: false, limit: "10kb" }));
 
 app.use((_req, res, next) => {
   res.setHeader("X-Content-Type-Options", "nosniff");
