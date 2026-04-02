@@ -17,6 +17,7 @@ import {
   ValidationError,
   ConflictError,
 } from "../../core/errors/app-error";
+import { calcIntervalMinutes } from "./timesheets.domain-service";
 import {
   weekQuerySchema,
   earningsQuerySchema,
@@ -72,28 +73,12 @@ timesheetsRouter.get("/api/timesheet/week", requireAuth, async (req: Request, re
         return t >= dayStart && t < dayEnd;
       });
 
-      let workMinutes = 0;
-      let travelMinutes = 0;
-      let openWorkStart: Date | null = null;
-      let openTravelStart: Date | null = null;
       const sorted = [...dayEntries].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
       const isToday = dayStr === todayStr;
       const dayEndTime = isToday ? now : dayEnd;
 
-      for (const entry of sorted) {
-        if (entry.entryType === "work_start") openWorkStart = new Date(entry.timestamp);
-        else if (entry.entryType === "work_end" && openWorkStart) {
-          workMinutes += Math.floor((new Date(entry.timestamp).getTime() - openWorkStart.getTime()) / 60000);
-          openWorkStart = null;
-        }
-        if (entry.entryType === "travel_start") openTravelStart = new Date(entry.timestamp);
-        else if (entry.entryType === "travel_end" && openTravelStart) {
-          travelMinutes += Math.floor((new Date(entry.timestamp).getTime() - openTravelStart.getTime()) / 60000);
-          openTravelStart = null;
-        }
-      }
-      if (openWorkStart) workMinutes += Math.floor((dayEndTime.getTime() - openWorkStart.getTime()) / 60000);
-      if (openTravelStart) travelMinutes += Math.floor((dayEndTime.getTime() - openTravelStart.getTime()) / 60000);
+      const workMinutes   = calcIntervalMinutes(sorted, "work_start",   "work_end",   dayEndTime);
+      const travelMinutes = calcIntervalMinutes(sorted, "travel_start", "travel_end", dayEndTime);
 
       const jobIds = new Set(dayEntries.filter((e) => e.jobId).map((e) => e.jobId));
       totalWorkMinutes += workMinutes;
@@ -237,20 +222,12 @@ timesheetsRouter.get("/api/admin/timesheets/week/:techId", requireRole("admin", 
         return t >= dayStart && t < dayEnd;
       });
       const sorted = [...dayEntries].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-      let workMinutes = 0, travelMinutes = 0;
-      let openWork: Date | null = null, openTravel: Date | null = null;
       const isFuture = dayStart > now;
       const capTime = date === todayStrCT() ? now : dayEnd;
       const jobIds = new Set<number>();
-      for (const e of sorted) {
-        if (e.jobId) jobIds.add(e.jobId);
-        if (e.entryType === "work_start") openWork = new Date(e.timestamp);
-        else if (e.entryType === "work_end" && openWork) { workMinutes += Math.floor((new Date(e.timestamp).getTime() - openWork.getTime()) / 60000); openWork = null; }
-        if (e.entryType === "travel_start") openTravel = new Date(e.timestamp);
-        else if (e.entryType === "travel_end" && openTravel) { travelMinutes += Math.floor((new Date(e.timestamp).getTime() - openTravel.getTime()) / 60000); openTravel = null; }
-      }
-      if (openWork && !isFuture) workMinutes += Math.floor((capTime.getTime() - openWork.getTime()) / 60000);
-      if (openTravel && !isFuture) travelMinutes += Math.floor((capTime.getTime() - openTravel.getTime()) / 60000);
+      for (const e of sorted) { if (e.jobId) jobIds.add(e.jobId); }
+      const workMinutes   = calcIntervalMinutes(sorted, "work_start",   "work_end",   isFuture ? undefined : capTime);
+      const travelMinutes = calcIntervalMinutes(sorted, "travel_start", "travel_end", isFuture ? undefined : capTime);
       return { date, entries: sorted, workMinutes, travelMinutes, jobsCount: jobIds.size };
     });
 

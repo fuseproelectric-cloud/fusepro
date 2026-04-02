@@ -1,6 +1,7 @@
 import { eq, desc, and, gte, lt, inArray, asc } from "drizzle-orm";
 import { db } from "./db";
 import { dayBoundsCT, weekBoundsCT, dateStrCT } from "./lib/time";
+import { timesheetsDomainService } from "./modules/timesheets/timesheets.domain-service";
 import { customerAddressService } from "./services/customer-address.service";
 import { inventoryRepository } from "./modules/inventory/inventory.repository";
 import { catalogRepository } from "./modules/catalog/catalog.repository";
@@ -397,75 +398,7 @@ export class Storage {
     totalTravelMinutesToday: number;
   }> {
     const todayEntries = await this.getTodayTimesheets(technicianId);
-
-    // Find last day_start and day_end
-    const dayStarts = todayEntries.filter((e) => e.entryType === "day_start");
-    const dayEnds = todayEntries.filter((e) => e.entryType === "day_end");
-    const isDayStarted = dayStarts.length > dayEnds.length;
-    const dayStartEntry = dayStarts.length > 0 ? dayStarts[dayStarts.length - 1] : null;
-
-    // Break status
-    const breakStarts = todayEntries.filter((e) => e.entryType === "break_start");
-    const breakEnds = todayEntries.filter((e) => e.entryType === "break_end");
-    const isOnBreak = breakStarts.length > breakEnds.length;
-
-    // Active job: last work_start without a corresponding work_end
-    const workStarts = todayEntries.filter((e) => e.entryType === "work_start");
-    const workEnds = todayEntries.filter((e) => e.entryType === "work_end");
-    const lastWorkStart = workStarts.length > 0 ? workStarts[workStarts.length - 1] : null;
-    const lastWorkEnd = workEnds.length > 0 ? workEnds[workEnds.length - 1] : null;
-    const isCurrentlyWorking =
-      lastWorkStart !== null &&
-      (lastWorkEnd === null ||
-        new Date(lastWorkStart.timestamp).getTime() > new Date(lastWorkEnd.timestamp).getTime());
-    const activeJobId = isCurrentlyWorking && lastWorkStart ? (lastWorkStart.jobId ?? null) : null;
-
-    // Calculate total work minutes
-    let totalWorkMinutes = 0;
-    const now = new Date();
-    const sortedEntries = [...todayEntries].sort(
-      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-    );
-    let openWorkStart: Date | null = null;
-    for (const entry of sortedEntries) {
-      if (entry.entryType === "work_start") {
-        openWorkStart = new Date(entry.timestamp);
-      } else if (entry.entryType === "work_end" && openWorkStart) {
-        totalWorkMinutes += Math.floor(
-          (new Date(entry.timestamp).getTime() - openWorkStart.getTime()) / 60000
-        );
-        openWorkStart = null;
-      }
-    }
-    if (openWorkStart) {
-      totalWorkMinutes += Math.floor((now.getTime() - openWorkStart.getTime()) / 60000);
-    }
-
-    // Calculate total travel minutes
-    let totalTravelMinutes = 0;
-    let openTravelStart: Date | null = null;
-    for (const entry of sortedEntries) {
-      if (entry.entryType === "travel_start") {
-        openTravelStart = new Date(entry.timestamp);
-      } else if (entry.entryType === "travel_end" && openTravelStart) {
-        totalTravelMinutes += Math.floor(
-          (new Date(entry.timestamp).getTime() - openTravelStart.getTime()) / 60000
-        );
-        openTravelStart = null;
-      }
-    }
-    if (openTravelStart) {
-      totalTravelMinutes += Math.floor((now.getTime() - openTravelStart.getTime()) / 60000);
-    }
-
-    return {
-      isDayStarted,
-      isOnBreak,
-      activeJobId,
-      dayStartTime: dayStartEntry ? new Date(dayStartEntry.timestamp) : null,
-      totalWorkMinutesToday: totalWorkMinutes,
-      totalTravelMinutesToday: totalTravelMinutes,
-    };
+    return timesheetsDomainService.computeCurrentStatus(todayEntries);
   }
 
   // ─── Admin Timesheet (all technicians) ──────────────────────────────────────
@@ -740,79 +673,15 @@ export class Storage {
       .where(and(eq(timesheets.technicianId, technicianId), gte(timesheets.timestamp, start), lt(timesheets.timestamp, end)))
       .orderBy(timesheets.timestamp);
 
-    // Fetch approvals for every date that appears in the result set, so we can use
-    // the snapshotRate (frozen at approval time) instead of the current hourlyRate.
-    const allDates = [...new Set(rows.map(r => r.ts.timestamp.toISOString().slice(0, 10)))];
+    // Fetch approvals for every date in the result set so the domain service
+    // can apply the frozen snapshotRate on approved days.
+    const allDates = [...new Set(rows.map((r) => r.ts.timestamp.toISOString().slice(0, 10)))];
     const approvalsMap = allDates.length > 0
       ? await this.getTimesheetApprovals(technicianId, allDates)
       : {} as Record<string, { approvedBy: number; approvedAt: Date; snapshotRate: string | null }>;
 
-    // Returns the effective rate for a calendar date.
-    // Approved days use the frozen snapshotRate; unapproved days use the current rate.
-    const rateFor = (date: string): number => {
-      const appr = approvalsMap[date];
-      if (appr?.snapshotRate != null) return Number(appr.snapshotRate);
-      return currentRate;
-    };
-
-    // Group by jobId
-    const jobMap = new Map<string, { jobId: number | null; jobTitle: string; entries: typeof rows[0][]; date: string }>();
-    for (const row of rows) {
-      const key = row.ts.jobId != null ? `job-${row.ts.jobId}` : `day-${row.ts.timestamp.toISOString().slice(0, 10)}`;
-      if (!jobMap.has(key)) {
-        jobMap.set(key, {
-          jobId: row.ts.jobId,
-          jobTitle: row.jobTitle ?? (row.ts.jobId ? `Job #${row.ts.jobId}` : 'General'),
-          entries: [],
-          date: row.ts.timestamp.toISOString().slice(0, 10),
-        });
-      }
-      jobMap.get(key)!.entries.push(row);
-    }
-
-    const calcMins = (entries: typeof rows) => {
-      let workMins = 0, travelMins = 0;
-      let openWork: Date | null = null, openTravel: Date | null = null;
-      for (const { ts } of entries) {
-        if (ts.entryType === 'work_start') openWork = new Date(ts.timestamp);
-        else if (ts.entryType === 'work_end' && openWork) { workMins += Math.floor((new Date(ts.timestamp).getTime() - openWork.getTime()) / 60000); openWork = null; }
-        if (ts.entryType === 'travel_start') openTravel = new Date(ts.timestamp);
-        else if (ts.entryType === 'travel_end' && openTravel) { travelMins += Math.floor((new Date(ts.timestamp).getTime() - openTravel.getTime()) / 60000); openTravel = null; }
-      }
-      return { workMins, travelMins };
-    };
-
-    const jobResults = [...jobMap.values()]
-      .filter(g => g.jobId != null)
-      .map(g => {
-        const { workMins, travelMins } = calcMins(g.entries);
-        return { jobId: g.jobId, jobTitle: g.jobTitle, workMinutes: workMins, travelMinutes: travelMins, earnings: Math.round((workMins / 60) * rateFor(g.date) * 100) / 100, date: g.date };
-      })
-      .filter(j => j.workMinutes > 0)
-      .sort((a, b) => b.date.localeCompare(a.date));
-
-    // Daily breakdown — each day uses its own effective rate
-    const dailyMap = new Map<string, { workMins: number; travelMins: number }>();
-    for (const row of rows) {
-      const d = row.ts.timestamp.toISOString().slice(0, 10);
-      if (!dailyMap.has(d)) dailyMap.set(d, { workMins: 0, travelMins: 0 });
-    }
-    for (const [date] of dailyMap) {
-      const dayEntries = rows.filter(r => r.ts.timestamp.toISOString().slice(0, 10) === date);
-      const { workMins, travelMins } = calcMins(dayEntries);
-      dailyMap.set(date, { workMins, travelMins });
-    }
-    const daily = [...dailyMap.entries()]
-      .map(([date, { workMins, travelMins }]) => ({ date, workMinutes: workMins, travelMinutes: travelMins, earnings: Math.round((workMins / 60) * rateFor(date) * 100) / 100 }))
-      .sort((a, b) => a.date.localeCompare(b.date));
-
-    const totalWorkMinutes = daily.reduce((s, d) => s + d.workMinutes, 0);
-    const totalTravelMinutes = daily.reduce((s, d) => s + d.travelMinutes, 0);
-    // Sum daily earnings (each may use a different rate) rather than multiplying
-    // totalWorkMinutes by a single rate — the only correct approach when rates differ per day.
-    const totalEarnings = Math.round(daily.reduce((s, d) => s + d.earnings, 0) * 100) / 100;
-
-    return { hourlyRate: currentRate, totalWorkMinutes, totalTravelMinutes, totalEarnings, jobs: jobResults, daily };
+    const result = timesheetsDomainService.computeEarnings(rows, currentRate, approvalsMap);
+    return { hourlyRate: currentRate, ...result };
   }
 
   async getJobChatList(userId: number, role: string) {
