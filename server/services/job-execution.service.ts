@@ -9,6 +9,10 @@
  *   - Atomic DB transaction: job update + timesheet entry writes together
  *   - Post-commit: socket events and activity notifications
  *
+ * Lifecycle rules (which transitions are valid, which statuses are terminal,
+ * which timesheet entries each transition produces) live in:
+ *   server/modules/jobs/job-status.lifecycle.ts
+ *
  * Admin/dispatcher changes go through adminOverride() which skips
  * timesheet side effects and state machine validation.
  */
@@ -21,6 +25,12 @@ import { jobs, timesheets } from "@shared/schema";
 import type { Job, Timesheet, InsertTimesheet } from "@shared/schema";
 import { notificationService } from "./notification.service";
 import { AppError } from "../core/errors/app-error";
+import {
+  type JobStatus,
+  isTechnicianTransitionAllowed,
+  isTerminalForTechnician,
+  TRANSITION_NOTIFICATION_ENTRY,
+} from "../modules/jobs/job-status.lifecycle";
 
 // ─── Error ────────────────────────────────────────────────────────────────────
 
@@ -33,19 +43,6 @@ export class TransitionError extends AppError {
     this.name = "TransitionError";
   }
 }
-
-// ─── State machine ────────────────────────────────────────────────────────────
-
-/**
- * Explicit set of transitions a technician is allowed to initiate.
- * Encoded as "fromStatus→toStatus" strings for O(1) lookup.
- * Admin/dispatcher bypass this via adminOverride().
- */
-const TECHNICIAN_ALLOWED: ReadonlySet<string> = new Set([
-  "assigned→on_the_way",
-  "on_the_way→in_progress",
-  "in_progress→completed",
-]);
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -75,16 +72,6 @@ export interface TransitionResult {
   timesheetEntries: Timesheet[];
 }
 
-// ─── Status → timesheet entry type mapping ────────────────────────────────────
-// Determines which job status transitions trigger an activity notification.
-// Only statuses in this map produce a notification:activity event.
-
-const STATUS_TO_ENTRY_TYPE: Record<string, string> = {
-  on_the_way: "travel_start",
-  in_progress: "work_start",
-  completed:   "work_end",
-};
-
 // ─── Service ──────────────────────────────────────────────────────────────────
 
 export const jobExecutionService = {
@@ -97,10 +84,11 @@ export const jobExecutionService = {
    *   2. Open DB transaction
    *      a. Lock job row FOR UPDATE (prevents concurrent duplicate transitions)
    *      b. Validate ownership
-   *      c. Validate state machine transition
-   *      d. Count existing timesheet entries (invariant checks)
-   *      e. Write job status update
-   *      f. Write timesheet entry/entries
+   *      c. Reject terminal statuses
+   *      d. Validate state machine transition via lifecycle rules
+   *      e. Count existing timesheet entries (invariant checks)
+   *      f. Write job status update
+   *      g. Write timesheet entry/entries
    *   3. Commit
    *   4. Post-commit: socket emits + activity notifications
    *
@@ -171,19 +159,21 @@ export const jobExecutionService = {
         throw new TransitionError("You are not assigned to this job.", 403);
       }
 
-      // INV-7: completed is terminal for technicians
-      if (job.status === "completed") {
-        throw new TransitionError(
-          "This job is already completed. Contact your dispatcher to reopen it.",
-          422,
-        );
+      const fromStatus = job.status as JobStatus;
+      const toStatus   = newStatus as JobStatus;
+
+      // Reject terminal statuses before the transition check for a clearer message
+      if (isTerminalForTechnician(fromStatus)) {
+        const msg = fromStatus === "completed"
+          ? "This job is already completed. Contact your dispatcher to reopen it."
+          : `This job is ${fromStatus} and cannot be advanced.`;
+        throw new TransitionError(msg, 422);
       }
 
-      // Validate state machine transition
-      const transitionKey = `${job.status}→${newStatus}`;
-      if (!TECHNICIAN_ALLOWED.has(transitionKey)) {
+      // Validate state machine transition against lifecycle rules
+      if (!isTechnicianTransitionAllowed(fromStatus, toStatus)) {
         throw new TransitionError(
-          `Transition '${job.status}' → '${newStatus}' is not allowed.`,
+          `Transition '${fromStatus}' → '${toStatus}' is not allowed.`,
           422,
         );
       }
@@ -199,7 +189,7 @@ export const jobExecutionService = {
 
       // ── Invariant checks + timesheet writes (order matters) ────────────────
 
-      if (newStatus === "on_the_way") {
+      if (toStatus === "on_the_way") {
         // INV-1: reject if an open travel interval already exists for this job
         const tStarts = await countEntries("travel_start");
         const tEnds   = await countEntries("travel_end");
@@ -216,7 +206,7 @@ export const jobExecutionService = {
           .returning();
         committedEntries.push(e);
 
-      } else if (newStatus === "in_progress") {
+      } else if (toStatus === "in_progress") {
         // INV-2: reject if an open work interval already exists for this job
         const wStarts = await countEntries("work_start");
         const wEnds   = await countEntries("work_end");
@@ -244,7 +234,7 @@ export const jobExecutionService = {
           .returning();
         committedEntries.push(ws);
 
-      } else if (newStatus === "completed") {
+      } else if (toStatus === "completed") {
         // INV-3: work_end requires an open work interval
         const wStarts = await countEntries("work_start");
         const wEnds   = await countEntries("work_end");
@@ -274,9 +264,9 @@ export const jobExecutionService = {
       }
 
       // Write job status update (last write in the transaction — all guards passed)
-      const patch: Record<string, unknown> = { status: newStatus };
+      const patch: Record<string, unknown> = { status: toStatus };
       if (notes !== undefined) patch.notes = notes;
-      if (newStatus === "completed") patch.completedAt = now;
+      if (toStatus === "completed") patch.completedAt = now;
 
       const updatedRows = await (tx as unknown as typeof db)
         .update(jobs)
@@ -293,7 +283,7 @@ export const jobExecutionService = {
     }
 
     // ── Post-commit: activity notification ──────────────────────────────────
-    const entryTypeForNotif = STATUS_TO_ENTRY_TYPE[newStatus];
+    const entryTypeForNotif = TRANSITION_NOTIFICATION_ENTRY[newStatus as JobStatus];
     if (entryTypeForNotif) {
       await notificationService.notifyJobActivity({
         entryType:        entryTypeForNotif,
