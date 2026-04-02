@@ -5,10 +5,10 @@
  *   - Request → Estimate  (toEstimate)
  *   - Request → Job       (toJob)
  *
- * Invariants enforced here:
- *   - A request may be converted exactly once.
- *   - Only requests in status 'new' or 'assessment_scheduled' are eligible.
- *   - 'archived' and 'converted' requests are rejected with the correct HTTP code.
+ * Invariants enforced here (see also request-conversion.lifecycle.ts):
+ *   - A request may be converted exactly once (409 if already converted).
+ *   - Only requests in CONVERTIBLE_STATUSES are eligible (422 otherwise).
+ *   - 'closed' and 'archived' requests produce a clear 422 with tailored messages.
  *   - The entire conversion (create entity + update request status) is atomic.
  *   - The request row is locked with SELECT FOR UPDATE to prevent concurrent
  *     duplicate conversions of the same request.
@@ -26,6 +26,11 @@ import type { Server as SocketServer } from "socket.io";
 import { db } from "../db";
 import { requests, estimates, jobs } from "@shared/schema";
 import { numberingService } from "./numbering.service";
+import { AppError } from "../core/errors/app-error";
+import {
+  type RequestStatus,
+  isConvertible,
+} from "../modules/requests/request-conversion.lifecycle";
 import type {
   Estimate,
   Job,
@@ -34,12 +39,17 @@ import type {
 
 // ─── Error ────────────────────────────────────────────────────────────────────
 
-export class ConversionError extends Error {
+/**
+ * Thrown for all invalid conversion attempts.
+ * Extends AppError so it flows through the unified error middleware automatically,
+ * producing the standard `{ error: { code, message } }` response shape.
+ */
+export class ConversionError extends AppError {
   constructor(
     message: string,
-    public readonly statusCode: 404 | 409 | 422 | 500,
+    statusCode: 404 | 409 | 422 | 500,
   ) {
-    super(message);
+    super(message, statusCode, "CONVERSION_ERROR");
     this.name = "ConversionError";
   }
 }
@@ -67,34 +77,48 @@ export interface ConversionResult<T extends Estimate | Job> {
   entityType: "estimate" | "job";
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Conversion guard ─────────────────────────────────────────────────────────
 
-function validateLocked(req: ServiceRequest | undefined, requestId: number): void {
+/**
+ * Validates that `req` is eligible for conversion.
+ * Must be called inside the SELECT FOR UPDATE transaction so that the status
+ * read is consistent with the subsequent INSERT + UPDATE writes.
+ *
+ * Eligibility rules (defined in request-conversion.lifecycle.ts):
+ *   - CONVERTIBLE_STATUSES: new, triaged, assessment_scheduled
+ *   - "converted" → 409 Conflict (already produced a linked entity)
+ *   - "closed" / "archived" → 422 with tailored message
+ *   - any other non-convertible status → 422
+ *   - null customerId → 422
+ *   - null serviceAddressId → 422
+ */
+function assertConvertible(req: ServiceRequest | undefined): void {
   if (!req) {
     throw new ConversionError("Request not found.", 404);
   }
-  if (req.status === "converted") {
+
+  const status = req.status as RequestStatus;
+
+  if (status === "converted") {
     throw new ConversionError("Request is already converted.", 409);
   }
-  if (req.status === "closed") {
-    throw new ConversionError("Cannot convert a closed request.", 422);
+
+  if (!isConvertible(status)) {
+    const msg =
+      status === "closed"   ? "Cannot convert a closed request."   :
+      status === "archived" ? "Cannot convert an archived request." :
+      `Request status '${status}' is not eligible for conversion.`;
+    throw new ConversionError(msg, 422);
   }
-  if (req.status === "archived") {
-    throw new ConversionError("Cannot convert an archived request.", 422);
-  }
-  if (req.status !== "new" && req.status !== "triaged" && req.status !== "assessment_scheduled") {
-    throw new ConversionError(
-      `Request status '${req.status}' is not eligible for conversion.`,
-      422,
-    );
-  }
-  if (req.customerId === null || req.customerId === undefined) {
+
+  if (req.customerId == null) {
     throw new ConversionError(
       "Request has no associated customer and cannot be converted.",
       422,
     );
   }
-  if (req.serviceAddressId === null || req.serviceAddressId === undefined) {
+
+  if (req.serviceAddressId == null) {
     throw new ConversionError(
       "Request has no service address. Set a service address before converting.",
       422,
@@ -111,7 +135,7 @@ export const requestConversionService = {
    *
    * Transaction steps:
    *   1. Lock request row FOR UPDATE
-   *   2. Validate state
+   *   2. Assert eligibility (assertConvertible)
    *   3. INSERT estimate (requestId, customerId, title, notes, empty line items)
    *   4. UPDATE request status → converted
    *   5. Commit
@@ -135,8 +159,8 @@ export const requestConversionService = {
 
       const req = lockedRows[0] as ServiceRequest | undefined;
 
-      // 2. Validate inside the lock
-      validateLocked(req, requestId);
+      // 2. Assert eligibility inside the lock
+      assertConvertible(req);
 
       // 3. Create estimate
       const [est] = await txDb
@@ -159,10 +183,10 @@ export const requestConversionService = {
       const [updated] = await txDb
         .update(requests)
         .set({
-          status:           "converted",
-          convertedToType:  "estimate",
-          convertedAt:      new Date(),
-          convertedByUserId: params.performedBy,
+          status:            "converted",
+          convertedToType:   "estimate",
+          convertedAt:       new Date(),
+          convertedByUserId: performedBy,
         })
         .where(eq(requests.id, requestId))
         .returning();
@@ -187,8 +211,8 @@ export const requestConversionService = {
    *
    * Transaction steps:
    *   1. Lock request row FOR UPDATE
-   *   2. Validate state
-   *   3. Compute next job number (MAX query — see numbering note in file header)
+   *   2. Assert eligibility (assertConvertible)
+   *   3. Generate next job number (sequence — atomic and concurrency-safe)
    *   4. INSERT job (requestId, customerId, title, notes, jobNumber, status=pending)
    *   5. UPDATE request status → converted
    *   6. Commit
@@ -215,8 +239,8 @@ export const requestConversionService = {
 
         const req = lockedRows[0] as ServiceRequest | undefined;
 
-        // 2. Validate inside the lock
-        validateLocked(req, requestId);
+        // 2. Assert eligibility inside the lock
+        assertConvertible(req);
 
         // 3. Generate job number via sequence — atomic and concurrency-safe.
         //    UNIQUE(jobs_job_number_unique) remains as a last-resort safety net.
@@ -245,7 +269,7 @@ export const requestConversionService = {
             status:            "converted",
             convertedToType:   "job",
             convertedAt:       new Date(),
-            convertedByUserId: params.performedBy,
+            convertedByUserId: performedBy,
           })
           .where(eq(requests.id, requestId))
           .returning();
@@ -257,7 +281,7 @@ export const requestConversionService = {
       if (err?.code === PG_UNIQUE_VIOLATION && err?.constraint === "jobs_job_number_unique") {
         throw new ConversionError("Job number conflict — please retry.", 500);
       }
-      // ConversionError instances (from validateLocked) and unexpected errors propagate unchanged
+      // ConversionError instances (from assertConvertible) and unexpected errors propagate unchanged
       throw err;
     }
 
