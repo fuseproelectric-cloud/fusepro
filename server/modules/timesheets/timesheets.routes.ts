@@ -4,7 +4,13 @@ import { Server as SocketServer } from "socket.io";
 import { storage } from "../../storage";
 import { weekBoundsCT, dayBoundsCT, todayStrCT } from "../../lib/time";
 import { parseId } from "../../core/utils/parse-id";
-import { requireAuth, requireRole } from "../../core/middleware/auth.middleware";
+import { requireAuth, requirePolicy } from "../../core/middleware/auth.middleware";
+import {
+  canViewAdminTimesheets,
+  canApproveTimesheets,
+  canEditTimesheetEntry,
+  canDeleteTimesheetEntry,
+} from "../../core/policies/timesheets.policy";
 import { insertTimesheetSchema } from "@shared/schema";
 import {
   timesheetService,
@@ -176,7 +182,7 @@ timesheetsRouter.get("/api/timesheet/earnings", requireAuth, async (req: Request
 
 // ─── GET /api/admin/timesheets ────────────────────────────────────────────────
 
-timesheetsRouter.get("/api/admin/timesheets", requireRole("admin", "dispatcher"), async (req: Request, res: Response, next: NextFunction) => {
+timesheetsRouter.get("/api/admin/timesheets", requirePolicy(canViewAdminTimesheets), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const parsed = adminDateQuerySchema.safeParse(req.query);
     const dateParam = parsed.success && parsed.data.date ? parsed.data.date : todayStrCT();
@@ -191,7 +197,7 @@ timesheetsRouter.get("/api/admin/timesheets", requireRole("admin", "dispatcher")
 
 // ─── GET /api/admin/timesheets/report ────────────────────────────────────────
 
-timesheetsRouter.get("/api/admin/timesheets/report", requireRole("admin", "dispatcher"), async (req: Request, res: Response, next: NextFunction) => {
+timesheetsRouter.get("/api/admin/timesheets/report", requirePolicy(canViewAdminTimesheets), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const result = reportQuerySchema.safeParse(req.query);
     if (!result.success) return next(new ValidationError("Invalid from/to date"));
@@ -205,7 +211,7 @@ timesheetsRouter.get("/api/admin/timesheets/report", requireRole("admin", "dispa
 
 // ─── GET /api/admin/timesheets/week/:techId ───────────────────────────────────
 
-timesheetsRouter.get("/api/admin/timesheets/week/:techId", requireRole("admin", "dispatcher"), async (req: Request, res: Response, next: NextFunction) => {
+timesheetsRouter.get("/api/admin/timesheets/week/:techId", requirePolicy(canViewAdminTimesheets), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const techId = parseId(req.params.techId);
     if (!techId) return next(new ValidationError("Invalid technician id"));
@@ -242,7 +248,7 @@ timesheetsRouter.get("/api/admin/timesheets/week/:techId", requireRole("admin", 
 
 // ─── PUT /api/admin/timesheets/entries/:id ────────────────────────────────────
 
-timesheetsRouter.put("/api/admin/timesheets/entries/:id", requireRole("admin", "dispatcher"), async (req: Request, res: Response, next: NextFunction) => {
+timesheetsRouter.put("/api/admin/timesheets/entries/:id", requirePolicy(canEditTimesheetEntry), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = parseId(req.params.id);
     if (!id) return next(new ValidationError("Invalid entry id"));
@@ -269,7 +275,7 @@ timesheetsRouter.put("/api/admin/timesheets/entries/:id", requireRole("admin", "
 
 // ─── DELETE /api/admin/timesheets/entries/:id ─────────────────────────────────
 
-timesheetsRouter.delete("/api/admin/timesheets/entries/:id", requireRole("admin", "dispatcher"), async (req: Request, res: Response, next: NextFunction) => {
+timesheetsRouter.delete("/api/admin/timesheets/entries/:id", requirePolicy(canDeleteTimesheetEntry), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = parseId(req.params.id);
     if (!id) return next(new ValidationError("Invalid entry id"));
@@ -290,7 +296,7 @@ timesheetsRouter.delete("/api/admin/timesheets/entries/:id", requireRole("admin"
 
 // ─── POST /api/admin/timesheets/approve ──────────────────────────────────────
 
-timesheetsRouter.post("/api/admin/timesheets/approve", requireRole("admin", "dispatcher"), async (req: Request, res: Response, next: NextFunction) => {
+timesheetsRouter.post("/api/admin/timesheets/approve", requirePolicy(canApproveTimesheets), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const result = approveBodySchema.safeParse(req.body);
     if (!result.success) return next(new ValidationError("technicianId and date required"));
@@ -304,7 +310,7 @@ timesheetsRouter.post("/api/admin/timesheets/approve", requireRole("admin", "dis
 
 // ─── DELETE /api/admin/timesheets/approve ─────────────────────────────────────
 
-timesheetsRouter.delete("/api/admin/timesheets/approve", requireRole("admin", "dispatcher"), async (req: Request, res: Response, next: NextFunction) => {
+timesheetsRouter.delete("/api/admin/timesheets/approve", requirePolicy(canApproveTimesheets), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const result = approveBodySchema.safeParse(req.body);
     if (!result.success) return next(new ValidationError("technicianId and date required"));

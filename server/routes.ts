@@ -34,6 +34,7 @@ import { UPLOADS_DIR, upload } from "./core/middleware/upload.middleware";
 import { requireAuth } from "./core/middleware/auth.middleware";
 import { jobExecutionService } from "./services/job-execution.service";
 import { AuthError, ValidationError, ForbiddenError } from "./core/errors/app-error";
+import { canTechnicianTransitionJob, canOverrideJobStatus } from "./core/policies/jobs.policy";
 
 // ─── Session setup ───────────────────────────────────────────────────────────
 const PgSession = connectPgSimple(session);
@@ -130,7 +131,7 @@ export async function registerRoutes(httpServer: Server, app: Express) {
         ? { lat: latNum, lng: lngNum, address: address ?? null }
         : undefined;
 
-      if (user.role === "technician") {
+      if (canTechnicianTransitionJob(user)) {
         const tech = await storage.getTechnicianByUserId(user.id);
         if (!tech) return next(new ForbiddenError());
 
@@ -148,6 +149,7 @@ export async function registerRoutes(httpServer: Server, app: Express) {
       }
 
       // Admin / dispatcher — override path, no timesheet side effects
+      if (!canOverrideJobStatus(user)) return next(new ForbiddenError());
       const result = await jobExecutionService.adminOverride({ jobId, newStatus: status, notes, io });
       return res.json(result.job);
     } catch (err) {

@@ -1,4 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
+import type { User } from "@shared/schema";
 import { storage } from "../../storage";
 import { parseId } from "../utils/parse-id";
 
@@ -16,6 +17,25 @@ export function requireRole(...roles: string[]) {
     }
     const user = await storage.getUserById(req.session.userId);
     if (!user || !roles.includes(user.role)) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+    next();
+  };
+}
+
+/**
+ * Middleware factory that enforces a policy function against the authenticated user.
+ * Use this to wire policy functions from server/core/policies/ into route definitions.
+ *
+ * Returns 401 when not authenticated, 403 when the policy rejects the user.
+ */
+export function requirePolicy(policy: (user: User) => boolean) {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    if (!req.session?.userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    const user = await storage.getUserById(req.session.userId);
+    if (!user || !policy(user)) {
       return res.status(403).json({ message: "Forbidden" });
     }
     next();
