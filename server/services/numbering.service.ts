@@ -61,10 +61,19 @@ export const numberingService = {
    * non-transactional. A gap will occur if the calling transaction rolls back.
    */
   async nextJobNumber(): Promise<string> {
-    const { rows } = await pool.query<{ val: string }>(
-      "SELECT nextval('job_number_seq')::text AS val",
-    );
-    return `J-${String(rows[0].val).padStart(4, "0")}`;
+    try {
+      const { rows } = await pool.query<{ val: string }>(
+        "SELECT nextval('job_number_seq')::text AS val",
+      );
+      return `J-${String(rows[0].val).padStart(4, "0")}`;
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message.includes("job_number_seq")) {
+        throw new Error(
+          "job_number_seq sequence is missing. Run: npm run db:migrate (migration 0003_numbering_sequences.sql)",
+        );
+      }
+      throw err;
+    }
   },
 
   /**
@@ -74,10 +83,19 @@ export const numberingService = {
    * semantics as nextJobNumber().
    */
   async nextInvoiceNumber(): Promise<string> {
-    const { rows } = await pool.query<{ val: string }>(
-      "SELECT nextval('invoice_number_seq')::text AS val",
-    );
-    return `INV-${String(rows[0].val).padStart(5, "0")}`;
+    try {
+      const { rows } = await pool.query<{ val: string }>(
+        "SELECT nextval('invoice_number_seq')::text AS val",
+      );
+      return `INV-${String(rows[0].val).padStart(5, "0")}`;
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message.includes("invoice_number_seq")) {
+        throw new Error(
+          "invoice_number_seq sequence is missing. Run: npm run db:migrate (migration 0003_numbering_sequences.sql)",
+        );
+      }
+      throw err;
+    }
   },
 
 };
