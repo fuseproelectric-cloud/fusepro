@@ -17,6 +17,8 @@
  *   3. No callers need to change
  */
 
+import { logger } from "../utils/logger";
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type JobHandler<T = any> = (payload: T) => Promise<void>;
 
@@ -43,14 +45,14 @@ export class JobQueue {
   async _dispatch<T>(type: string, payload: T): Promise<void> {
     const handler = this.handlers.get(type);
     if (!handler) {
-      console.error(`[job-queue] No handler registered for job type "${type}"`);
+      logger.warn("No handler registered for job type", { source: "job-queue", job_type: type });
       return;
     }
     try {
       await (handler as JobHandler<T>)(payload);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      console.error(`[job-queue] Job "${type}" failed: ${msg}`, err);
+      const message = err instanceof Error ? err.message : String(err);
+      logger.error("Job failed", { source: "job-queue", job_type: type, message });
     }
   }
 }

@@ -2,7 +2,7 @@ import express from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
-import { log } from "./core/utils/logger";
+import { log, logger } from "./core/utils/logger";
 import { errorMiddleware } from "./core/middleware/error.middleware";
 
 const app = express();
@@ -59,23 +59,31 @@ export { log };
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
+  let errorCode: string | undefined;
 
   const originalResJson = res.json;
   res.json = function (bodyJson, ...args) {
-    capturedJsonResponse = bodyJson;
+    // Capture error code from structured error responses for log enrichment.
+    // Only the code field is captured — never log response body data.
+    if (bodyJson && typeof bodyJson === "object" && "error" in bodyJson) {
+      errorCode = (bodyJson as any).error?.code;
+    }
     return originalResJson.apply(res, [bodyJson, ...args]);
   };
 
   res.on("finish", () => {
-    const duration = Date.now() - start;
-    if (path.startsWith("/api")) {
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-      }
-      log(logLine);
-    }
+    if (!path.startsWith("/api")) return;
+    const status      = res.statusCode;
+    const duration_ms = Date.now() - start;
+    const ctx = {
+      source:      "http",
+      method:      req.method,
+      status,
+      duration_ms,
+      ...(errorCode ? { error_code: errorCode } : {}),
+    };
+    const level = status >= 500 ? "error" : status >= 400 ? "warn" : "info";
+    logger[level](`${req.method} ${path}`, ctx);
   });
 
   next();

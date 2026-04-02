@@ -35,6 +35,7 @@ import { requireAuth } from "./core/middleware/auth.middleware";
 import { jobExecutionService } from "./services/job-execution.service";
 import { AuthError, ValidationError, ForbiddenError } from "./core/errors/app-error";
 import { canTechnicianTransitionJob, canOverrideJobStatus } from "./core/policies/jobs.policy";
+import { healthRouter } from "./modules/health/health.routes";
 // Register domain event handlers (timesheet notifications, job realtime updates)
 import "./core/events";
 // Register background job handlers (notification fan-out)
@@ -51,6 +52,9 @@ declare module "express-session" {
 
 // ─── Register all routes ──────────────────────────────────────────────────────
 export async function registerRoutes(httpServer: Server, app: Express) {
+  // Health/readiness probes — no auth, registered first so they are always reachable
+  app.use(healthRouter);
+
   // Serve uploaded files
   app.use("/uploads", express.static(UPLOADS_DIR));
 
