@@ -68,7 +68,8 @@ vi.mock("connect-pg-simple", () => {
   };
 });
 vi.mock("socket.io", () => {
-  class MockIo { on = vi.fn(); to = vi.fn().mockReturnThis(); emit = vi.fn(); }
+  class MockIo { on = vi.fn(); to = vi.fn().mockReturnThis(); emit = vi.fn();
+    use = vi.fn(); }
   return { Server: MockIo };
 });
 vi.mock("bcryptjs", () => ({

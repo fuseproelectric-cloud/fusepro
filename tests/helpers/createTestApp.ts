@@ -13,5 +13,7 @@ export async function createTestApp(): Promise<{ app: Express; httpServer: Serve
   app.use(express.json());
   const httpServer = createServer(app);
   await registerRoutes(httpServer, app);
+  const { errorMiddleware } = await import("../../server/core/middleware/error.middleware");
+  app.use(errorMiddleware);
   return { app, httpServer };
 }

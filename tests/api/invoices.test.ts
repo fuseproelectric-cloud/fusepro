@@ -75,6 +75,7 @@ vi.mock("socket.io", () => {
     on = vi.fn();
     to = vi.fn().mockReturnThis();
     emit = vi.fn();
+    use = vi.fn();
   }
   return { Server: MockIo };
 });
