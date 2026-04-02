@@ -6,6 +6,9 @@ import { parseId } from "../../core/utils/parse-id";
 import { invoicesRepository } from "./invoices.repository";
 import { lifecycleService, LifecycleError } from "../../services/lifecycle.service";
 
+// PostgreSQL unique violation error code
+const PG_UNIQUE_VIOLATION = "23505";
+
 export const invoicesRouter = Router();
 
 // ─── Invoices ─────────────────────────────────────────────────────────────────
@@ -53,8 +56,14 @@ invoicesRouter.post("/api/invoices", requireRole("admin", "dispatcher"), async (
     const data = insertInvoiceSchema.parse(body);
     const inv = await invoicesRepository.create(data);
     res.status(201).json(inv);
-  } catch (err) {
+  } catch (err: any) {
     if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors });
+    // Sequence-backed numbering (invoice_number_seq) makes this collision essentially
+    // impossible in normal operation. If it fires anyway (e.g. data patched externally),
+    // surface a clear retryable message rather than a generic server error.
+    if (err?.code === PG_UNIQUE_VIOLATION && err?.constraint === "invoices_invoice_number_unique") {
+      return res.status(500).json({ message: "Invoice number conflict — please retry." });
+    }
     res.status(500).json({ message: "Failed to create invoice" });
   }
 });
