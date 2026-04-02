@@ -4,6 +4,7 @@ import { serveStatic } from "./static";
 import { createServer } from "http";
 import { log, logger } from "./core/utils/logger";
 import { errorMiddleware } from "./core/middleware/error.middleware";
+import { runMigrations } from "./lib/run-migrations";
 
 const app = express();
 const httpServer = createServer(app);
@@ -90,6 +91,14 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Migrations must succeed before the server accepts any requests.
+  // If the DB is missing sequences or schema changes, fail fast here rather
+  // than serving requests that will 500 at runtime.
+  await runMigrations().catch(err => {
+    console.error(err instanceof Error ? err.message : String(err));
+    process.exit(1);
+  });
+
   await registerRoutes(httpServer, app);
 
   app.use(errorMiddleware);

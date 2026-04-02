@@ -69,7 +69,7 @@ export const numberingService = {
     } catch (err: unknown) {
       if (err instanceof Error && err.message.includes("job_number_seq")) {
         throw new Error(
-          "job_number_seq sequence is missing. Run: npm run db:migrate (migration 0003_numbering_sequences.sql)",
+          "Missing database sequence 'job_number_seq'. Run: npm run db:migrate",
         );
       }
       throw err;
@@ -91,7 +91,7 @@ export const numberingService = {
     } catch (err: unknown) {
       if (err instanceof Error && err.message.includes("invoice_number_seq")) {
         throw new Error(
-          "invoice_number_seq sequence is missing. Run: npm run db:migrate (migration 0003_numbering_sequences.sql)",
+          "Missing database sequence 'invoice_number_seq'. Run: npm run db:migrate",
         );
       }
       throw err;
