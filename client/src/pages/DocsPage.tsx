@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 
 const SECTIONS = [
@@ -11,7 +11,7 @@ const SECTIONS = [
   { id: "deployment",    label: "Deployment" },
 ];
 
-function Code({ children }: { children: string }) {
+function Code({ children }: { children: React.ReactNode }) {
   return (
     <code className="bg-muted/40 text-blue-800 px-1.5 py-0.5 rounded text-[13px] font-mono">
       {children}

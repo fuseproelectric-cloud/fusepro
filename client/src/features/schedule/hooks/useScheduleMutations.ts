@@ -41,7 +41,7 @@ export function useScheduleMutations(): ScheduleMutationsResult {
     mutationFn: async ({ jobId, target }) => {
       const current = qc.getQueryData<Job[]>(["/api/jobs"])?.find(j => j.id === jobId);
       const scheduledAt = resolveDropTime(current, target);
-      const patch: Partial<Job> = { scheduledAt: new Date(scheduledAt) as unknown as string };
+      const patch: Partial<Job> = { scheduledAt: new Date(scheduledAt) };
       if (target.technicianId !== null) {
         patch.technicianId = target.technicianId;
         patch.status       = "assigned";
@@ -56,7 +56,7 @@ export function useScheduleMutations(): ScheduleMutationsResult {
           const scheduledAt = resolveDropTime(j, target);
           return {
             ...j,
-            scheduledAt,
+            scheduledAt: new Date(scheduledAt),
             ...(target.technicianId !== null && {
               technicianId: target.technicianId,
               status: "assigned" as const,
@@ -74,13 +74,13 @@ export function useScheduleMutations(): ScheduleMutationsResult {
   const weekResizeMutation = useMutation<unknown, Error, WeekResizeVars, { previous?: Job[] }>({
     mutationFn: async ({ jobId, scheduledAt, durationMin }) =>
       jobsApi.update(jobId, {
-        scheduledAt:       new Date(scheduledAt) as unknown as string,
+        scheduledAt:       new Date(scheduledAt),
         estimatedDuration: durationMin,
       } as never),
     onMutate: async ({ jobId, scheduledAt, durationMin }) => {
       const previous = await cancelAndSnapshot();
       qc.setQueryData<Job[]>(["/api/jobs"], old =>
-        old?.map(j => j.id !== jobId ? j : { ...j, scheduledAt, estimatedDuration: durationMin }) ?? []
+        old?.map(j => j.id !== jobId ? j : { ...j, scheduledAt: new Date(scheduledAt), estimatedDuration: durationMin }) ?? []
       );
       return { previous };
     },
@@ -91,7 +91,7 @@ export function useScheduleMutations(): ScheduleMutationsResult {
   // ── Day-view: drag to exact time + optional tech reassign ────────────────────
   const timelineDragMutation = useMutation<unknown, Error, TimelineDragVars, { previous?: Job[] }>({
     mutationFn: async ({ jobId, newTechId, newStartTime }) => {
-      const patch: Partial<Job> = { scheduledAt: newStartTime.toISOString() as unknown as string };
+      const patch: Partial<Job> = { scheduledAt: newStartTime as unknown as Date };
       if (newTechId !== null) { patch.technicianId = newTechId; patch.status = "assigned"; }
       return jobsApi.update(jobId, patch as never);
     },
@@ -100,7 +100,7 @@ export function useScheduleMutations(): ScheduleMutationsResult {
       qc.setQueryData<Job[]>(["/api/jobs"], old =>
         old?.map(j => j.id !== jobId ? j : {
           ...j,
-          scheduledAt: newStartTime.toISOString(),
+          scheduledAt: newStartTime,
           ...(newTechId !== null && { technicianId: newTechId, status: "assigned" as const }),
         }) ?? []
       );
@@ -114,7 +114,7 @@ export function useScheduleMutations(): ScheduleMutationsResult {
   const dayResizeMutation = useMutation<unknown, Error, DayResizeVars, { previous?: Job[] }>({
     mutationFn: async ({ jobId, newDurationMin, newStartTime }) => {
       const patch: Partial<Job> = { estimatedDuration: newDurationMin };
-      if (newStartTime) patch.scheduledAt = newStartTime.toISOString() as unknown as string;
+      if (newStartTime) patch.scheduledAt = newStartTime as unknown as Date;
       return jobsApi.update(jobId, patch as never);
     },
     onMutate: async ({ jobId, newDurationMin, newStartTime }) => {
@@ -123,7 +123,7 @@ export function useScheduleMutations(): ScheduleMutationsResult {
         old?.map(j => j.id !== jobId ? j : {
           ...j,
           estimatedDuration: newDurationMin,
-          ...(newStartTime && { scheduledAt: newStartTime.toISOString() }),
+          ...(newStartTime && { scheduledAt: newStartTime }),
         }) ?? []
       );
       return { previous };

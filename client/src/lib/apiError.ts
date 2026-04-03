@@ -4,7 +4,7 @@
  * apiRequest throws with messages like `"409: {"message":"...","error":"..."}"`
  * This strips the leading status code and parses the JSON body.
  */
-export function getApiErrorMessage(err: unknown, fallback: string): string {
+export function getApiErrorMessage(err: unknown, fallback = "An error occurred"): string {
   const raw = err instanceof Error ? err.message : String(err);
   try {
     const body = JSON.parse(raw.replace(/^\d+:\s*/, ""));

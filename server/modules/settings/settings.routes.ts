@@ -18,8 +18,8 @@ settingsRouter.get("/api/settings", requireRole("admin"), async (_req, res) => {
 
 settingsRouter.put("/api/settings/:key", requireRole("admin"), async (req, res) => {
   try {
-    const { value } = req.body;
-    const setting = await storage.upsertSetting(req.params.key, value);
+    const value: string = String(req.body.value);
+    const setting = await storage.upsertSetting(req.params.key as string, value);
     res.json(setting);
   } catch (err) {
     res.status(500).json({ message: "Failed to update setting" });

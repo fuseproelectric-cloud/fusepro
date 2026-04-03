@@ -153,7 +153,10 @@ export function CustomersPage() {
 
   /* mutations */
   const createMutation = useMutation({
-    mutationFn: (data: CustomerForm) => customersApi.create(data),
+    mutationFn: (data: CustomerForm) => customersApi.create({
+      ...data,
+      tags: data.tags ? data.tags.split(",").map(t => t.trim()).filter(Boolean) : undefined,
+    }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/customers"] }); closeDialog(); },
     onError: (err: unknown) => toastErr("Could not create customer", err),
   });

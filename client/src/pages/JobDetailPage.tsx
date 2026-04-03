@@ -24,7 +24,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { TechnicianMap } from "@/components/TechnicianMap";
 import Stack from "@mui/material/Stack";
 
-type JobNote = { id: number; content: string; createdAt: string; user?: { name: string } | null };
+type JobNote = { id: number; content: string; createdAt: string; user?: { id: number; name: string } | null };
 
 type Job = {
   id: number; title: string; status: string; priority: string;
@@ -382,7 +382,7 @@ function EditJobModal({ job, onClose, onSaved }: {
   const [address, setAddress] = useState(job.address ?? "");
   const [error, setError] = useState<string | null>(null);
 
-  const { data: allCustomers = [] } = useQuery<{ id: number; name: string }[]>({
+  const { data: allCustomers = [] } = useQuery<Customer[]>({
     queryKey: ["/api/customers"],
     queryFn: customersApi.getAll,
   });
@@ -471,7 +471,7 @@ function EditJobModal({ job, onClose, onSaved }: {
           <div>
             <label className="block text-xs font-medium text-muted-foreground mb-1">Customer</label>
             <CustomerCombobox
-              customers={allCustomers}
+              customers={allCustomers as any}
               value={customerId}
               onChange={setCustomerId}
             />
