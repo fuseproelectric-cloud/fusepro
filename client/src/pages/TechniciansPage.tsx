@@ -279,7 +279,7 @@ export function TechniciansPage() {
                 value={watch("status")}
                 onValueChange={v => setValue("status", v)}
               />
-              <TextInput label="Calendar Color" type="color" className="cursor-pointer" {...register("color")} />
+              <TextInput label="Calendar Color" type="color" className="cursor-pointer" value={watch("color") ?? "#2563eb"} {...register("color")} />
             </FormRow>
             {editTech && (
               <NumberInput label="Hourly Rate" prefix="$" step="0.50" min="0" placeholder="25.00" {...register("hourlyRate")} />
