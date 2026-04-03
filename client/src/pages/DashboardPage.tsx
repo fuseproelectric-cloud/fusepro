@@ -28,6 +28,7 @@ import {
 import { formatCurrency, STATUS_COLORS, PRIORITY_COLORS, formatStatus } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { Link } from "wouter";
+import Stack from "@mui/material/Stack";
 
 interface MetricProps {
   label: string;
@@ -70,7 +71,7 @@ export function DashboardPage() {
   })) ?? [];
 
   return (
-    <div className="space-y-5">
+    <Stack spacing={3}>
 
       {/* KPI Bar */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
@@ -237,6 +238,6 @@ export function DashboardPage() {
           </div>
         )}
       </div>
-    </div>
+    </Stack>
   );
 }

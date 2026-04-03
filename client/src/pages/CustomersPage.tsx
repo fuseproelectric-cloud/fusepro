@@ -21,7 +21,15 @@ import { Icon } from "@/components/ui/Icon";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import Paper from "@mui/material/Paper";
+import Stack from "@mui/material/Stack";
 import { TextInput, TextareaInput, FormSection, FormRow, FormActions } from "@/components/forms";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -232,7 +240,7 @@ export function CustomersPage() {
 
   /* ── render ──────────────────────────────────────────────────────────── */
   return (
-    <div className="space-y-5">
+    <Stack spacing={3}>
 
       {/* ── Metrics bar ─────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -294,7 +302,7 @@ export function CustomersPage() {
       </div>
 
       {/* ── Table ───────────────────────────────────────────────────────── */}
-      <div className="bg-card rounded-lg border border-border overflow-hidden" style={{ boxShadow: "var(--shadow-low)" }}>
+      <Paper variant="outlined">
         {isLoading ? (
           <div className="p-6 space-y-3">
             {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
@@ -319,151 +327,151 @@ export function CustomersPage() {
             )}
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-muted/50 border-b border-border">
-                  <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Client</th>
-                  <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground hidden sm:table-cell">Contact</th>
-                  <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground hidden md:table-cell">Location</th>
-                  <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground hidden lg:table-cell">Tags</th>
-                  <th className="px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider text-muted-foreground hidden md:table-cell">Jobs</th>
-                  <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground hidden lg:table-cell">Added</th>
-                  <th className="w-10" />
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((c) => {
-                  const jobs = getJobs(c.id);
-                  const tags = c.tags ?? [] as string[];
-                  const activeJob = jobs.find(j => ["scheduled","in_progress"].includes(j.status));
-                  return (
-                    <tr
-                      key={c.id}
-                      className="border-b border-border/60 last:border-0 hover:bg-muted/30 cursor-pointer group transition-colors"
-                      onClick={() => navigate(`/customers/${c.id}`)}
-                    >
-                      {/* Client name + avatar */}
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0", avatarColor(c.name))}>
-                            {getInitials(c.name)}
-                          </div>
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-1.5">
-                              <span className="font-semibold text-foreground truncate">{c.name}</span>
-                              {activeJob && (
-                                <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-orange-100 text-orange-700">
-                                  Active
-                                </span>
+          <>
+            <TableContainer>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Client</TableCell>
+                    <TableCell>Contact</TableCell>
+                    <TableCell>Location</TableCell>
+                    <TableCell>Tags</TableCell>
+                    <TableCell align="center">Jobs</TableCell>
+                    <TableCell>Added</TableCell>
+                    <TableCell padding="none" />
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {filtered.map((c) => {
+                    const jobs = getJobs(c.id);
+                    const tags = c.tags ?? [] as string[];
+                    const activeJob = jobs.find(j => ["scheduled","in_progress"].includes(j.status));
+                    return (
+                      <TableRow
+                        key={c.id}
+                        hover
+                        sx={{ cursor: "pointer" }}
+                        onClick={() => navigate(`/customers/${c.id}`)}
+                      >
+                        {/* Client name + avatar */}
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0", avatarColor(c.name))}>
+                              {getInitials(c.name)}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-semibold text-foreground truncate">{c.name}</span>
+                                {activeJob && (
+                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-orange-100 text-orange-700">
+                                    Active
+                                  </span>
+                                )}
+                              </div>
+                              {c.company && (
+                                <p className="text-xs text-muted-foreground flex items-center gap-1 truncate">
+                                  <Icon icon={Building2} size={12} className="flex-shrink-0" />
+                                  {c.company}
+                                </p>
                               )}
                             </div>
-                            {c.company && (
-                              <p className="text-xs text-muted-foreground flex items-center gap-1 truncate">
-                                <Icon icon={Building2} size={12} className="flex-shrink-0" />
-                                {c.company}
+                          </div>
+                        </TableCell>
+                        {/* Contact */}
+                        <TableCell>
+                          <div className="space-y-0.5">
+                            {c.phone && (
+                              <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                                <Icon icon={Phone} size={12} className="text-muted-foreground/60 flex-shrink-0" />
+                                {c.phone}
+                              </p>
+                            )}
+                            {c.email && (
+                              <p className="text-xs text-muted-foreground flex items-center gap-1.5 truncate max-w-[180px]">
+                                <Icon icon={Mail} size={12} className="text-muted-foreground/60 flex-shrink-0" />
+                                {c.email}
                               </p>
                             )}
                           </div>
-                        </div>
-                      </td>
-                      {/* Contact */}
-                      <td className="px-4 py-3 hidden sm:table-cell">
-                        <div className="space-y-0.5">
-                          {c.phone && (
-                            <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                              <Icon icon={Phone} size={12} className="text-muted-foreground/60 flex-shrink-0" />
-                              {c.phone}
-                            </p>
-                          )}
-                          {c.email && (
-                            <p className="text-xs text-muted-foreground flex items-center gap-1.5 truncate max-w-[180px]">
-                              <Icon icon={Mail} size={12} className="text-muted-foreground/60 flex-shrink-0" />
-                              {c.email}
-                            </p>
-                          )}
-                        </div>
-                      </td>
-                      {/* Location */}
-                      <td className="px-4 py-3 hidden md:table-cell">
-                        <p className="text-xs text-muted-foreground">—</p>
-                      </td>
-                      {/* Tags */}
-                      <td className="px-4 py-3 hidden lg:table-cell">
-                        <div className="flex flex-wrap gap-1">
-                          {tags.slice(0, 3).map((tag: string) => (
-                            <span key={tag} className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-muted text-muted-foreground border border-border">
-                              {tag}
-                            </span>
-                          ))}
-                          {tags.length > 3 && (
-                            <span className="text-[10px] text-muted-foreground/60">+{tags.length - 3}</span>
-                          )}
-                        </div>
-                      </td>
-                      {/* Jobs count */}
-                      <td className="px-4 py-3 text-center hidden md:table-cell">
-                        <span className={cn(
-                          "inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-semibold",
-                          jobs.length > 0 ? "bg-orange-100 text-orange-700" : "bg-muted text-muted-foreground"
-                        )}>
-                          {jobs.length}
-                        </span>
-                      </td>
-                      {/* Added */}
-                      <td className="px-4 py-3 text-xs text-muted-foreground hidden lg:table-cell whitespace-nowrap">
-                        {formatDate(c.createdAt)}
-                      </td>
-                      {/* Actions */}
-                      <td className="px-2 py-3" onClick={e => e.stopPropagation()}>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="w-7 h-7 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <Icon icon={MoreVertical} size={16} />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-44">
-                            <DropdownMenuItem onClick={() => navigate(`/customers/${c.id}`)}>
-                              <Icon icon={ExternalLink} size={16} className="mr-2" /> View Profile
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => openEdit(c)}>
-                              <Icon icon={Pencil} size={16} className="mr-2" /> Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              className="text-destructive focus:text-destructive"
-                              onClick={() => { if (confirm(`Delete ${c.name}?`)) deleteMutation.mutate(c.id); }}
-                            >
-                              <Icon icon={Trash2} size={16} className="mr-2" /> Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                        </TableCell>
+                        {/* Location */}
+                        <TableCell>
+                          <span className="text-xs text-muted-foreground">—</span>
+                        </TableCell>
+                        {/* Tags */}
+                        <TableCell>
+                          <div className="flex flex-wrap gap-1">
+                            {tags.slice(0, 3).map((tag: string) => (
+                              <span key={tag} className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-muted text-muted-foreground border border-border">
+                                {tag}
+                              </span>
+                            ))}
+                            {tags.length > 3 && (
+                              <span className="text-[10px] text-muted-foreground/60">+{tags.length - 3}</span>
+                            )}
+                          </div>
+                        </TableCell>
+                        {/* Jobs count */}
+                        <TableCell align="center">
+                          <span className={cn(
+                            "inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-semibold",
+                            jobs.length > 0 ? "bg-orange-100 text-orange-700" : "bg-muted text-muted-foreground"
+                          )}>
+                            {jobs.length}
+                          </span>
+                        </TableCell>
+                        {/* Added */}
+                        <TableCell>
+                          <span className="text-xs text-muted-foreground whitespace-nowrap">{formatDate(c.createdAt)}</span>
+                        </TableCell>
+                        {/* Actions */}
+                        <TableCell padding="none" onClick={e => e.stopPropagation()}>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="w-7 h-7">
+                                <Icon icon={MoreVertical} size={16} />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-44">
+                              <DropdownMenuItem onClick={() => navigate(`/customers/${c.id}`)}>
+                                <Icon icon={ExternalLink} size={16} className="mr-2" /> View Profile
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => openEdit(c)}>
+                                <Icon icon={Pencil} size={16} className="mr-2" /> Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
+                                onClick={() => { if (confirm(`Delete ${c.name}?`)) deleteMutation.mutate(c.id); }}
+                              >
+                                <Icon icon={Trash2} size={16} className="mr-2" /> Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
             <div className="px-4 py-2.5 border-t border-border bg-muted/30">
               <p className="text-xs text-muted-foreground">
                 Showing {filtered.length} of {customers.length} clients
               </p>
             </div>
-          </div>
+          </>
         )}
-      </div>
+      </Paper>
 
 
       {/* ══════════════════════════════════════════════════════════════════
           NEW / EDIT CLIENT DIALOG — Jobber-style form sections
       ══════════════════════════════════════════════════════════════════ */}
-      <Dialog open={dialogOpen} onOpenChange={o => !o && closeDialog()}>
-        <DialogContent className="max-w-xl bg-card">
-          <DialogHeader>
-            <DialogTitle>{editCustomer ? "Edit Client" : "New Client"}</DialogTitle>
-          </DialogHeader>
-
-          <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4 px-6 pb-4 max-h-[60vh] overflow-y-auto">
+      <Dialog open={dialogOpen} onOpenChange={o => !o && closeDialog()} maxWidth="md" fullWidth>
+        <DialogTitle onClose={closeDialog}>{editCustomer ? "Edit Client" : "New Client"}</DialogTitle>
+        <DialogContent>
+          <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
             <FormSection title="Client Name">
               <FormRow cols={2}>
                 <TextInput label="Full Name" required placeholder="John Smith"       error={errors.name}  {...register("name")} />
@@ -494,6 +502,6 @@ export function CustomersPage() {
         </DialogContent>
       </Dialog>
 
-    </div>
+    </Stack>
   );
 }

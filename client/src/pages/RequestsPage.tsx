@@ -28,7 +28,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import Paper from "@mui/material/Paper";
+import Stack from "@mui/material/Stack";
 import { Textarea } from "@/components/ui/textarea";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -443,7 +451,7 @@ export function RequestsPage() {
 
   /* ── render ──────────────────────────────────────────────────────────── */
   return (
-    <div className="space-y-5">
+    <Stack spacing={3}>
 
       {/* ── Metrics ─────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
@@ -499,7 +507,7 @@ export function RequestsPage() {
       </div>
 
       {/* ── Table ───────────────────────────────────────────────────────── */}
-      <div className="bg-card rounded-lg border border-border overflow-hidden" style={{ boxShadow: "var(--shadow-low)" }}>
+      <Paper variant="outlined">
         {isLoading ? (
           <div className="p-6 space-y-3">
             {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
@@ -522,155 +530,158 @@ export function RequestsPage() {
             )}
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-muted/50 border-b border-border">
-                  <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Request</th>
-                  <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground hidden sm:table-cell">Client</th>
-                  <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Status</th>
-                  <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground hidden md:table-cell">Priority</th>
-                  <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground hidden lg:table-cell">Received</th>
-                  <th className="w-10" />
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map(req => {
-                  const customer = customers.find(c => c.id === req.customerId);
-                  const { bg, icon } = statusIconCls(req.status);
-                  const isTerminal = TERMINAL_STATUSES.includes(req.status as any);
-                  return (
-                    <tr
-                      key={req.id}
-                      className="border-b border-border/60 last:border-0 hover:bg-muted/30 cursor-pointer group transition-colors"
-                      onClick={() => setDetail(req)}
-                    >
-                      {/* Title */}
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <div className={cn("w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0", bg)}>
-                            <Icon icon={Inbox} size={13} className={icon} />
+          <>
+            <TableContainer>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Request</TableCell>
+                    <TableCell>Client</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell>Priority</TableCell>
+                    <TableCell>Received</TableCell>
+                    <TableCell padding="none" />
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {filtered.map(req => {
+                    const customer = customers.find(c => c.id === req.customerId);
+                    const { bg, icon } = statusIconCls(req.status);
+                    const isTerminal = TERMINAL_STATUSES.includes(req.status as any);
+                    return (
+                      <TableRow
+                        key={req.id}
+                        hover
+                        sx={{ cursor: "pointer" }}
+                        onClick={() => setDetail(req)}
+                      >
+                        {/* Title */}
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <div className={cn("w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0", bg)}>
+                              <Icon icon={Inbox} size={13} className={icon} />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-semibold text-foreground truncate">{req.title}</p>
+                              {req.category && (
+                                <p className="text-xs text-muted-foreground truncate">{req.category}</p>
+                              )}
+                            </div>
                           </div>
-                          <div className="min-w-0">
-                            <p className="font-semibold text-foreground truncate">{req.title}</p>
-                            {req.category && (
-                              <p className="text-xs text-muted-foreground truncate">{req.category}</p>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                      {/* Client */}
-                      <td className="px-4 py-3 hidden sm:table-cell">
-                        {customer ? (
-                          <div className="flex items-center gap-1.5">
-                            <Icon icon={User} size={12} className="text-muted-foreground/60 flex-shrink-0" />
-                            <span className="text-sm text-foreground">{customer.name}</span>
-                          </div>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">—</span>
-                        )}
-                      </td>
-                      {/* Status */}
-                      <td className="px-4 py-3">
-                        <StatusBadge status={req.status} />
-                      </td>
-                      {/* Priority */}
-                      <td className="px-4 py-3 hidden md:table-cell">
-                        <PriorityBadge priority={req.priority} />
-                      </td>
-                      {/* Date */}
-                      <td className="px-4 py-3 text-xs text-muted-foreground hidden lg:table-cell whitespace-nowrap">
-                        {formatDate(req.createdAt)}
-                      </td>
-                      {/* Actions */}
-                      <td className="px-2 py-3" onClick={e => e.stopPropagation()}>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="w-7 h-7 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <Icon icon={MoreVertical} size={16} />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-52">
-                            <DropdownMenuItem onClick={() => setDetail(req)}>
-                              <Icon icon={ExternalLink} size={16} className="mr-2" /> View Details
-                            </DropdownMenuItem>
-                            {!isTerminal && (
-                              <DropdownMenuItem onClick={() => openEdit(req)}>
-                                <Icon icon={Pencil} size={16} className="mr-2" /> Edit
+                        </TableCell>
+                        {/* Client */}
+                        <TableCell>
+                          {customer ? (
+                            <div className="flex items-center gap-1.5">
+                              <Icon icon={User} size={12} className="text-muted-foreground/60 flex-shrink-0" />
+                              <span className="text-sm text-foreground">{customer.name}</span>
+                            </div>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                        {/* Status */}
+                        <TableCell>
+                          <StatusBadge status={req.status} />
+                        </TableCell>
+                        {/* Priority */}
+                        <TableCell>
+                          <PriorityBadge priority={req.priority} />
+                        </TableCell>
+                        {/* Date */}
+                        <TableCell>
+                          <span className="text-xs text-muted-foreground whitespace-nowrap">{formatDate(req.createdAt)}</span>
+                        </TableCell>
+                        {/* Actions */}
+                        <TableCell padding="none" onClick={e => e.stopPropagation()}>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="w-7 h-7">
+                                <Icon icon={MoreVertical} size={16} />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-52">
+                              <DropdownMenuItem onClick={() => setDetail(req)}>
+                                <Icon icon={ExternalLink} size={16} className="mr-2" /> View Details
                               </DropdownMenuItem>
-                            )}
-                            <DropdownMenuSeparator />
-                            {canConvert(req) && (
-                              <>
-                                <DropdownMenuItem
-                                  disabled={convertToEstimateMutation.isPending || convertToJobMutation.isPending}
-                                  onClick={() => convertToEstimateMutation.mutate(req.id)}
-                                >
-                                  <Icon icon={FileText} size={16} className="mr-2" /> Convert to Estimate
+                              {!isTerminal && (
+                                <DropdownMenuItem onClick={() => openEdit(req)}>
+                                  <Icon icon={Pencil} size={16} className="mr-2" /> Edit
                                 </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  disabled={convertToEstimateMutation.isPending || convertToJobMutation.isPending}
-                                  onClick={() => convertToJobMutation.mutate(req.id)}
-                                >
-                                  <Icon icon={Briefcase} size={16} className="mr-2" /> Convert to Job
-                                </DropdownMenuItem>
-                              </>
-                            )}
-                            {req.status === "new" && (
-                              <DropdownMenuItem
-                                disabled={statusMutation.isPending}
-                                onClick={() => statusMutation.mutate({ id: req.id, status: "triaged" })}
-                              >
-                                <Icon icon={CheckSquare} size={16} className="mr-2" /> Mark Triaged
-                              </DropdownMenuItem>
-                            )}
-                            {(req.status === "new" || req.status === "triaged") && (
-                              <DropdownMenuItem
-                                disabled={statusMutation.isPending}
-                                onClick={() => statusMutation.mutate({ id: req.id, status: "assessment_scheduled" })}
-                              >
-                                <Icon icon={CalendarClock} size={16} className="mr-2" /> Schedule Assessment
-                              </DropdownMenuItem>
-                            )}
-                            {!isTerminal && (
-                              <>
+                              )}
+                              <DropdownMenuSeparator />
+                              {canConvert(req) && (
+                                <>
+                                  <DropdownMenuItem
+                                    disabled={convertToEstimateMutation.isPending || convertToJobMutation.isPending}
+                                    onClick={() => convertToEstimateMutation.mutate(req.id)}
+                                  >
+                                    <Icon icon={FileText} size={16} className="mr-2" /> Convert to Estimate
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    disabled={convertToEstimateMutation.isPending || convertToJobMutation.isPending}
+                                    onClick={() => convertToJobMutation.mutate(req.id)}
+                                  >
+                                    <Icon icon={Briefcase} size={16} className="mr-2" /> Convert to Job
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                              {req.status === "new" && (
                                 <DropdownMenuItem
                                   disabled={statusMutation.isPending}
-                                  onClick={() => statusMutation.mutate({ id: req.id, status: "closed" })}
+                                  onClick={() => statusMutation.mutate({ id: req.id, status: "triaged" })}
                                 >
-                                  <Icon icon={X} size={16} className="mr-2" /> Close
+                                  <Icon icon={CheckSquare} size={16} className="mr-2" /> Mark Triaged
                                 </DropdownMenuItem>
+                              )}
+                              {(req.status === "new" || req.status === "triaged") && (
                                 <DropdownMenuItem
                                   disabled={statusMutation.isPending}
-                                  onClick={() => statusMutation.mutate({ id: req.id, status: "archived" })}
+                                  onClick={() => statusMutation.mutate({ id: req.id, status: "assessment_scheduled" })}
                                 >
-                                  <Icon icon={Archive} size={16} className="mr-2" /> Archive
+                                  <Icon icon={CalendarClock} size={16} className="mr-2" /> Schedule Assessment
                                 </DropdownMenuItem>
-                              </>
-                            )}
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              className="text-destructive focus:text-destructive"
-                              onClick={() => { if (confirm(`Delete "${req.title}"?`)) deleteMutation.mutate(req.id); }}
-                            >
-                              <Icon icon={Trash2} size={16} className="mr-2" /> Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                              )}
+                              {!isTerminal && (
+                                <>
+                                  <DropdownMenuItem
+                                    disabled={statusMutation.isPending}
+                                    onClick={() => statusMutation.mutate({ id: req.id, status: "closed" })}
+                                  >
+                                    <Icon icon={X} size={16} className="mr-2" /> Close
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    disabled={statusMutation.isPending}
+                                    onClick={() => statusMutation.mutate({ id: req.id, status: "archived" })}
+                                  >
+                                    <Icon icon={Archive} size={16} className="mr-2" /> Archive
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
+                                onClick={() => { if (confirm(`Delete "${req.title}"?`)) deleteMutation.mutate(req.id); }}
+                              >
+                                <Icon icon={Trash2} size={16} className="mr-2" /> Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
             <div className="px-4 py-2.5 border-t border-border bg-muted/30">
               <p className="text-xs text-muted-foreground">
                 Showing {filtered.length} of {requests.length} requests
               </p>
             </div>
-          </div>
+          </>
         )}
-      </div>
+      </Paper>
 
       {/* ══════════════════════════════════════════════════════════════════
           REQUEST DETAIL SHEET
@@ -916,13 +927,10 @@ export function RequestsPage() {
           CREATE DIALOG (intake form — no status selector)
       ══════════════════════════════════════════════════════════════════ */}
       {dialogOpen && !editRequest && (
-        <Dialog open onOpenChange={o => !o && closeDialog()}>
-          <DialogContent className="max-w-lg bg-card max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>New Request</DialogTitle>
-            </DialogHeader>
-
-            <form id="create-request-form" onSubmit={createForm.handleSubmit(onCreateSubmit)} className="space-y-5 px-6 pb-2">
+        <Dialog open onOpenChange={o => !o && closeDialog()} maxWidth="md" fullWidth>
+          <DialogTitle onClose={closeDialog}>New Request</DialogTitle>
+          <DialogContent>
+            <form id="create-request-form" onSubmit={createForm.handleSubmit(onCreateSubmit)} className="space-y-5">
 
               {/* Core */}
               <FormSection title="Request">
@@ -1080,19 +1088,18 @@ export function RequestsPage() {
                 </div>
               </FormSection>
             </form>
-
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={closeDialog}>Cancel</Button>
-              <Button
-                type="submit"
-                form="create-request-form"
-                className="bg-orange-500 hover:bg-orange-600 text-white min-w-[120px]"
-                disabled={createMutation.isPending}
-              >
-                {createMutation.isPending ? "Creating…" : "Create Request"}
-              </Button>
-            </DialogFooter>
           </DialogContent>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={closeDialog}>Cancel</Button>
+            <Button
+              type="submit"
+              form="create-request-form"
+              className="bg-orange-500 hover:bg-orange-600 text-white min-w-[120px]"
+              disabled={createMutation.isPending}
+            >
+              {createMutation.isPending ? "Creating…" : "Create Request"}
+            </Button>
+          </DialogFooter>
         </Dialog>
       )}
 
@@ -1100,13 +1107,10 @@ export function RequestsPage() {
           EDIT DIALOG (triage form — includes status + owner)
       ══════════════════════════════════════════════════════════════════ */}
       {dialogOpen && editRequest && (
-        <Dialog open onOpenChange={o => !o && closeDialog()}>
-          <DialogContent className="max-w-lg bg-card max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Edit Request</DialogTitle>
-            </DialogHeader>
-
-            <form id="edit-request-form" onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-5 px-6 pb-2">
+        <Dialog open onOpenChange={o => !o && closeDialog()} maxWidth="md" fullWidth>
+          <DialogTitle onClose={closeDialog}>Edit Request</DialogTitle>
+          <DialogContent>
+            <form id="edit-request-form" onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-5">
 
               {/* Triage */}
               <FormSection title="Triage">
@@ -1300,21 +1304,20 @@ export function RequestsPage() {
                 </div>
               </FormSection>
             </form>
-
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={closeDialog}>Cancel</Button>
-              <Button
-                type="submit"
-                form="edit-request-form"
-                className="bg-orange-500 hover:bg-orange-600 text-white min-w-[120px]"
-                disabled={updateMutation.isPending}
-              >
-                {updateMutation.isPending ? "Saving…" : "Save Changes"}
-              </Button>
-            </DialogFooter>
           </DialogContent>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={closeDialog}>Cancel</Button>
+            <Button
+              type="submit"
+              form="edit-request-form"
+              className="bg-orange-500 hover:bg-orange-600 text-white min-w-[120px]"
+              disabled={updateMutation.isPending}
+            >
+              {updateMutation.isPending ? "Saving…" : "Save Changes"}
+            </Button>
+          </DialogFooter>
         </Dialog>
       )}
-    </div>
+    </Stack>
   );
 }

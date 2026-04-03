@@ -52,6 +52,7 @@ interface TechTimesheetData {
 }
 
 import { fmtTime, fmtDateFull, dateStrCT, todayStrCT } from "@/lib/time";
+import Stack from "@mui/material/Stack";
 
 function formatTime(ts: string) { return fmtTime(ts); }
 function formatDateISO(d: Date) { return dateStrCT(d); }
@@ -849,7 +850,7 @@ export function AdminTimesheetPage() {
   const hasGpsData = mapTracks.length > 0;
 
   return (
-    <div className="space-y-5">
+    <Stack spacing={3}>
       {/* Mode tabs + controls */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
@@ -1002,6 +1003,6 @@ export function AdminTimesheetPage() {
           </div>
         </>
       )}
-    </div>
+    </Stack>
   );
 }

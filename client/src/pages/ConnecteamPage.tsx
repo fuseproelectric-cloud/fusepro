@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import Stack from "@mui/material/Stack";
 
 /* ─── schemas ─────────────────────────────────────────────────────────────── */
 const credSchema = z.object({
@@ -127,7 +128,7 @@ export function ConnecteamPage() {
   const isConnected = settings?.hasCredentials;
 
   return (
-    <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-6">
+    <Stack spacing={3} sx={{ maxWidth: 896, mx: "auto" }}>
 
       {/* Page header */}
       <div className="flex items-start justify-between">
@@ -408,7 +409,7 @@ export function ConnecteamPage() {
           <TimeClockTab />
         </TabsContent>
       </Tabs>
-    </div>
+    </Stack>
   );
 }
 

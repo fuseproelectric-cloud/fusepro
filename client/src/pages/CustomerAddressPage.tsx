@@ -26,6 +26,7 @@ import { jobFormSchema, buildJobPayload } from "@/components/jobs/jobForm";
 import type { JobFormValues } from "@/components/jobs/jobForm";
 import { JobFormFields } from "@/components/jobs/JobFormFields";
 import type { Technician } from "@shared/schema";
+import Stack from "@mui/material/Stack";
 
 type CustomerAddress = {
   id: number; customerId: number; label: string;
@@ -233,11 +234,11 @@ export function CustomerAddressPage() {
   /* ── loading ── */
   if (custLoading || addrLoading) {
     return (
-      <div className="space-y-5">
+      <Stack spacing={3}>
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-40 w-full" />
         <Skeleton className="h-60 w-full" />
-      </div>
+      </Stack>
     );
   }
   if (!addr || !customer) {
@@ -252,7 +253,7 @@ export function CustomerAddressPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <Stack spacing={3}>
 
       {/* ── Breadcrumb ── */}
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -731,6 +732,6 @@ export function CustomerAddressPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </Stack>
   );
 }

@@ -17,7 +17,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import Stack from "@mui/material/Stack";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TextInput, NumberInput, SelectInput, FormRow, FormActions, type SelectOption } from "@/components/forms";
@@ -152,7 +153,7 @@ export function TechniciansPage() {
   const inactive  = technicians.filter(t => t.status === "inactive").length;
 
   return (
-    <div className="space-y-5">
+    <Stack spacing={3}>
       {/* Metric Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {([
@@ -258,12 +259,10 @@ export function TechniciansPage() {
         </div>
       )}
 
-      <Dialog open={dialogOpen} onOpenChange={(o) => !o && closeDialog()}>
-        <DialogContent className="bg-card">
-          <DialogHeader>
-            <DialogTitle>{editTech ? "Edit Technician" : "Add Technician"}</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4 px-6 pb-4">
+      <Dialog open={dialogOpen} onOpenChange={(o) => !o && closeDialog()} maxWidth="sm" fullWidth>
+        <DialogTitle onClose={closeDialog}>{editTech ? "Edit Technician" : "Add Technician"}</DialogTitle>
+        <DialogContent>
+          <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
             {!editTech && (
               <>
                 <TextInput label="Full Name" required placeholder="John Smith"        error={errors.name}  {...register("name")} />
@@ -293,6 +292,6 @@ export function TechniciansPage() {
           </form>
         </DialogContent>
       </Dialog>
-    </div>
+    </Stack>
   );
 }

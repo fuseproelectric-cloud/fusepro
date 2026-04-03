@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 import { getSocket } from "@/lib/socket";
 import { apiRequest } from "@/lib/queryClient";
 import { TechnicianMap } from "@/components/TechnicianMap";
+import Stack from "@mui/material/Stack";
 
 type JobNote = { id: number; content: string; createdAt: string; user?: { name: string } | null };
 
@@ -665,7 +666,7 @@ export function JobDetailPage() {
   const backHref = isTechnician ? "/my-jobs" : "/jobs";
 
   return (
-    <div className="max-w-4xl mx-auto pb-8 space-y-4">
+    <Stack spacing={3} sx={{ maxWidth: 896, mx: "auto", pb: 4 }}>
       <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-muted-foreground -ml-2" onClick={() => navigate(backHref)}>
         <Icon icon={ArrowLeft} size={16} className="mr-1" /> Back
       </Button>
@@ -1039,6 +1040,6 @@ export function JobDetailPage() {
           onSaved={() => qc.invalidateQueries({ queryKey: [`/api/jobs/${jobId}`] })}
         />
       )}
-    </div>
+    </Stack>
   );
 }

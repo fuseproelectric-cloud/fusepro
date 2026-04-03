@@ -15,9 +15,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import Paper from "@mui/material/Paper";
+import Stack from "@mui/material/Stack";
 
 const inventorySchema = z.object({
   name: z.string().min(1, "Name required"),
@@ -132,7 +140,7 @@ export function InventoryPage() {
   });
 
   return (
-    <div className="space-y-5">
+    <Stack spacing={3}>
       {/* Metric Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <div className="bg-card rounded-lg border border-border p-4 flex items-start gap-3" style={{ boxShadow: "var(--shadow-low)" }}>
@@ -200,7 +208,7 @@ export function InventoryPage() {
         )}
       </div>
 
-      <div className="bg-card rounded-lg border border-border overflow-hidden" style={{ boxShadow: "var(--shadow-low)" }}>
+      <Paper variant="outlined">
           {isLoading ? (
             <div className="p-6 space-y-3">
               {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
@@ -212,34 +220,34 @@ export function InventoryPage() {
               <p className="empty-state__desc">Add items to track your parts and materials.</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-muted/50 border-b border-border">
-                    <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Name</th>
-                    <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">SKU</th>
-                    <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Category</th>
-                    <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Quantity</th>
-                    <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Unit Cost</th>
-                    <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Location</th>
-                    <th className="px-4 py-2.5 w-12"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
+            <TableContainer>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Name</TableCell>
+                    <TableCell>SKU</TableCell>
+                    <TableCell>Category</TableCell>
+                    <TableCell>Quantity</TableCell>
+                    <TableCell>Unit Cost</TableCell>
+                    <TableCell>Location</TableCell>
+                    <TableCell padding="none" />
+                  </TableRow>
+                </TableHead>
+                <TableBody>
                   {filtered.map((item) => {
                     const isLow = item.minQuantity !== null && item.minQuantity !== undefined && item.quantity <= item.minQuantity;
                     return (
-                      <tr key={item.id} className="hover:bg-muted/20 group">
-                        <td className="px-4 py-3 font-medium text-foreground">{item.name}</td>
-                        <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{item.sku ?? "—"}</td>
-                        <td className="px-4 py-3 text-muted-foreground">
+                      <TableRow key={item.id} hover>
+                        <TableCell sx={{ fontWeight: 500 }}>{item.name}</TableCell>
+                        <TableCell sx={{ fontFamily: "monospace", fontSize: "0.75rem", color: "text.secondary" }}>{item.sku ?? "—"}</TableCell>
+                        <TableCell>
                           {item.category ? (
                             <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded">
                               {item.category}
                             </span>
                           ) : "—"}
-                        </td>
-                        <td className="px-4 py-3">
+                        </TableCell>
+                        <TableCell>
                           <div className="flex items-center gap-2">
                             <span className={cn("font-medium", isLow ? "text-yellow-400" : "text-foreground")}>
                               {item.quantity} {item.unit ?? ""}
@@ -249,14 +257,14 @@ export function InventoryPage() {
                           {item.minQuantity !== null && item.minQuantity !== undefined && (
                             <p className="text-xs text-muted-foreground">min: {item.minQuantity}</p>
                           )}
-                        </td>
-                        <td className="px-4 py-3 text-muted-foreground">{formatCurrency(item.unitCost ?? "0")}</td>
-                        <td className="px-4 py-3 text-muted-foreground text-xs">{item.location ?? "—"}</td>
-                        <td className="px-4 py-3">
+                        </TableCell>
+                        <TableCell sx={{ color: "text.secondary" }}>{formatCurrency(item.unitCost ?? "0")}</TableCell>
+                        <TableCell sx={{ color: "text.secondary", fontSize: "0.75rem" }}>{item.location ?? "—"}</TableCell>
+                        <TableCell padding="none">
                           {!isTechnician && (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="w-7 h-7 opacity-0 group-hover:opacity-100">
+                                <Button variant="ghost" size="icon" className="w-7 h-7">
                                   <Icon icon={MoreVertical} size={16} />
                                 </Button>
                               </DropdownMenuTrigger>
@@ -276,23 +284,21 @@ export function InventoryPage() {
                               </DropdownMenuContent>
                             </DropdownMenu>
                           )}
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     );
                   })}
-                </tbody>
-              </table>
-            </div>
+                </TableBody>
+              </Table>
+            </TableContainer>
           )}
-      </div>
+      </Paper>
 
-      <Dialog open={dialogOpen} onOpenChange={(o) => !o && closeDialog()}>
-        <DialogContent className="max-w-lg bg-card">
-          <DialogHeader>
-            <DialogTitle>{editItem ? "Edit Item" : "Add Inventory Item"}</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4 px-6 pb-2">
-            <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-1">
+      <Dialog open={dialogOpen} onOpenChange={(o) => !o && closeDialog()} maxWidth="sm" fullWidth>
+        <DialogTitle onClose={closeDialog}>{editItem ? "Edit Item" : "Add Inventory Item"}</DialogTitle>
+        <DialogContent>
+          <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
+            <div className="space-y-4">
               <div className="space-y-1.5">
                 <Label>Name *</Label>
                 <Input {...register("name")} placeholder="20A Circuit Breaker" />
@@ -327,19 +333,21 @@ export function InventoryPage() {
                 <Input {...register("location")} placeholder="Warehouse A, Shelf 3..." />
               </div>
             </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={closeDialog}>Cancel</Button>
-              <Button
-                type="submit"
-                className="bg-orange-500 hover:bg-orange-600 text-white"
-                disabled={createMutation.isPending || updateMutation.isPending}
-              >
-                {editItem ? "Update" : "Add Item"}
-              </Button>
-            </DialogFooter>
           </form>
         </DialogContent>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={closeDialog}>Cancel</Button>
+          <Button
+            type="submit"
+            form="inventory-form"
+            className="bg-orange-500 hover:bg-orange-600 text-white"
+            disabled={createMutation.isPending || updateMutation.isPending}
+            onClick={handleSubmit(onSubmit)}
+          >
+            {editItem ? "Update" : "Add Item"}
+          </Button>
+        </DialogFooter>
       </Dialog>
-    </div>
+    </Stack>
   );
 }

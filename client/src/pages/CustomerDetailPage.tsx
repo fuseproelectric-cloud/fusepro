@@ -17,7 +17,9 @@ import {
 } from "lucide-react";
 import { Icon } from "@/components/ui/Icon";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import Stack from "@mui/material/Stack";
+import Paper from "@mui/material/Paper";
 import { TextInput, TextareaInput, CheckboxInput, FormRow, FormActions } from "@/components/forms";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -308,11 +310,11 @@ export function CustomerDetailPage() {
   }
   if (isLoading) {
     return (
-      <div className="space-y-5">
+      <Stack spacing={3}>
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-40 w-full" />
         <Skeleton className="h-60 w-full" />
-      </div>
+      </Stack>
     );
   }
   if (isError || !customer) {
@@ -329,7 +331,7 @@ export function CustomerDetailPage() {
   const tags: string[] = customer.tags ?? [];
 
   return (
-    <div className="space-y-6">
+    <Stack spacing={3}>
 
       {/* ── Back ── */}
       <button
@@ -634,12 +636,10 @@ export function CustomerDetailPage() {
 
 
       {/* ── Edit Customer Dialog ── */}
-      <Dialog open={editOpen} onOpenChange={o => !o && setEditOpen(false)}>
-        <DialogContent className="max-w-xl bg-card">
-          <DialogHeader>
-            <DialogTitle>Edit Client</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={editForm.handleSubmit(onEditSubmit)} noValidate className="space-y-3 px-6 pb-4 max-h-[60vh] overflow-y-auto">
+      <Dialog open={editOpen} onOpenChange={o => !o && setEditOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle onClose={() => setEditOpen(false)}>Edit Client</DialogTitle>
+        <DialogContent>
+          <form onSubmit={editForm.handleSubmit(onEditSubmit)} noValidate className="space-y-3">
             <FormRow cols={2}>
               <TextInput label="Full Name" required error={editForm.formState.errors.name}  {...editForm.register("name")} />
               <TextInput label="Company"                                                     {...editForm.register("company")} />
@@ -655,16 +655,10 @@ export function CustomerDetailPage() {
       </Dialog>
 
       {/* ── Address Dialog ── */}
-      <Dialog open={addrOpen} onOpenChange={o => { if (!o) { closeAddrDialog(); setAddrMapPin(null); } }}>
-        <DialogContent
-          className="max-w-md bg-card"
-          onPointerDownOutside={e => { if ((e.target as HTMLElement)?.closest?.(".pac-container")) e.preventDefault(); }}
-          onInteractOutside={e => { if ((e.target as HTMLElement)?.closest?.(".pac-container")) e.preventDefault(); }}
-        >
-          <DialogHeader>
-            <DialogTitle>{editAddress ? "Edit Address" : "Add Address"}</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={addrForm.handleSubmit(onAddrSubmit)} noValidate className="space-y-3 px-6 pb-4">
+      <Dialog open={addrOpen} onOpenChange={o => { if (!o) { closeAddrDialog(); setAddrMapPin(null); } }} maxWidth="sm" fullWidth>
+        <DialogTitle onClose={() => { closeAddrDialog(); setAddrMapPin(null); }}>{editAddress ? "Edit Address" : "Add Address"}</DialogTitle>
+        <DialogContent>
+          <form onSubmit={addrForm.handleSubmit(onAddrSubmit)} noValidate className="space-y-3">
             {/* Mini map preview */}
             {addrMapPin && (
               <MiniMapPreview lat={addrMapPin.lat} lng={addrMapPin.lng} />
@@ -708,6 +702,6 @@ export function CustomerDetailPage() {
           </form>
         </DialogContent>
       </Dialog>
-    </div>
+    </Stack>
   );
 }

@@ -15,7 +15,8 @@ import { Label } from "@/components/ui/label";
 import { TextInput, SelectInput, FormActions } from "@/components/forms";
 import { AddressAutocompleteTextInput } from "@/components/AddressAutocompleteInput";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import Stack from "@mui/material/Stack";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -198,7 +199,7 @@ export function SettingsPage() {
   };
 
   return (
-    <div className="max-w-3xl space-y-6">
+    <Stack spacing={3} sx={{ maxWidth: 768 }}>
       <Tabs defaultValue="profile">
         <TabsList className="mb-6">
           <TabsTrigger value="profile"><Icon icon={User} size={16} className="mr-2" />Profile</TabsTrigger>
@@ -455,12 +456,10 @@ export function SettingsPage() {
       </Tabs>
 
       {/* User Create/Edit Dialog */}
-      <Dialog open={userDialogOpen} onOpenChange={(o) => !o && closeUserDialog()}>
-        <DialogContent className="bg-card">
-          <DialogHeader>
-            <DialogTitle>{editUser ? "Edit User" : "Add User"}</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={userSubmit(onUserSubmit)} className="space-y-4 px-6 pb-2">
+      <Dialog open={userDialogOpen} onOpenChange={(o) => !o && closeUserDialog()} maxWidth="sm" fullWidth>
+        <DialogTitle onClose={closeUserDialog}>{editUser ? "Edit User" : "Add User"}</DialogTitle>
+        <DialogContent>
+          <form onSubmit={userSubmit(onUserSubmit)} className="space-y-4">
             <TextInput
               label="Full Name" required
               error={userErrors.name}
@@ -488,19 +487,20 @@ export function SettingsPage() {
                 {...userReg("password")}
               />
             )}
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={closeUserDialog}>Cancel</Button>
-              <Button
-                type="submit"
-                className="bg-orange-500 hover:bg-orange-600 text-white"
-                disabled={createUserMutation.isPending || updateUserMutation.isPending}
-              >
-                {editUser ? "Update" : "Create User"}
-              </Button>
-            </DialogFooter>
           </form>
         </DialogContent>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={closeUserDialog}>Cancel</Button>
+          <Button
+            type="button"
+            className="bg-orange-500 hover:bg-orange-600 text-white"
+            disabled={createUserMutation.isPending || updateUserMutation.isPending}
+            onClick={userSubmit(onUserSubmit)}
+          >
+            {editUser ? "Update" : "Create User"}
+          </Button>
+        </DialogFooter>
       </Dialog>
-    </div>
+    </Stack>
   );
 }

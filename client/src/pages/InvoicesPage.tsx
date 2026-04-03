@@ -26,6 +26,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import Paper from "@mui/material/Paper";
+import Stack from "@mui/material/Stack";
 import { TextInput, TextareaInput, DateInput, NumberInput, SelectInput, FormSection, FormField } from "@/components/forms";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -190,7 +198,7 @@ export function InvoicesPage() {
   });
 
   return (
-    <div className="space-y-5">
+    <Stack spacing={3}>
       {/* Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <MetricCard label="Collected"   value={formatCurrency(paidTotal)}    icon={CheckCircle2} color="green"  sub={`${invoices.filter(i => i.status === "paid").length} paid invoices`} />
@@ -224,7 +232,7 @@ export function InvoicesPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-card rounded-lg border border-border overflow-hidden" style={{ boxShadow: "var(--shadow-low)" }}>
+      <Paper variant="outlined">
         {isLoading ? (
           <div className="p-6 space-y-3">{[...Array(4)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>
         ) : filtered.length === 0 ? (
@@ -236,42 +244,47 @@ export function InvoicesPage() {
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-muted/50 border-b border-border">
-                    <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Invoice</th>
-                    <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground hidden sm:table-cell">Client</th>
-                    <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Status</th>
-                    <th className="px-4 py-2.5 text-right text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Total</th>
-                    <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground hidden md:table-cell">Due Date</th>
-                    <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground hidden lg:table-cell">Created</th>
-                    <th className="w-10" />
-                  </tr>
-                </thead>
-                <tbody>
+            <TableContainer>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Invoice</TableCell>
+                    <TableCell>Client</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell align="right">Total</TableCell>
+                    <TableCell>Due Date</TableCell>
+                    <TableCell>Created</TableCell>
+                    <TableCell padding="none" />
+                  </TableRow>
+                </TableHead>
+                <TableBody>
                   {filtered.map(inv => {
                     const customer = customers.find(c => c.id === inv.customerId);
                     const isOverdue = inv.status === "overdue";
                     return (
-                      <tr key={inv.id} className={cn("border-b border-border/60 last:border-0 hover:bg-muted/30 group transition-colors", inv.status !== "paid" && "cursor-pointer", isOverdue && "bg-red-50/40")} onClick={() => inv.status !== "paid" && openEdit(inv)}>
-                        <td className="px-4 py-3">
+                      <TableRow
+                        key={inv.id}
+                        hover={inv.status !== "paid"}
+                        sx={{ cursor: inv.status !== "paid" ? "pointer" : "default", backgroundColor: isOverdue ? "rgba(239,68,68,0.04)" : undefined }}
+                        onClick={() => inv.status !== "paid" && openEdit(inv)}
+                      >
+                        <TableCell>
                           <p className="font-semibold text-foreground font-mono text-xs">{inv.invoiceNumber}</p>
                           {inv.subject && <p className="text-xs text-muted-foreground truncate max-w-[160px]">{inv.subject}</p>}
-                        </td>
-                        <td className="px-4 py-3 hidden sm:table-cell">
+                        </TableCell>
+                        <TableCell>
                           {customer ? <div className="flex items-center gap-1.5"><Icon icon={User} size={12} className="text-muted-foreground/60" /><span className="text-sm text-foreground">{customer.name}</span></div> : <span className="text-sm text-muted-foreground">—</span>}
-                        </td>
-                        <td className="px-4 py-3"><StatusBadge status={inv.status} /></td>
-                        <td className="px-4 py-3 text-right">
+                        </TableCell>
+                        <TableCell><StatusBadge status={inv.status} /></TableCell>
+                        <TableCell align="right">
                           <span className={cn("font-semibold tabular-nums", isOverdue ? "text-red-600" : "text-foreground")}>{formatCurrency(inv.total ?? "0")}</span>
-                        </td>
-                        <td className="px-4 py-3 text-xs text-muted-foreground hidden md:table-cell">{inv.dueDate ? formatDate(inv.dueDate) : "—"}</td>
-                        <td className="px-4 py-3 text-xs text-muted-foreground hidden lg:table-cell">{formatDate(inv.createdAt)}</td>
-                        <td className="px-2 py-3" onClick={e => e.stopPropagation()}>
+                        </TableCell>
+                        <TableCell sx={{ color: "text.secondary", fontSize: "0.75rem" }}>{inv.dueDate ? formatDate(inv.dueDate) : "—"}</TableCell>
+                        <TableCell sx={{ color: "text.secondary", fontSize: "0.75rem" }}>{formatDate(inv.createdAt)}</TableCell>
+                        <TableCell padding="none" onClick={e => e.stopPropagation()}>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="w-7 h-7 opacity-0 group-hover:opacity-100 transition-opacity"><Icon icon={MoreVertical} size={16} /></Button>
+                              <Button variant="ghost" size="icon" className="w-7 h-7"><Icon icon={MoreVertical} size={16} /></Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-48">
                               {inv.status !== "paid" && <DropdownMenuItem onClick={() => openEdit(inv)}><Icon icon={Pencil} size={16} className="mr-2" />Edit</DropdownMenuItem>}
@@ -284,24 +297,24 @@ export function InvoicesPage() {
                               <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => { if (confirm("Delete invoice?")) deleteMutation.mutate(inv.id); }}><Icon icon={Trash2} size={16} className="mr-2" />Delete</DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     );
                   })}
-                </tbody>
-              </table>
-            </div>
+                </TableBody>
+              </Table>
+            </TableContainer>
             <div className="px-4 py-2.5 border-t border-border bg-muted/30">
               <p className="text-xs text-muted-foreground">Showing {filtered.length} of {invoices.length} invoices</p>
             </div>
           </>
         )}
-      </div>
+      </Paper>
 
       <DocumentPreviewDialog html={previewHtml} title="Invoice Preview" onClose={() => setPreviewHtml(null)} />
 
       {/* ── Create / Edit Dialog — two-panel ── */}
-      <Dialog open={dialogOpen} onOpenChange={o => !o && closeDialog()}>
+      <Dialog open={dialogOpen} onOpenChange={o => !o && closeDialog()} maxWidth="xl" fullWidth>
         <DialogContent className="max-w-4xl p-0 gap-0 bg-background overflow-hidden flex flex-col" style={{ maxHeight: "92vh" }}>
           <DialogDescription className="sr-only">Create or edit an invoice</DialogDescription>
           <DialogHeader className="px-6 py-4 bg-card border-b border-border flex-shrink-0">
@@ -412,6 +425,6 @@ export function InvoicesPage() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </Stack>
   );
 }

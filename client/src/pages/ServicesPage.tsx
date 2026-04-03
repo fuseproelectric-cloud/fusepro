@@ -11,10 +11,18 @@ import { Plus, Pencil, Trash2, MoreVertical, Tag, Check, X, DollarSign, Receipt 
 import { Icon } from "@/components/ui/Icon";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TextInput, NumberInput, TextareaInput, SwitchInput, FormRow, FormActions } from "@/components/forms";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import Paper from "@mui/material/Paper";
+import Stack from "@mui/material/Stack";
 
 interface Service {
   id: number;
@@ -119,7 +127,7 @@ export function ServicesPage() {
   const taxableCount = services.filter(s => s.taxable).length;
 
   return (
-    <div className="space-y-5">
+    <Stack spacing={3}>
       {/* Metrics */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="bg-card rounded-lg border border-border p-4 flex items-start gap-3" style={{ boxShadow: "var(--shadow-low)" }}>
@@ -167,7 +175,7 @@ export function ServicesPage() {
         </Button>
       </div>
 
-      <div className="bg-card rounded-lg border border-border overflow-hidden" style={{ boxShadow: "var(--shadow-low)" }}>
+      <Paper variant="outlined">
           {isLoading ? (
             <div className="p-6 space-y-3">
               {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
@@ -180,50 +188,50 @@ export function ServicesPage() {
               <Button onClick={openCreate} className="mt-4 h-8 bg-orange-500 hover:bg-orange-600 text-white text-sm"><Icon icon={Plus} size={14} className="mr-1.5" />New Service</Button>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-muted/50 border-b border-border">
-                    <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Name</th>
-                    <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Description</th>
-                    <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Unit Price</th>
-                    <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Cost</th>
-                    <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Category</th>
-                    <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Taxable</th>
-                    <th className="px-4 py-2.5 w-12"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
+            <TableContainer>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Name</TableCell>
+                    <TableCell>Description</TableCell>
+                    <TableCell>Unit Price</TableCell>
+                    <TableCell>Cost</TableCell>
+                    <TableCell>Category</TableCell>
+                    <TableCell>Taxable</TableCell>
+                    <TableCell padding="none" />
+                  </TableRow>
+                </TableHead>
+                <TableBody>
                   {services.map((svc) => (
-                    <tr key={svc.id} className="hover:bg-muted/20 group">
-                      <td className="px-4 py-3 font-medium text-foreground">{svc.name}</td>
-                      <td className="px-4 py-3 text-muted-foreground text-xs max-w-[200px] truncate">
-                        {svc.description || "—"}
-                      </td>
-                      <td className="px-4 py-3 font-medium text-foreground">
+                    <TableRow key={svc.id} hover>
+                      <TableCell sx={{ fontWeight: 500 }}>{svc.name}</TableCell>
+                      <TableCell sx={{ color: "text.secondary", fontSize: "0.75rem", maxWidth: 200 }}>
+                        <span className="block truncate">{svc.description || "—"}</span>
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 500 }}>
                         {formatCurrency(parseFloat(svc.unitPrice ?? "0"))}
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground">
+                      </TableCell>
+                      <TableCell sx={{ color: "text.secondary" }}>
                         {formatCurrency(parseFloat(svc.cost ?? "0"))}
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground text-xs">
+                      </TableCell>
+                      <TableCell sx={{ fontSize: "0.75rem", color: "text.secondary" }}>
                         {svc.category ? (
                           <Badge variant="outline" className="text-xs">
                             {svc.category}
                           </Badge>
                         ) : "—"}
-                      </td>
-                      <td className="px-4 py-3">
+                      </TableCell>
+                      <TableCell>
                         {svc.taxable ? (
                           <Icon icon={Check} size={16} className="text-green-500" />
                         ) : (
                           <Icon icon={X} size={16} className="text-muted-foreground" />
                         )}
-                      </td>
-                      <td className="px-4 py-3">
+                      </TableCell>
+                      <TableCell padding="none">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="w-7 h-7 opacity-0 group-hover:opacity-100">
+                            <Button variant="ghost" size="icon" className="w-7 h-7">
                               <Icon icon={MoreVertical} size={16} />
                             </Button>
                           </DropdownMenuTrigger>
@@ -242,22 +250,20 @@ export function ServicesPage() {
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
-            </div>
+                </TableBody>
+              </Table>
+            </TableContainer>
           )}
-      </div>
+      </Paper>
 
       {/* Create/Edit Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={(o) => !o && closeDialog()}>
-        <DialogContent className="max-w-md bg-card">
-          <DialogHeader>
-            <DialogTitle>{editService ? "Edit Service" : "New Service"}</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4 px-6 pb-4 max-h-[75vh] overflow-y-auto">
+      <Dialog open={dialogOpen} onOpenChange={(o) => !o && closeDialog()} maxWidth="sm" fullWidth>
+        <DialogTitle onClose={closeDialog}>{editService ? "Edit Service" : "New Service"}</DialogTitle>
+        <DialogContent>
+          <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
             <TextInput label="Name" required placeholder="e.g. Electrical Panel Inspection" error={errors.name} {...register("name")} />
             <TextareaInput label="Description" rows={2} placeholder="What this service includes..." {...register("description")} />
             <FormRow cols={2}>
@@ -274,6 +280,6 @@ export function ServicesPage() {
           </form>
         </DialogContent>
       </Dialog>
-    </div>
+    </Stack>
   );
 }

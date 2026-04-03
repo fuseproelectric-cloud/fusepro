@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
 import { Textarea } from "@/components/ui/textarea";
+import Stack from "@mui/material/Stack";
 
 type TimesheetEntry = {
   id: number;
@@ -512,7 +513,7 @@ function EarningsTab() {
   const maxDayEarnings = useMemo(() => Math.max(...(data?.daily.map(d => d.earnings) ?? [1])), [data]);
 
   return (
-    <div className="space-y-5">
+    <Stack spacing={3}>
       {/* Period selector */}
       <div className="bg-card rounded-lg border border-border p-4 space-y-3">
         <div className="flex flex-wrap gap-2">
@@ -640,7 +641,7 @@ function EarningsTab() {
           )}
         </>
       )}
-    </div>
+    </Stack>
   );
 }
 
@@ -768,7 +769,7 @@ export function TimesheetPage() {
   const isBusy = entryMutation.isPending || gpsLoading;
 
   return (
-    <div className="max-w-2xl mx-auto pb-10 space-y-5">
+    <Stack spacing={3} sx={{ maxWidth: 672, mx: "auto", pb: 5 }}>
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Timesheet</h1>
@@ -1075,6 +1076,6 @@ export function TimesheetPage() {
         </div>
       )}
       </>}
-    </div>
+    </Stack>
   );
 }
