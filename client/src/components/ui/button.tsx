@@ -44,3 +44,18 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   },
 );
 Button.displayName = "Button";
+
+export function buttonVariants({ variant = "default", size = "default", className = "" }: {
+  variant?: ButtonProps["variant"];
+  size?: ButtonProps["size"];
+  className?: string;
+} = {}): string {
+  return cn(
+    "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium",
+    "transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+    "disabled:pointer-events-none disabled:opacity-50",
+    variants[variant ?? "default"],
+    sizes[size ?? "default"],
+    className,
+  );
+}

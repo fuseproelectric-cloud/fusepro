@@ -10,6 +10,7 @@ export type { SectionConfig, FieldConfig } from "./SchemaForm";
 
 // Готовые input-компоненты
 export { TextInput }     from "./inputs/TextInput";
+export type { TextInputProps } from "./inputs/TextInput";
 export { NumberInput }   from "./inputs/NumberInput";
 export { TextareaInput } from "./inputs/TextareaInput";
 export { SelectInput }   from "./inputs/SelectInput";

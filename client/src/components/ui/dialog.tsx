@@ -8,7 +8,7 @@ import { X } from "lucide-react";
 
 /* ─── Dialog root ─────────────────────────────────────────────────────────── */
 export interface DialogProps {
-  open: boolean;
+  open?: boolean;
   onOpenChange?: (open: boolean) => void;
   maxWidth?: MuiDialogProps["maxWidth"];
   fullWidth?: boolean;
@@ -18,7 +18,7 @@ export interface DialogProps {
 export function Dialog({ open, onOpenChange, maxWidth = "sm", fullWidth = true, children }: DialogProps) {
   return (
     <MuiDialog
-      open={open}
+      open={!!open}
       onClose={() => onOpenChange?.(false)}
       maxWidth={maxWidth}
       fullWidth={fullWidth}
@@ -32,11 +32,18 @@ export function Dialog({ open, onOpenChange, maxWidth = "sm", fullWidth = true, 
 export interface DialogContentProps {
   children?: React.ReactNode;
   className?: string;
+  style?: React.CSSProperties;
+  // absorb Radix-specific props that callers may still pass
+  [key: string]: unknown;
 }
 
-export function DialogContent({ children, className: _className }: DialogContentProps) {
+export function DialogContent({ children, className: _c, style: _s, ...rest }: DialogContentProps) {
+  // filter out Radix/unknown event props before passing to MUI
+  const muiProps = Object.fromEntries(
+    Object.entries(rest).filter(([k]) => !k.startsWith("on") || ["onScroll"].includes(k))
+  );
   return (
-    <MuiDialogContent dividers={false} sx={{ pt: 1 }}>
+    <MuiDialogContent dividers={false} sx={{ pt: 1 }} {...muiProps as any}>
       {children}
     </MuiDialogContent>
   );
@@ -46,9 +53,11 @@ export function DialogContent({ children, className: _className }: DialogContent
 export interface DialogTitleProps {
   children?: React.ReactNode;
   onClose?: () => void;
+  className?: string;
+  [key: string]: unknown;
 }
 
-export function DialogTitle({ children, onClose }: DialogTitleProps) {
+export function DialogTitle({ children, onClose, className: _c, ...rest }: DialogTitleProps) {
   return (
     <MuiDialogTitle
       sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", pr: onClose ? 6 : undefined }}
@@ -69,7 +78,7 @@ export function DialogTitle({ children, onClose }: DialogTitleProps) {
 }
 
 /* ─── DialogHeader — renders nothing extra, title is already in DialogTitle ── */
-export function DialogHeader({ children }: { children?: React.ReactNode }) {
+export function DialogHeader({ children, className: _c }: { children?: React.ReactNode; className?: string }) {
   return <>{children}</>;
 }
 
