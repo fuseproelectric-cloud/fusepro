@@ -469,9 +469,9 @@
 [class*="button_primary"],
 [class*="Button_button__"],
 [class*="button--primary"] {
-  --color-interactive: hsl(25, 95%, 53%) !important;
-  --color-interactive--hover: hsl(25, 95%, 46%) !important;
-  --color-interactive--active: hsl(25, 95%, 40%) !important;
+  --color-interactive: hsl(221, 83%, 53%) !important;
+  --color-interactive--hover: hsl(221, 83%, 46%) !important;
+  --color-interactive--active: hsl(221, 83%, 40%) !important;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -502,7 +502,7 @@
 }
 .sidebar-dark .nav-item.active {
   background-color: hsl(221 83% 53% / 0.12);
-  color: hsl(25, 95%, 45%);
+  color: hsl(221, 83%, 45%);
   font-weight: 600;
 }
 .sidebar-dark .nav-item.active:hover {
