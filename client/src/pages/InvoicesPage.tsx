@@ -67,9 +67,9 @@ function StatusBadge({ status }: { status: string }) {
 function MetricCard({ label, value, sub, icon, color }: {
   label: string; value: string; sub?: string;
   icon: LucideIcon;
-  color: "green" | "blue" | "red" | "orange";
+  color: "green" | "blue" | "red";
 }) {
-  const bg = { green: "bg-emerald-500", blue: "bg-blue-500", red: "bg-red-500", orange: "bg-blue-500" }[color];
+  const bg = { green: "bg-emerald-500", blue: "bg-blue-500", red: "bg-red-500", blue:   "bg-blue-600" }[color];
   return (
     <div className="bg-card rounded-lg border border-border p-4 flex items-start gap-3" style={{ boxShadow: "var(--shadow-low)" }}>
       <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 text-white", bg)}>

@@ -7,11 +7,11 @@ function MetricCard({ label, value, icon, color }: {
   label: string;
   value: number;
   icon: LucideIcon;
-  color: "yellow" | "orange" | "green" | "slate";
+  color: "yellow" | "blue" | "green" | "slate";
 }) {
   const bg = {
     yellow: "bg-amber-500",
-    orange: "bg-blue-500",
+    blue:   "bg-blue-600",
     green:  "bg-emerald-500",
     slate:  "bg-muted-foreground/40",
   }[color];
@@ -40,7 +40,7 @@ export function JobsMetrics({ pendingCount, inProgressCount, completedCount, can
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
       <MetricCard label="Pending"     value={pendingCount}    icon={Clock}        color="yellow" />
-      <MetricCard label="In Progress" value={inProgressCount} icon={Briefcase}    color="orange" />
+      <MetricCard label="In Progress" value={inProgressCount} icon={Briefcase}    color="blue" />
       <MetricCard label="Completed"   value={completedCount}  icon={CheckCircle2} color="green"  />
       <MetricCard label="Cancelled"   value={cancelledCount}  icon={AlertCircle}  color="slate"  />
     </div>

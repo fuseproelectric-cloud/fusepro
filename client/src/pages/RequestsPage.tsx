@@ -183,10 +183,10 @@ function SourceBadge({ source }: { source: string }) {
 function MetricCard({ label, value, sub, icon, color }: {
   label: string; value: string | number; sub?: string;
   icon: LucideIcon;
-  color: "orange" | "blue" | "yellow" | "purple" | "green" | "slate";
+  color: "blue" | "blue" | "yellow" | "purple" | "green" | "slate";
 }) {
   const colors = {
-    orange: "bg-blue-500 text-white",
+    blue:   "bg-blue-600 text-white",
     blue:   "bg-blue-500 text-white",
     yellow: "bg-yellow-500 text-white",
     purple: "bg-purple-500 text-white",
