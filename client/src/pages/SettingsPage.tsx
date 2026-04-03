@@ -251,9 +251,9 @@ export function SettingsPage() {
                 </div>
               )}
               <form onSubmit={pwSubmit((d) => changePwMutation.mutate(d))} noValidate className="space-y-3 max-w-sm">
-                <TextInput label="Current Password" type="password" required error={pwErrors.currentPassword} {...pwReg("currentPassword")} />
-                <TextInput label="New Password"     type="password" required error={pwErrors.newPassword}     hint="At least 8 characters" {...pwReg("newPassword")} />
-                <TextInput label="Confirm Password" type="password" required error={pwErrors.confirmPassword} {...pwReg("confirmPassword")} />
+                <TextInput label="Current Password" type="password" autoComplete="current-password" required error={pwErrors.currentPassword} {...pwReg("currentPassword")} />
+                <TextInput label="New Password"     type="password" autoComplete="new-password"     required error={pwErrors.newPassword}     hint="At least 8 characters" {...pwReg("newPassword")} />
+                <TextInput label="Confirm Password" type="password" autoComplete="new-password"     required error={pwErrors.confirmPassword} {...pwReg("confirmPassword")} />
                 <FormActions submitLabel="Update Password" loadingLabel="Updating…" loading={changePwMutation.isPending} align="start" />
               </form>
             </CardContent>
@@ -482,7 +482,7 @@ export function SettingsPage() {
             />
             {!editUser && (
               <TextInput
-                label="Password" type="password"
+                label="Password" type="password" autoComplete="new-password"
                 hint="Leave blank to use the system default"
                 {...userReg("password")}
               />
