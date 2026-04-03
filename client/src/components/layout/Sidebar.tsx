@@ -120,9 +120,9 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="w-full flex items-center justify-between px-3 h-8 rounded-md text-sm font-semibold text-white transition-colors"
-                style={{ backgroundColor: "hsl(25,95%,53%)" }}
-                onMouseEnter={e => (e.currentTarget.style.backgroundColor = "hsl(25,95%,46%)")}
-                onMouseLeave={e => (e.currentTarget.style.backgroundColor = "hsl(25,95%,53%)")}
+                style={{ backgroundColor: "hsl(221,83%,53%)" }}
+                onMouseEnter={e => (e.currentTarget.style.backgroundColor = "hsl(221,83%,46%)")}
+                onMouseLeave={e => (e.currentTarget.style.backgroundColor = "hsl(221,83%,53%)")}
               >
                 <span className="flex items-center gap-1.5">
                   <Icon icon={Plus} size={14} />
