@@ -120,7 +120,7 @@ export function ConnecteamPage() {
   if (settingsLoading) {
     return (
       <div className="p-6 flex items-center justify-center min-h-[300px]">
-        <div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -134,8 +134,8 @@ export function ConnecteamPage() {
       <div className="flex items-start justify-between">
         <div>
           <div className="flex items-center gap-2.5 mb-1">
-            <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center">
-              <Icon icon={Zap} size={16} className="text-orange-500" />
+            <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+              <Icon icon={Zap} size={16} className="text-blue-500" />
             </div>
             <h1 className="text-xl font-bold text-foreground">Connecteam Integration</h1>
           </div>
@@ -199,7 +199,7 @@ export function ConnecteamPage() {
               <div className="flex items-center gap-2 pt-1">
                 <Button
                   type="submit"
-                  className="h-8 bg-orange-500 hover:bg-orange-600 text-white text-xs px-4"
+                  className="h-8 bg-blue-500 hover:bg-blue-700 text-white text-xs px-4"
                   disabled={saveMutation.isPending}
                 >
                   {saveMutation.isPending ? "Saving…" : "Save Credentials"}
@@ -273,7 +273,7 @@ export function ConnecteamPage() {
               </Button>
               <Button
                 size="sm"
-                className="h-8 bg-orange-500 hover:bg-orange-600 text-white text-xs"
+                className="h-8 bg-blue-500 hover:bg-blue-700 text-white text-xs"
                 onClick={() => { setSyncMsg(""); syncMutation.mutate(); }}
                 disabled={syncMutation.isPending}
               >
@@ -305,7 +305,7 @@ export function ConnecteamPage() {
           <Card>
             {usersLoading ? (
               <div className="p-6 flex justify-center">
-                <div className="w-5 h-5 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+                <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
               </div>
             ) : ctUsers.length === 0 ? (
               <div className="p-8 text-center text-sm text-muted-foreground">No employees found</div>
@@ -313,8 +313,8 @@ export function ConnecteamPage() {
               <div className="divide-y divide-border">
                 {ctUsers.map((u: any) => (
                   <div key={u.userId} className="flex items-center gap-3 px-4 py-3">
-                    <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
-                      <Icon icon={User} size={16} className="text-orange-600" />
+                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                      <Icon icon={User} size={16} className="text-blue-700" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-foreground">{u.firstName} {u.lastName}</p>
@@ -334,7 +334,7 @@ export function ConnecteamPage() {
                     <span className={cn(
                       "text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full",
                       u.userType === "owner"
-                        ? "bg-orange-100 text-orange-700"
+                        ? "bg-blue-100 text-blue-800"
                         : "bg-muted text-muted-foreground"
                     )}>
                       {u.userType}
@@ -367,7 +367,7 @@ export function ConnecteamPage() {
           <Card>
             {jobsLoading ? (
               <div className="p-6 flex justify-center">
-                <div className="w-5 h-5 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+                <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
               </div>
             ) : ctJobs.length === 0 ? (
               <div className="p-8 text-center text-sm text-muted-foreground">No jobs found</div>
@@ -377,7 +377,7 @@ export function ConnecteamPage() {
                   <div key={j.jobId} className="flex items-start gap-3 px-4 py-3">
                     <div
                       className="w-3 h-3 rounded-full flex-shrink-0 mt-1"
-                      style={{ backgroundColor: j.color ?? "#f97316" }}
+                      style={{ backgroundColor: j.color ?? "#2563eb" }}
                     />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-foreground">{j.title}</p>
@@ -466,7 +466,7 @@ function TimeClockTab() {
       <Card>
         {isLoading ? (
           <div className="p-6 flex justify-center">
-            <div className="w-5 h-5 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : entries.length === 0 ? (
           <div className="p-8 text-center">

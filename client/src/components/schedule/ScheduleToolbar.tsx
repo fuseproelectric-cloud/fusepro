@@ -54,7 +54,7 @@ export function ScheduleToolbar({
           className={cn(
             "flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors",
             viewMode === "week"
-              ? "bg-orange-500 text-white"
+              ? "bg-blue-500 text-white"
               : "text-muted-foreground hover:bg-muted/50"
           )}
           onClick={() => onViewModeChange("week")}
@@ -65,7 +65,7 @@ export function ScheduleToolbar({
           className={cn(
             "flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors border-l border-border",
             viewMode === "day"
-              ? "bg-orange-500 text-white"
+              ? "bg-blue-500 text-white"
               : "text-muted-foreground hover:bg-muted/50"
           )}
           onClick={() => onViewModeChange("day")}
@@ -89,7 +89,7 @@ export function ScheduleToolbar({
           <Button variant="outline" size="icon" onClick={onNextWeek}>
             <Icon icon={ChevronRight} size={16} />
           </Button>
-          <Button variant="ghost" size="sm" className="text-orange-500" onClick={onToday}>
+          <Button variant="ghost" size="sm" className="text-blue-500" onClick={onToday}>
             Today
           </Button>
         </div>
@@ -107,7 +107,7 @@ export function ScheduleToolbar({
           <Button variant="outline" size="icon" onClick={onNextDay}>
             <Icon icon={ChevronRight} size={16} />
           </Button>
-          <Button variant="ghost" size="sm" className="text-orange-500" onClick={onToday}>
+          <Button variant="ghost" size="sm" className="text-blue-500" onClick={onToday}>
             Today
           </Button>
         </div>
@@ -130,7 +130,7 @@ export function ScheduleToolbar({
         </Select>
 
         <Button
-          className="bg-orange-500 hover:bg-orange-600 text-white font-semibold"
+          className="bg-blue-500 hover:bg-blue-700 text-white font-semibold"
           onClick={onNewJob}
         >
           <Icon icon={Plus} size={16} className="mr-1" /> New Job

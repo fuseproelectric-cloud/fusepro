@@ -35,8 +35,8 @@ type TimesheetEntry = {
 const STATUS_COLORS: Record<string, string> = {
   pending: "bg-muted/40 text-foreground",
   assigned: "bg-blue-100 text-blue-700",
-  on_the_way: "bg-orange-100 text-orange-700",
-  in_progress: "bg-orange-100 text-orange-700",
+  on_the_way: "bg-blue-100 text-blue-800",
+  in_progress: "bg-blue-100 text-blue-800",
   completed: "bg-green-100 text-green-700",
   cancelled: "bg-red-100 text-red-700",
 };
@@ -177,19 +177,19 @@ export function MyJobsPage() {
 
       {/* Active Job Banner */}
       {activeJob && (
-        <div className="bg-orange-500 rounded-xl p-4 text-white">
+        <div className="bg-blue-500 rounded-xl p-4 text-white">
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
-              <p className="text-orange-100 text-xs font-semibold uppercase tracking-wide mb-0.5">Active Job</p>
+              <p className="text-blue-100 text-xs font-semibold uppercase tracking-wide mb-0.5">Active Job</p>
               <p className="font-bold text-lg leading-tight truncate">{activeJob.title}</p>
               {activeJobWorkStart && (
-                <p className="text-orange-100 text-sm mt-1 font-mono">
+                <p className="text-blue-100 text-sm mt-1 font-mono">
                   <ElapsedTimer fromTs={activeJobWorkStart.timestamp} />
                 </p>
               )}
             </div>
             <Button
-              className="bg-card text-orange-600 hover:bg-orange-50 font-semibold h-10 flex-shrink-0"
+              className="bg-card text-blue-700 hover:bg-blue-50 font-semibold h-10 flex-shrink-0"
               size="sm"
               onClick={() => navigate(`/job/${activeJob.id}`)}
             >
@@ -206,7 +206,7 @@ export function MyJobsPage() {
           <p className="text-xs text-muted-foreground mt-0.5">Today</p>
         </div>
         <div className="bg-card rounded-xl border border-border p-3 text-center">
-          <p className="text-2xl font-bold text-orange-500">{stats?.myInProgress ?? 0}</p>
+          <p className="text-2xl font-bold text-blue-500">{stats?.myInProgress ?? 0}</p>
           <p className="text-xs text-muted-foreground mt-0.5">In Progress</p>
         </div>
         <div className="bg-card rounded-xl border border-border p-3 text-center">
@@ -234,7 +234,7 @@ export function MyJobsPage() {
       {/* Job list */}
       {isLoading ? (
         <div className="flex justify-center py-12">
-          <Icon icon={Loader2} size={24} className="animate-spin text-orange-500" />
+          <Icon icon={Loader2} size={24} className="animate-spin text-blue-500" />
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
@@ -278,7 +278,7 @@ function JobCard({
   return (
     <div className={cn(
       "bg-card rounded-xl border p-4 space-y-3",
-      job.status === "in_progress" ? "border-orange-400 shadow-orange-100 shadow-md" : "border-border"
+      job.status === "in_progress" ? "border-blue-400 shadow-blue-100 shadow-md" : "border-border"
     )}>
       {/* Title row */}
       <div className="flex items-start justify-between gap-2 cursor-pointer" onClick={onClick}>
@@ -291,7 +291,7 @@ function JobCard({
             </div>
           )}
           {job.status === "on_the_way" && travelStartEntry && (
-            <div className="flex items-center gap-1 mt-1 text-orange-600">
+            <div className="flex items-center gap-1 mt-1 text-blue-700">
               <Icon icon={Truck} size={14} className="flex-shrink-0" />
               <span className="text-sm font-medium">En Route</span>
               <span className="text-sm font-mono ml-1">
@@ -334,7 +334,7 @@ function JobCard({
       {/* Action buttons */}
       {job.status === "assigned" && (
         <Button
-          className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold h-11"
+          className="w-full bg-blue-500 hover:bg-blue-700 text-white font-semibold h-11"
           onClick={(e) => { e.stopPropagation(); onStatusUpdate(job.id, "on_the_way"); }}
           disabled={isUpdating}
         >
@@ -362,7 +362,7 @@ function JobCard({
 
       {job.status === "in_progress" && (
         <Button
-          className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold h-11"
+          className="w-full bg-blue-500 hover:bg-blue-700 text-white font-semibold h-11"
           onClick={(e) => { e.stopPropagation(); onClick(); }}
         >
           Open Job

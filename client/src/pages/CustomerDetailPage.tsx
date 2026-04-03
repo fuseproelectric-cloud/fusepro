@@ -78,7 +78,7 @@ function getInitials(name: string) {
 }
 function avatarColor(name: string) {
   const palette = [
-    "bg-orange-100 text-orange-600", "bg-blue-100 text-blue-600",
+    "bg-blue-100 text-blue-700", "bg-blue-100 text-blue-600",
     "bg-emerald-100 text-emerald-600", "bg-purple-100 text-purple-600",
     "bg-rose-100 text-rose-600", "bg-amber-100 text-amber-600",
     "bg-cyan-100 text-cyan-600",
@@ -91,7 +91,7 @@ function avatarColor(name: string) {
 const JOB_STATUS: Record<string, { label: string; cls: string }> = {
   pending:     { label: "Pending",     cls: "bg-slate-100 text-slate-600" },
   assigned:    { label: "Assigned",    cls: "bg-blue-100 text-blue-700" },
-  in_progress: { label: "In Progress", cls: "bg-orange-100 text-orange-700" },
+  in_progress: { label: "In Progress", cls: "bg-blue-100 text-blue-800" },
   scheduled:   { label: "Scheduled",   cls: "bg-purple-100 text-purple-700" },
   completed:   { label: "Completed",   cls: "bg-emerald-100 text-emerald-700" },
   cancelled:   { label: "Cancelled",   cls: "bg-red-100 text-red-600" },
@@ -120,7 +120,7 @@ const REQ_STATUS: Record<string, { label: string; cls: string }> = {
 };
 const REQ_PRIORITY: Record<string, { label: string; cls: string }> = {
   emergency: { label: "Emergency", cls: "bg-red-100 text-red-700" },
-  high:      { label: "High",      cls: "bg-orange-100 text-orange-700" },
+  high:      { label: "High",      cls: "bg-blue-100 text-blue-800" },
   normal:    { label: "Normal",    cls: "bg-muted/40 text-muted-foreground" },
   low:       { label: "Low",       cls: "bg-sky-50 text-sky-600" },
 };
@@ -364,7 +364,7 @@ export function CustomerDetailPage() {
                 {tags.length > 0 && (
                   <div className="flex flex-wrap gap-1 mt-2">
                     {tags.map((t: string) => (
-                      <span key={t} className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-orange-100 text-orange-700">{t}</span>
+                      <span key={t} className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-800">{t}</span>
                     ))}
                   </div>
                 )}
@@ -443,7 +443,7 @@ export function CustomerDetailPage() {
           </div>
           {outstanding > 0 && (
             <div className="flex items-center gap-2 ml-auto">
-              <span className="text-sm font-bold text-orange-600">${outstanding.toFixed(2)}</span>
+              <span className="text-sm font-bold text-blue-700">${outstanding.toFixed(2)}</span>
               <span className="text-xs text-muted-foreground">Outstanding</span>
             </div>
           )}
@@ -472,7 +472,7 @@ export function CustomerDetailPage() {
           </div>
           <button
             onClick={openAddrCreate}
-            className="flex items-center gap-1 text-xs font-medium text-orange-500 hover:text-orange-600 transition-colors"
+            className="flex items-center gap-1 text-xs font-medium text-blue-500 hover:text-blue-700 transition-colors"
           >
             <Icon icon={Plus} size={14} /> Add Address
           </button>
@@ -482,7 +482,7 @@ export function CustomerDetailPage() {
           <div className="bg-card rounded-lg border border-border border-dashed p-10 text-center">
             <Icon icon={MapPin} size={40} className="text-muted-foreground/30 mx-auto mb-3" />
             <p className="text-sm text-muted-foreground mb-2">No addresses yet</p>
-            <button onClick={openAddrCreate} className="text-xs text-orange-500 hover:text-orange-600 font-medium">
+            <button onClick={openAddrCreate} className="text-xs text-blue-500 hover:text-blue-700 font-medium">
               + Add first address
             </button>
           </div>
@@ -494,7 +494,7 @@ export function CustomerDetailPage() {
                 onClick={() => navigate(`/customers/${customerId}/addresses/${a.id}`)}
                 className={cn(
                   "bg-card rounded-xl border cursor-pointer group transition-all hover:shadow-md hover:-translate-y-0.5 relative",
-                  a.isPrimary ? "border-orange-200 ring-1 ring-orange-200" : "border-border hover:border-orange-200"
+                  a.isPrimary ? "border-blue-200 ring-1 ring-blue-200" : "border-border hover:border-blue-200"
                 )}
                 style={{ boxShadow: "var(--shadow-low)" }}
               >
@@ -522,14 +522,14 @@ export function CustomerDetailPage() {
                   <div className="flex items-start gap-3 mb-3">
                     <div className={cn(
                       "w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0",
-                      a.isPrimary ? "bg-orange-500" : "bg-muted"
+                      a.isPrimary ? "bg-blue-500" : "bg-muted"
                     )}>
                       <Icon icon={MapPin} size={16} className={cn(a.isPrimary ? "text-white" : "text-muted-foreground")} />
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="font-semibold text-foreground text-sm leading-tight truncate pr-8">{a.label}</p>
                       {a.isPrimary && (
-                        <span className="inline-flex mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-orange-100 text-orange-700">
+                        <span className="inline-flex mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800">
                           Primary
                         </span>
                       )}
@@ -543,7 +543,7 @@ export function CustomerDetailPage() {
                         href={`https://maps.google.com/?q=${encodeURIComponent([a.address, a.city, a.state, a.zip].filter(Boolean).join(", "))}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="block hover:text-orange-500 transition-colors"
+                        className="block hover:text-blue-500 transition-colors"
                         onClick={e => e.stopPropagation()}
                       >
                         {a.address && <p className="text-sm text-foreground">{a.address}</p>}
@@ -564,7 +564,7 @@ export function CustomerDetailPage() {
 
                   {/* Footer */}
                   <div className="mt-4 pt-3 border-t border-border flex items-center justify-end">
-                    <Icon icon={ChevronRight} size={16} className="text-muted-foreground/40 group-hover:text-orange-500 transition-colors" />
+                    <Icon icon={ChevronRight} size={16} className="text-muted-foreground/40 group-hover:text-blue-500 transition-colors" />
                   </div>
                 </div>
               </div>

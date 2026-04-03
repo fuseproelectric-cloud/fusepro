@@ -60,14 +60,14 @@ export function TechniciansPage() {
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<TechForm>({
     resolver: zodResolver(techSchema),
-    defaultValues: { status: "available", color: "#f97316" },
+    defaultValues: { status: "available", color: "#2563eb" },
     values: editTech ? {
       name:        editTech.user?.name ?? "",
       email:       editTech.user?.email ?? "",
       phone:       editTech.phone ?? "",
       skills:      Array.isArray(editTech.skills) ? editTech.skills.join(", ") : "",
       status:      editTech.status ?? "available",
-      color:       editTech.color ?? "#f97316",
+      color:       editTech.color ?? "#2563eb",
       hourlyRate:  String(editTech.hourlyRate ?? "25.00"),
     } : undefined,
   });
@@ -87,7 +87,7 @@ export function TechniciansPage() {
         phone: data.phone,
         skills,
         status: data.status as any,
-        color: data.color || "#f97316",
+        color: data.color || "#2563eb",
       });
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/technicians"] }); closeDialog(); },
@@ -126,7 +126,7 @@ export function TechniciansPage() {
       phone: tech.phone ?? "",
       skills: (tech.skills ?? []).join(", "),
       status: tech.status,
-      color: tech.color ?? "#f97316",
+      color: tech.color ?? "#2563eb",
       hourlyRate: String(tech.hourlyRate ?? "25.00"),
     });
     setDialogOpen(true);
@@ -159,7 +159,7 @@ export function TechniciansPage() {
         {([
           { label: "Total",     value: technicians.length, icon: Users,     bg: "bg-muted-foreground/40" },
           { label: "Available", value: available,           icon: UserCheck, bg: "bg-emerald-500" },
-          { label: "Active",    value: active,              icon: UserCheck, bg: "bg-orange-500" },
+          { label: "Active",    value: active,              icon: UserCheck, bg: "bg-blue-500" },
           { label: "Inactive",  value: inactive,            icon: XCircle,   bg: "bg-muted-foreground/40" },
         ] as { label: string; value: number; icon: LucideIcon; bg: string }[]).map(({ label, value, icon, bg }) => (
           <div key={label} className="bg-card rounded-lg border border-border p-4 flex items-start gap-3" style={{ boxShadow: "var(--shadow-low)" }}>
@@ -175,7 +175,7 @@ export function TechniciansPage() {
       </div>
 
       <div className="flex justify-end">
-        <Button onClick={openCreate} className="bg-orange-500 hover:bg-orange-600 text-white">
+        <Button onClick={openCreate} className="bg-blue-500 hover:bg-blue-700 text-white">
           <Icon icon={Plus} size={16} className="mr-2" />
           Add Technician
         </Button>
@@ -201,7 +201,7 @@ export function TechniciansPage() {
                   <div className="flex items-center gap-3">
                     <div
                       className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold"
-                      style={{ backgroundColor: tech.color ?? "#f97316" }}
+                      style={{ backgroundColor: tech.color ?? "#2563eb" }}
                     >
                       {(tech.user?.name ?? "T")[0].toUpperCase()}
                     </div>

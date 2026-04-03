@@ -68,7 +68,7 @@ function InlineText({
 const PRIORITY_COLORS: Record<string, string> = {
   low:       "bg-muted/50 text-muted-foreground",
   normal:    "bg-blue-100 text-blue-700",
-  high:      "bg-orange-100 text-orange-700",
+  high:      "bg-blue-100 text-blue-800",
   emergency: "bg-red-200 text-red-800 font-bold",
 };
 
@@ -254,7 +254,7 @@ export function JobEditDialog({ job, technicians, customers, onClose, onSave }: 
 
         <div className="px-5 pb-5 pb-safe">
           <Button
-            className="w-full h-10 bg-orange-500 hover:bg-orange-600 text-white font-semibold"
+            className="w-full h-10 bg-blue-500 hover:bg-blue-700 text-white font-semibold"
             onClick={() => { onClose(); navigate(`/job/${job.id}`); }}
           >
             <Icon icon={ExternalLink} size={16} className="mr-2" /> Open Full Details

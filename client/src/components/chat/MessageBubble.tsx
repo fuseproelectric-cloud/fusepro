@@ -17,7 +17,7 @@ export function getInitials(name: string) {
 export const ROLE_COLORS: Record<string, string> = {
   admin:      "bg-blue-500",
   dispatcher: "bg-purple-500",
-  technician: "bg-orange-500",
+  technician: "bg-blue-500",
 };
 
 export const ROLE_LABELS: Record<string, string> = {
@@ -97,7 +97,7 @@ export function MessageBubble({ msg, isOwn, groupedWithPrev, groupedWithNext }: 
         <div className={cn(
           "px-3 py-2 text-sm leading-relaxed whitespace-pre-wrap break-words",
           isOwn
-            ? "bg-orange-500 text-white rounded-2xl rounded-br-sm"
+            ? "bg-blue-500 text-white rounded-2xl rounded-br-sm"
             : "bg-card border border-border text-foreground rounded-2xl rounded-bl-sm shadow-sm"
         )}>
           {msg.content}

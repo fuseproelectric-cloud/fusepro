@@ -6,16 +6,16 @@
 @tailwind utilities;
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   DESIGN TOKENS — mapped to Atlantis foundation + orange brand override
+   DESIGN TOKENS — mapped to Atlantis foundation + blue brand override
    ───────────────────────────────────────────────────────────────────────────── */
 :root {
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
-  /* ── Brand / Primary (orange) — FusePro override of Atlantis blue ── */
-  --primary: 25 95% 53%;
+  /* ── Brand / Primary (blue) ── */
+  --primary: 221 83% 53%;
   --primary-foreground: 0 0% 100%;
-  --primary-hover: 25 95% 46%;
+  --primary-hover: 221 83% 46%;
 
   /* ── Neutrals ── */
   --background: 220 14% 96%;
@@ -33,15 +33,15 @@
   --muted: 220 13% 94%;
   --muted-foreground: 215 16% 47%;
 
-  --accent: 25 100% 95%;
-  --accent-foreground: 25 95% 35%;
+  --accent: 214 100% 95%;
+  --accent-foreground: 221 83% 35%;
 
   --destructive: 4 74% 49%;
   --destructive-foreground: 0 0% 100%;
 
   --border: 220 13% 88%;
   --input: 220 13% 88%;
-  --ring: 25 95% 53%;
+  --ring: 221 83% 53%;
 
   /* ── Sidebar ── */
   --sidebar: 222 39% 12%;
@@ -71,7 +71,7 @@
   --timing-slow:  300ms;
 
   /* ── Chart ── */
-  --chart-1: 25 95% 53%;
+  --chart-1: 221 83% 53%;
   --chart-2: 221 83% 53%;
   --chart-3: 142 76% 36%;
   --chart-4: 4 74% 49%;
@@ -397,7 +397,7 @@
 .status-badge--overdue  { background-color: hsl(4 74% 92%);  color: hsl(4 74% 38%); }
 .status-badge--rejected { background-color: hsl(4 74% 92%);  color: hsl(4 74% 38%); }
 .status-badge--pending  { background-color: hsl(38 90% 90%); color: hsl(38 90% 35%); }
-.status-badge--active   { background-color: hsl(25 95% 92%); color: hsl(25 95% 35%); }
+.status-badge--active   { background-color: hsl(214 100% 92%); color: hsl(221 83% 35%); }
 .status-badge--converted{ background-color: hsl(271 50% 92%); color: hsl(271 81% 40%); }
 .status-badge--archived { background-color: hsl(var(--muted) / 0.6); color: hsl(var(--muted-foreground)); }
 
@@ -454,17 +454,17 @@
   align-items: center;
   justify-content: center;
   border-radius: 9999px;
-  background-color: hsl(25 100% 94%);
-  color: hsl(25 95% 40%);
+  background-color: hsl(214 100% 94%);
+  color: hsl(221 83% 40%);
   font-weight: 600;
   font-size: 0.75rem;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   ATLANTIS COMPONENT OVERRIDES — orange brand
+   ATLANTIS COMPONENT OVERRIDES — blue brand
    ───────────────────────────────────────────────────────────────────────────── */
 
-/* Override Atlantis "work" (green) to our orange brand */
+/* Override Atlantis "work" (green) to our blue brand */
 [class*="button"][class*="base_primary"],
 [class*="button_primary"],
 [class*="Button_button__"],
@@ -501,12 +501,12 @@
   text-decoration: none;
 }
 .sidebar-dark .nav-item.active {
-  background-color: hsl(25 95% 53% / 0.12);
+  background-color: hsl(221 83% 53% / 0.12);
   color: hsl(25, 95%, 45%);
   font-weight: 600;
 }
 .sidebar-dark .nav-item.active:hover {
-  background-color: hsl(25 95% 53% / 0.18);
+  background-color: hsl(221 83% 53% / 0.18);
 }
 .sidebar-dark .sidebar-section-label {
   font-size: 10px;

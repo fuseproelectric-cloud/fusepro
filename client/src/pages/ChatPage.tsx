@@ -171,8 +171,8 @@ function JobChatView({ jobId, currentUserId, onBack }: { jobId: number; currentU
         <button onClick={onBack} className="lg:hidden p-1 -ml-1 text-muted-foreground hover:text-foreground">
           <Icon icon={ArrowLeft} size={16} />
         </button>
-        <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
-          <Icon icon={Briefcase} size={16} className="text-orange-500" />
+        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+          <Icon icon={Briefcase} size={16} className="text-blue-500" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-foreground truncate">{jobData?.title ?? `Job #${jobId}`}</p>
@@ -225,7 +225,7 @@ function JobChatView({ jobId, currentUserId, onBack }: { jobId: number; currentU
             onClick={handleSend}
             disabled={!content.trim() || sending}
             size="icon"
-            className="h-9 w-9 rounded-full bg-orange-500 hover:bg-orange-600 flex-shrink-0 mb-0.5"
+            className="h-9 w-9 rounded-full bg-blue-500 hover:bg-blue-700 flex-shrink-0 mb-0.5"
           >
             {sending ? <Icon icon={Loader2} size={16} className="animate-spin" /> : <Icon icon={Send} size={16} />}
           </Button>
@@ -380,7 +380,7 @@ function ConversationView({ convId, currentUserId, onBack }: { convId: number; c
             placeholder="Message... (Enter to send)" rows={1}
             className="flex-1 resize-none min-h-[40px] max-h-32 text-sm py-2 rounded-xl" />
           <Button onClick={handleSend} disabled={!content.trim() || sending} size="icon"
-            className="h-9 w-9 rounded-full bg-orange-500 hover:bg-orange-600 flex-shrink-0 mb-0.5">
+            className="h-9 w-9 rounded-full bg-blue-500 hover:bg-blue-700 flex-shrink-0 mb-0.5">
             {sending ? <Icon icon={Loader2} size={16} className="animate-spin" /> : <Icon icon={Send} size={16} />}
           </Button>
         </div>
@@ -409,7 +409,7 @@ function ConversationList({ conversations, jobChats, activeKey, currentUserId, o
     return (
       <button onClick={() => onSelectConv(conv.id)} className={cn(
         "flex w-full items-center gap-3 px-3 py-2.5 rounded-xl text-left transition",
-        active ? "bg-orange-500 text-white" : "hover:bg-muted/40"
+        active ? "bg-blue-500 text-white" : "hover:bg-muted/40"
       )}>
         <div className={cn("w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden text-muted-foreground", active ? "bg-card/20 text-white" : "bg-muted/40")}>
           {convIcon(conv, currentUserId)}
@@ -435,10 +435,10 @@ function ConversationList({ conversations, jobChats, activeKey, currentUserId, o
     return (
       <button onClick={() => onSelectJob(job.jobId)} className={cn(
         "flex w-full items-center gap-3 px-3 py-2.5 rounded-xl text-left transition",
-        active ? "bg-orange-500 text-white" : "hover:bg-muted/40"
+        active ? "bg-blue-500 text-white" : "hover:bg-muted/40"
       )}>
-        <div className={cn("w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 relative", active ? "bg-card/20" : "bg-orange-50")}>
-          <Icon icon={Briefcase} size={16} className={cn(active ? "text-white" : "text-orange-500")} />
+        <div className={cn("w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 relative", active ? "bg-card/20" : "bg-blue-50")}>
+          <Icon icon={Briefcase} size={16} className={cn(active ? "text-white" : "text-blue-500")} />
           <span className={cn("absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-card", STATUS_DOT[job.status] ?? "bg-muted/60")} />
         </div>
         <div className="flex-1 min-w-0">
@@ -478,7 +478,7 @@ function ConversationList({ conversations, jobChats, activeKey, currentUserId, o
     <div className="flex flex-col h-full bg-card border-r border-border">
       <div className="flex items-center justify-between px-4 py-3 border-b">
         <h2 className="text-sm font-bold text-foreground">Messages</h2>
-        <button onClick={onNew} className="w-7 h-7 rounded-full bg-orange-500 text-white flex items-center justify-center hover:bg-orange-600 transition">
+        <button onClick={onNew} className="w-7 h-7 rounded-full bg-blue-500 text-white flex items-center justify-center hover:bg-blue-700 transition">
           <Icon icon={Plus} size={14} />
         </button>
       </div>
@@ -493,14 +493,14 @@ function ConversationList({ conversations, jobChats, activeKey, currentUserId, o
         )}
 
         <Section label="Groups" open={groupsOpen} onToggle={() => setGroupsOpen(o => !o)}
-          extra={<button onClick={onNew} className="text-[10px] text-orange-500 hover:text-orange-600 font-medium">+ New</button>}>
+          extra={<button onClick={onNew} className="text-[10px] text-blue-500 hover:text-blue-700 font-medium">+ New</button>}>
           {groups.length === 0
             ? <p className="text-xs text-muted-foreground px-3 py-2">No groups yet</p>
             : groups.map(c => <ConvRow key={c.id} conv={c} />)}
         </Section>
 
         <Section label="Direct Messages" open={dmsOpen} onToggle={() => setDmsOpen(o => !o)}
-          extra={<button onClick={onNew} className="text-[10px] text-orange-500 hover:text-orange-600 font-medium">+ New</button>}>
+          extra={<button onClick={onNew} className="text-[10px] text-blue-500 hover:text-blue-700 font-medium">+ New</button>}>
           {dms.length === 0
             ? <p className="text-xs text-muted-foreground px-3 py-2">No direct messages</p>
             : dms.map(c => <ConvRow key={c.id} conv={c} />)}
@@ -620,7 +620,7 @@ export function ChatPage() {
             <Icon icon={MessageSquare} size={48} className="text-muted-foreground/30 mb-3" />
             <p className="text-sm font-medium text-muted-foreground">Select a conversation</p>
             <p className="text-xs text-muted-foreground mt-1">or start a new one</p>
-            <Button className="mt-4 bg-orange-500 hover:bg-orange-600 text-white" onClick={() => setNewDialogOpen(true)}>
+            <Button className="mt-4 bg-blue-500 hover:bg-blue-700 text-white" onClick={() => setNewDialogOpen(true)}>
               <Icon icon={Plus} size={16} className="mr-1.5" /> New Message
             </Button>
           </div>

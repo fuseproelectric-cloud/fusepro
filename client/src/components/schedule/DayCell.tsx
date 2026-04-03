@@ -45,7 +45,7 @@ const LABEL_TICKS    = HOUR_TICKS.filter(t =>
 const STATUS_DOT: Record<string, string> = {
   pending:     "bg-gray-400",
   assigned:    "bg-blue-500",
-  in_progress: "bg-orange-500 animate-pulse",
+  in_progress: "bg-blue-500 animate-pulse",
   completed:   "bg-green-500",
   cancelled:   "bg-gray-300",
 };
@@ -228,7 +228,7 @@ export const DayCell = memo(function DayCell({
       className={cn(
         "relative border-r border-border last:border-r-0 group/cell overflow-hidden",
         "transition-colors duration-100",
-        isToday && "bg-orange-500/[0.04]",
+        isToday && "bg-blue-500/[0.04]",
         isOver  && "bg-blue-50/60 dark:bg-blue-950/25",
       )}
       style={{ height: CELL_H }}
@@ -337,7 +337,7 @@ export const DayCell = memo(function DayCell({
           "absolute bottom-0.5 right-0.5 w-4 h-4 rounded z-20",
           "bg-muted/70 text-muted-foreground flex items-center justify-center",
           "opacity-0 group-hover/cell:opacity-100",
-          "hover:bg-orange-500 hover:text-white",
+          "hover:bg-blue-500 hover:text-white",
           "transition-all duration-100",
         )}
         onClick={e => { e.stopPropagation(); onAddJob(technicianId); }}

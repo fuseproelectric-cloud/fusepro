@@ -70,7 +70,7 @@ function MetricCard({ label, value, sub, icon, color }: {
   icon: LucideIcon;
   color: "green" | "blue" | "red" | "orange";
 }) {
-  const bg = { green: "bg-emerald-500", blue: "bg-blue-500", red: "bg-red-500", orange: "bg-orange-500" }[color];
+  const bg = { green: "bg-emerald-500", blue: "bg-blue-500", red: "bg-red-500", orange: "bg-blue-500" }[color];
   return (
     <div className="bg-card rounded-lg border border-border p-4 flex items-start gap-3" style={{ boxShadow: "var(--shadow-low)" }}>
       <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 text-white", bg)}>
@@ -216,7 +216,7 @@ export function EstimatesPage() {
             <SelectItem value="archived">Archived</SelectItem>
           </SelectContent>
         </Select>
-        <Button onClick={openCreate} className="ml-auto h-8 bg-orange-500 hover:bg-orange-600 text-white text-sm px-3">
+        <Button onClick={openCreate} className="ml-auto h-8 bg-blue-500 hover:bg-blue-700 text-white text-sm px-3">
           <Icon icon={Plus} size={14} className="mr-1.5" /> New Estimate
         </Button>
       </div>
@@ -230,7 +230,7 @@ export function EstimatesPage() {
             <div className="empty-state__icon"><Icon icon={FileText} size={28} /></div>
             <p className="empty-state__title">{search || filterStatus !== "all" ? "No estimates match your filters" : "No estimates yet"}</p>
             <p className="empty-state__desc">{search || filterStatus !== "all" ? "Try a different search or clear the filters." : "Create your first estimate."}</p>
-            {!search && filterStatus === "all" && <Button onClick={openCreate} className="mt-4 h-8 bg-orange-500 hover:bg-orange-600 text-white text-sm"><Icon icon={Plus} size={14} className="mr-1.5" />New Estimate</Button>}
+            {!search && filterStatus === "all" && <Button onClick={openCreate} className="mt-4 h-8 bg-blue-500 hover:bg-blue-700 text-white text-sm"><Icon icon={Plus} size={14} className="mr-1.5" />New Estimate</Button>}
           </div>
         ) : (
           <>
@@ -316,7 +316,7 @@ export function EstimatesPage() {
                 <Button type="button" variant="outline" size="sm" className="h-8" onClick={closeDialog}>Cancel</Button>
                 <Button
                   size="sm"
-                  className="h-8 bg-orange-500 hover:bg-orange-600 text-white min-w-[120px]"
+                  className="h-8 bg-blue-500 hover:bg-blue-700 text-white min-w-[120px]"
                   disabled={createMutation.isPending || updateMutation.isPending}
                   onClick={handleSubmit(onSubmit)}
                 >

@@ -29,7 +29,7 @@ const ENTRY_COLORS: Record<string, string> = {
   day_end:      "#64748b",
   travel_start: "#3b82f6",
   travel_end:   "#06b6d4",
-  work_start:   "#f97316",
+  work_start:   "#2563eb",
   work_end:     "#10b981",
   break_start:  "#eab308",
   break_end:    "#eab308",

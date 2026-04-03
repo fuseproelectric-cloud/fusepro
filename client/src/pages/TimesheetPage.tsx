@@ -256,7 +256,7 @@ function WorkCompleteModal({
 
             <div className="flex gap-2">
               <button
-                className="flex-1 h-10 rounded-lg border-2 border-dashed border-border hover:border-orange-400 text-muted-foreground hover:text-orange-500 transition-colors flex items-center justify-center gap-2 text-sm"
+                className="flex-1 h-10 rounded-lg border-2 border-dashed border-border hover:border-blue-400 text-muted-foreground hover:text-blue-500 transition-colors flex items-center justify-center gap-2 text-sm"
                 onClick={() => {
                   if (fileRef.current) {
                     fileRef.current.removeAttribute("capture");
@@ -267,7 +267,7 @@ function WorkCompleteModal({
                 <Icon icon={ImagePlus} size={16} /> Gallery
               </button>
               <button
-                className="flex-1 h-10 rounded-lg border-2 border-dashed border-border hover:border-orange-400 text-muted-foreground hover:text-orange-500 transition-colors flex items-center justify-center gap-2 text-sm"
+                className="flex-1 h-10 rounded-lg border-2 border-dashed border-border hover:border-blue-400 text-muted-foreground hover:text-blue-500 transition-colors flex items-center justify-center gap-2 text-sm"
                 onClick={() => {
                   if (fileRef.current) {
                     fileRef.current.setAttribute("capture", "environment");
@@ -335,7 +335,7 @@ function JobTimesheetCard({
     <div className={cn(
       "rounded-lg border p-4 space-y-3",
       isDone ? "bg-green-50 border-green-200" :
-      nextAction === "work_end" ? "bg-orange-50 border-orange-300" :
+      nextAction === "work_end" ? "bg-blue-50 border-blue-300" :
       "bg-card border-border"
     )}>
       <div className="flex items-start justify-between gap-2">
@@ -356,7 +356,7 @@ function JobTimesheetCard({
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           {workMins > 0 && (
-            <span className="text-xs font-semibold text-orange-600 bg-orange-100 px-2 py-0.5 rounded-full">
+            <span className="text-xs font-semibold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">
               {formatDuration(workMins)}
             </span>
           )}
@@ -403,7 +403,7 @@ function JobTimesheetCard({
             "w-full h-10 font-semibold text-sm",
             nextAction === "travel_start" ? "bg-blue-500 hover:bg-blue-600 text-white" :
             nextAction === "travel_end" ? "bg-cyan-500 hover:bg-cyan-600 text-white" :
-            nextAction === "work_start" ? "bg-orange-500 hover:bg-orange-600 text-white" :
+            nextAction === "work_start" ? "bg-blue-500 hover:bg-blue-700 text-white" :
             "bg-green-600 hover:bg-green-700 text-white"
           )}
           onClick={() => {
@@ -520,7 +520,7 @@ function EarningsTab() {
           {PERIODS.map(p => (
             <button key={p.key} onClick={() => setPeriod(p.key)}
               className={cn("px-3 py-1.5 rounded-lg text-sm font-medium transition",
-                period === p.key ? "bg-orange-500 text-white" : "bg-muted/40 text-muted-foreground hover:bg-muted/60"
+                period === p.key ? "bg-blue-500 text-white" : "bg-muted/40 text-muted-foreground hover:bg-muted/60"
               )}>{p.label}</button>
           ))}
         </div>
@@ -528,16 +528,16 @@ function EarningsTab() {
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs text-muted-foreground">From</span>
             <input type="date" value={customFrom} max={customTo} onChange={e => setCustomFrom(e.target.value)}
-              className="border border-border rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-orange-400" />
+              className="border border-border rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400" />
             <span className="text-xs text-muted-foreground">To</span>
             <input type="date" value={customTo} min={customFrom} max={new Date().toISOString().slice(0,10)} onChange={e => setCustomTo(e.target.value)}
-              className="border border-border rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-orange-400" />
+              className="border border-border rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400" />
           </div>
         )}
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-12"><Icon icon={Loader2} size={24} className="animate-spin text-orange-500" /></div>
+        <div className="flex justify-center py-12"><Icon icon={Loader2} size={24} className="animate-spin text-blue-500" /></div>
       ) : !data ? null : (
         <>
           {/* Summary cards */}
@@ -550,13 +550,13 @@ function EarningsTab() {
               <p className="text-2xl font-bold text-green-700">${data.totalEarnings.toFixed(2)}</p>
               <p className="text-xs text-green-600 mt-0.5">@ ${data.hourlyRate}/hr</p>
             </div>
-            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <div className="flex items-center gap-2 mb-1">
-                <Icon icon={Clock} size={16} className="text-orange-600" />
-                <p className="text-xs font-medium text-orange-700">Work Hours</p>
+                <Icon icon={Clock} size={16} className="text-blue-700" />
+                <p className="text-xs font-medium text-blue-800">Work Hours</p>
               </div>
-              <p className="text-2xl font-bold text-orange-700">{formatDuration(data.totalWorkMinutes)}</p>
-              <p className="text-xs text-orange-600 mt-0.5">{data.jobs.length} jobs</p>
+              <p className="text-2xl font-bold text-blue-800">{formatDuration(data.totalWorkMinutes)}</p>
+              <p className="text-xs text-blue-700 mt-0.5">{data.jobs.length} jobs</p>
             </div>
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <div className="flex items-center gap-2 mb-1">
@@ -580,7 +580,7 @@ function EarningsTab() {
           {data.daily.length > 0 && (
             <div className="bg-card rounded-lg border border-border p-4">
               <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-                <Icon icon={TrendingUp} size={16} className="text-orange-500" />Daily Earnings
+                <Icon icon={TrendingUp} size={16} className="text-blue-500" />Daily Earnings
               </h3>
               <div className="flex items-end gap-1 h-24 overflow-x-auto pb-1">
                 {data.daily.map(d => {
@@ -589,9 +589,9 @@ function EarningsTab() {
                   return (
                     <div key={d.date} className="flex flex-col items-center gap-1 flex-shrink-0" style={{ minWidth: 32 }}>
                       <span className="text-[9px] text-muted-foreground whitespace-nowrap">{d.earnings > 0 ? `$${d.earnings.toFixed(0)}` : ""}</span>
-                      <div className="w-6 bg-orange-100 rounded-t relative" style={{ height: 56 }}>
+                      <div className="w-6 bg-blue-100 rounded-t relative" style={{ height: 56 }}>
                         <div
-                          className="absolute bottom-0 w-full bg-orange-500 rounded-t transition-all"
+                          className="absolute bottom-0 w-full bg-blue-500 rounded-t transition-all"
                           style={{ height: `${pct}%`, minHeight: d.earnings > 0 ? 2 : 0 }}
                         />
                       </div>
@@ -609,7 +609,7 @@ function EarningsTab() {
           {data.jobs.length > 0 && (
             <div className="bg-card rounded-lg border border-border p-4">
               <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-                <Icon icon={Briefcase} size={16} className="text-orange-500" />Hours by Job
+                <Icon icon={Briefcase} size={16} className="text-blue-500" />Hours by Job
               </h3>
               <div className="space-y-2">
                 {data.jobs.map((job, i) => {
@@ -624,7 +624,7 @@ function EarningsTab() {
                         <p className="text-sm font-bold text-green-700 flex-shrink-0">${job.earnings.toFixed(2)}</p>
                       </div>
                       <div className="w-full bg-muted/40 rounded-full h-1.5">
-                        <div className="bg-orange-400 h-1.5 rounded-full" style={{ width: `${pct}%` }} />
+                        <div className="bg-blue-400 h-1.5 rounded-full" style={{ width: `${pct}%` }} />
                       </div>
                     </div>
                   );
@@ -778,12 +778,12 @@ export function TimesheetPage() {
         <div className="flex rounded-lg border border-border bg-card overflow-hidden">
           <button onClick={() => setTab("timesheet")}
             className={cn("px-4 py-2 text-sm font-medium flex items-center gap-1.5 transition",
-              tab === "timesheet" ? "bg-orange-500 text-white" : "text-muted-foreground hover:bg-muted/30")}>
+              tab === "timesheet" ? "bg-blue-500 text-white" : "text-muted-foreground hover:bg-muted/30")}>
             <Icon icon={Clock} size={14} />Hours
           </button>
           <button onClick={() => setTab("earnings")}
             className={cn("px-4 py-2 text-sm font-medium flex items-center gap-1.5 transition",
-              tab === "earnings" ? "bg-orange-500 text-white" : "text-muted-foreground hover:bg-muted/30")}>
+              tab === "earnings" ? "bg-blue-500 text-white" : "text-muted-foreground hover:bg-muted/30")}>
             <Icon icon={DollarSign} size={14} />Earnings
           </button>
         </div>
@@ -797,7 +797,7 @@ export function TimesheetPage() {
       <div className="bg-card rounded-lg border border-border p-4 space-y-4">
         {isLoading ? (
           <div className="flex justify-center py-6">
-            <Icon icon={Loader2} size={24} className="animate-spin text-orange-500" />
+            <Icon icon={Loader2} size={24} className="animate-spin text-blue-500" />
           </div>
         ) : !status?.isDayStarted ? (
           <div className="text-center py-4">
@@ -807,7 +807,7 @@ export function TimesheetPage() {
               GPS location will be recorded automatically
             </p>
             <Button
-              className="bg-orange-500 hover:bg-orange-600 text-white h-14 text-lg px-10 font-bold rounded-lg"
+              className="bg-blue-500 hover:bg-blue-700 text-white h-14 text-lg px-10 font-bold rounded-lg"
               onClick={() => createEntry("day_start")}
               disabled={isBusy}
             >
@@ -837,9 +837,9 @@ export function TimesheetPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-orange-50 rounded-lg px-3 py-2">
-                <p className="text-xs text-orange-600 font-medium">Work Time</p>
-                <p className="text-lg font-bold text-orange-700">
+              <div className="bg-blue-50 rounded-lg px-3 py-2">
+                <p className="text-xs text-blue-700 font-medium">Work Time</p>
+                <p className="text-lg font-bold text-blue-800">
                   <RunningWorkTimer
                     totalWorkMinutes={status.totalWorkMinutesToday}
                     lastWorkStartTs={isCurrentlyWorking && lastWorkStart ? lastWorkStart.timestamp : null}
@@ -893,7 +893,7 @@ export function TimesheetPage() {
       {status?.isDayStarted && (
         <div className="space-y-3">
           <h2 className="font-semibold text-foreground flex items-center gap-2">
-            <Icon icon={Wrench} size={16} className="text-orange-500" />
+            <Icon icon={Wrench} size={16} className="text-blue-500" />
             Today's Jobs
             {todayJobs.length > 0 && (
               <span className="text-xs font-normal text-muted-foreground">({todayJobs.length})</span>
@@ -971,7 +971,7 @@ export function TimesheetPage() {
               {!isCurrentWeek && (
                 <button
                   onClick={() => { setWeekOffset(0); setSelectedDay(null); }}
-                  className="text-xs font-medium text-orange-500 hover:text-orange-600 px-1"
+                  className="text-xs font-medium text-blue-500 hover:text-blue-700 px-1"
                 >
                   Today
                 </button>
@@ -999,9 +999,9 @@ export function TimesheetPage() {
                   onClick={() => setSelectedDay(isSelected ? null : day.date)}
                   className={cn(
                     "rounded-lg p-2 text-center transition-all relative",
-                    isSelected ? "ring-2 ring-orange-500 ring-offset-1" : "",
+                    isSelected ? "ring-2 ring-blue-500 ring-offset-1" : "",
                     isApproved ? "bg-green-50 border border-green-300"
-                    : isToday ? "bg-orange-100 border border-orange-300"
+                    : isToday ? "bg-blue-100 border border-blue-300"
                     : hasDayEnd ? "bg-green-50 border border-green-200"
                     : hasData ? "bg-muted/30 border border-border hover:border-border"
                     : "bg-muted/30 border border-border opacity-50"
@@ -1012,11 +1012,11 @@ export function TimesheetPage() {
                       <Icon icon={CheckCircle2} size={10} className="text-green-500" />
                     </div>
                   )}
-                  <p className={cn("text-xs font-semibold", isApproved ? "text-green-700" : isToday ? "text-orange-700" : "text-muted-foreground")}>
+                  <p className={cn("text-xs font-semibold", isApproved ? "text-green-700" : isToday ? "text-blue-800" : "text-muted-foreground")}>
                     {fmtDayAbbr(dayDate)}
                   </p>
                   {hasData ? (
-                    <p className={cn("text-xs mt-1 font-medium leading-tight", isApproved ? "text-green-700" : isToday ? "text-orange-800" : "text-foreground")}>
+                    <p className={cn("text-xs mt-1 font-medium leading-tight", isApproved ? "text-green-700" : isToday ? "text-blue-900" : "text-foreground")}>
                       {formatDuration(day.workMinutes)}
                     </p>
                   ) : (
@@ -1058,7 +1058,7 @@ export function TimesheetPage() {
                 </div>
                 {(day.workMinutes > 0 || day.travelMinutes > 0) && (
                   <div className="flex gap-3 mt-2 pt-2 border-t border-border">
-                    {day.workMinutes > 0 && <span className="text-[10px] text-orange-600 font-medium">Work: {formatDuration(day.workMinutes)}</span>}
+                    {day.workMinutes > 0 && <span className="text-[10px] text-blue-700 font-medium">Work: {formatDuration(day.workMinutes)}</span>}
                     {day.travelMinutes > 0 && <span className="text-[10px] text-blue-600 font-medium">Travel: {formatDuration(day.travelMinutes)}</span>}
                   </div>
                 )}

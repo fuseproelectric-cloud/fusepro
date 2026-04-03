@@ -75,7 +75,7 @@ export function DashboardPage() {
 
       {/* KPI Bar */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        <MetricCard label="Total Jobs"       value={stats?.totalJobs ?? 0}                       icon={Briefcase}    accent="bg-orange-500"  loading={isLoading} />
+        <MetricCard label="Total Jobs"       value={stats?.totalJobs ?? 0}                       icon={Briefcase}    accent="bg-blue-500"  loading={isLoading} />
         <MetricCard label="In Progress"      value={stats?.inProgressJobs ?? 0}                  icon={Clock}        accent="bg-blue-500"    loading={isLoading} />
         <MetricCard label="Completed Today"  value={stats?.completedJobsToday ?? 0}              icon={CheckCircle2} accent="bg-green-500"   loading={isLoading} />
         <MetricCard label="Pending"          value={stats?.pendingJobs ?? 0}                     icon={FileText}     accent="bg-amber-500"   loading={isLoading} />
@@ -123,7 +123,7 @@ export function DashboardPage() {
                       fontSize: 12,
                     }}
                   />
-                  <Bar dataKey="count" fill="#f97316" radius={[4, 4, 0, 0]} maxBarSize={48} />
+                  <Bar dataKey="count" fill="#2563eb" radius={[4, 4, 0, 0]} maxBarSize={48} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
@@ -147,12 +147,12 @@ export function DashboardPage() {
               { href: "/invoices",   label: "New Invoice" },
             ].map(({ href, label }) => (
               <Link key={href} href={href}>
-                <div className="flex items-center justify-between px-3 py-2.5 rounded-lg border border-border hover:bg-muted/30 hover:border-orange-200 transition-colors cursor-pointer group">
+                <div className="flex items-center justify-between px-3 py-2.5 rounded-lg border border-border hover:bg-muted/30 hover:border-blue-200 transition-colors cursor-pointer group">
                   <span className="flex items-center gap-2 text-sm font-medium text-foreground">
-                    <Icon icon={Plus} size={14} className="text-orange-500" />
+                    <Icon icon={Plus} size={14} className="text-blue-500" />
                     {label}
                   </span>
-                  <Icon icon={ArrowRight} size={14} className="text-muted-foreground group-hover:text-orange-500 transition-colors" />
+                  <Icon icon={ArrowRight} size={14} className="text-muted-foreground group-hover:text-blue-500 transition-colors" />
                 </div>
               </Link>
             ))}
@@ -231,7 +231,7 @@ export function DashboardPage() {
             <Icon icon={Briefcase} size={32} className="mx-auto text-muted-foreground/30 mb-2" />
             <p className="text-sm text-muted-foreground">No jobs yet.</p>
             <Link href="/jobs">
-              <span className="text-sm text-orange-500 hover:text-orange-600 cursor-pointer mt-1 inline-block">
+              <span className="text-sm text-blue-500 hover:text-blue-700 cursor-pointer mt-1 inline-block">
                 Create your first job →
               </span>
             </Link>

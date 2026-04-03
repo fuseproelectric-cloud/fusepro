@@ -67,7 +67,7 @@ function getInitials(name: string) {
 }
 function avatarColor(name: string) {
   const palette = [
-    "bg-orange-100 text-orange-600",
+    "bg-blue-100 text-blue-700",
     "bg-blue-100 text-blue-600",
     "bg-emerald-100 text-emerald-600",
     "bg-purple-100 text-purple-600",
@@ -89,7 +89,7 @@ function MetricCard({ label, value, sub, icon, accent = false }: {
     <div className="bg-card rounded-lg border border-border p-4 flex items-start gap-3" style={{ boxShadow: "var(--shadow-low)" }}>
       <div className={cn(
         "w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5",
-        accent ? "bg-orange-500" : "bg-muted"
+        accent ? "bg-blue-500" : "bg-muted"
       )}>
         <Icon icon={icon} size={17} className={cn(accent ? "text-white" : "text-muted-foreground")} />
       </div>
@@ -294,7 +294,7 @@ export function CustomersPage() {
 
         <Button
           onClick={openCreate}
-          className="ml-auto h-8 bg-orange-500 hover:bg-orange-600 text-white text-sm px-3"
+          className="ml-auto h-8 bg-blue-500 hover:bg-blue-700 text-white text-sm px-3"
         >
           <Icon icon={Plus} size={14} className="mr-1.5" />
           New Client
@@ -321,7 +321,7 @@ export function CustomersPage() {
                 : "Add your first client to get started."}
             </p>
             {!search && tagFilter === "all" && (
-              <Button onClick={openCreate} className="mt-4 h-8 bg-orange-500 hover:bg-orange-600 text-white text-sm">
+              <Button onClick={openCreate} className="mt-4 h-8 bg-blue-500 hover:bg-blue-700 text-white text-sm">
                 <Icon icon={Plus} size={14} className="mr-1.5" /> New Client
               </Button>
             )}
@@ -363,7 +363,7 @@ export function CustomersPage() {
                               <div className="flex items-center gap-1.5">
                                 <span className="font-semibold text-foreground truncate">{c.name}</span>
                                 {activeJob && (
-                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-orange-100 text-orange-700">
+                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 text-blue-800">
                                     Active
                                   </span>
                                 )}
@@ -415,7 +415,7 @@ export function CustomersPage() {
                         <TableCell align="center">
                           <span className={cn(
                             "inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-semibold",
-                            jobs.length > 0 ? "bg-orange-100 text-orange-700" : "bg-muted text-muted-foreground"
+                            jobs.length > 0 ? "bg-blue-100 text-blue-800" : "bg-muted text-muted-foreground"
                           )}>
                             {jobs.length}
                           </span>

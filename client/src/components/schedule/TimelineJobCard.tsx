@@ -10,7 +10,7 @@ import type { UseResizeJobReturn } from "@/hooks/useResizeJob";
 const STATUS_BG: Record<string, string> = {
   pending:     "opacity-70",
   assigned:    "",
-  in_progress: "ring-1 ring-inset ring-orange-400/50",
+  in_progress: "ring-1 ring-inset ring-blue-400/50",
   completed:   "opacity-50 saturate-50",
   cancelled:   "opacity-25",
 };
@@ -18,7 +18,7 @@ const STATUS_BG: Record<string, string> = {
 const STATUS_DOT: Record<string, string> = {
   pending:     "bg-gray-400",
   assigned:    "bg-blue-500",
-  in_progress: "bg-orange-500 animate-pulse",
+  in_progress: "bg-blue-500 animate-pulse",
   completed:   "bg-green-500",
   cancelled:   "bg-gray-300",
 };

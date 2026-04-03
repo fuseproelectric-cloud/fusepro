@@ -20,7 +20,7 @@ export function ForbiddenPage() {
         </p>
         <Link
           href={homeRoute}
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-orange-500 hover:text-orange-600 transition-colors"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-500 hover:text-blue-700 transition-colors"
         >
           ← Go back home
         </Link>

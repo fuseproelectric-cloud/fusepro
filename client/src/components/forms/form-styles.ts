@@ -26,6 +26,6 @@ export const F = {
   sectionTitle:"text-[11px] font-bold uppercase tracking-widest text-muted-foreground",
 
   // Кнопка Submit
-  submit:      "bg-orange-500 hover:bg-orange-600 text-white font-semibold",
+  submit:      "bg-blue-500 hover:bg-blue-700 text-white font-semibold",
   submitDanger:"bg-red-500 hover:bg-red-600 text-white font-semibold",
 } as const;

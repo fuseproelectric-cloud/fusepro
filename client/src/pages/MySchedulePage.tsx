@@ -29,7 +29,7 @@ type Job = {
 const STATUS_COLORS: Record<string, string> = {
   pending: "bg-muted/40 text-foreground",
   assigned: "bg-blue-100 text-blue-700",
-  in_progress: "bg-orange-100 text-orange-700",
+  in_progress: "bg-blue-100 text-blue-800",
   completed: "bg-green-100 text-green-700",
   cancelled: "bg-red-100 text-red-700",
 };
@@ -92,7 +92,7 @@ export function MySchedulePage() {
         <Button
           variant="ghost"
           size="sm"
-          className="text-orange-500 hover:text-orange-600 -mt-2"
+          className="text-blue-500 hover:text-blue-700 -mt-2"
           onClick={() => setWeekOffset(0)}
         >
           Back to current week
@@ -101,7 +101,7 @@ export function MySchedulePage() {
 
       {isLoading ? (
         <div className="flex justify-center py-12">
-          <Icon icon={Loader2} size={24} className="animate-spin text-orange-500" />
+          <Icon icon={Loader2} size={24} className="animate-spin text-blue-500" />
         </div>
       ) : (
         <div className="space-y-3">
@@ -114,7 +114,7 @@ export function MySchedulePage() {
                 className={cn(
                   "rounded-xl border p-3",
                   today
-                    ? "border-orange-300 bg-orange-50"
+                    ? "border-blue-300 bg-blue-50"
                     : "border-border bg-card"
                 )}
               >
@@ -124,18 +124,18 @@ export function MySchedulePage() {
                     className={cn(
                       "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
                       today
-                        ? "bg-orange-500 text-white"
+                        ? "bg-blue-500 text-white"
                         : "bg-muted/40 text-foreground"
                     )}
                   >
                     {format(day, "d")}
                   </div>
                   <div>
-                    <p className={cn("text-sm font-semibold", today ? "text-orange-700" : "text-foreground")}>
+                    <p className={cn("text-sm font-semibold", today ? "text-blue-800" : "text-foreground")}>
                       {format(day, "EEEE")}
                     </p>
                     {today && (
-                      <p className="text-xs text-orange-500">Today</p>
+                      <p className="text-xs text-blue-500">Today</p>
                     )}
                   </div>
                   {dayJobs.length > 0 && (
@@ -153,7 +153,7 @@ export function MySchedulePage() {
                     {dayJobs.map((job) => (
                       <button
                         key={job.id}
-                        className="w-full text-left bg-card border border-border rounded-lg px-3 py-2 hover:border-orange-300 transition-colors"
+                        className="w-full text-left bg-card border border-border rounded-lg px-3 py-2 hover:border-blue-300 transition-colors"
                         onClick={() => navigate(`/job/${job.id}`)}
                       >
                         <div className="flex items-center justify-between gap-2">

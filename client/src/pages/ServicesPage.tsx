@@ -131,7 +131,7 @@ export function ServicesPage() {
       {/* Metrics */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="bg-card rounded-lg border border-border p-4 flex items-start gap-3" style={{ boxShadow: "var(--shadow-low)" }}>
-          <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 text-white bg-orange-500">
+          <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 text-white bg-blue-500">
             <Icon icon={Tag} size={17} />
           </div>
           <div>
@@ -170,7 +170,7 @@ export function ServicesPage() {
 
       {/* Toolbar */}
       <div className="flex items-center justify-end">
-        <Button onClick={openCreate} className="h-8 bg-orange-500 hover:bg-orange-600 text-white text-sm px-3">
+        <Button onClick={openCreate} className="h-8 bg-blue-500 hover:bg-blue-700 text-white text-sm px-3">
           <Icon icon={Plus} size={14} className="mr-1.5" /> New Service
         </Button>
       </div>
@@ -185,7 +185,7 @@ export function ServicesPage() {
               <div className="empty-state__icon"><Icon icon={Tag} size={28} /></div>
               <p className="empty-state__title">No services yet</p>
               <p className="empty-state__desc">Add services to use as line items in estimates and invoices.</p>
-              <Button onClick={openCreate} className="mt-4 h-8 bg-orange-500 hover:bg-orange-600 text-white text-sm"><Icon icon={Plus} size={14} className="mr-1.5" />New Service</Button>
+              <Button onClick={openCreate} className="mt-4 h-8 bg-blue-500 hover:bg-blue-700 text-white text-sm"><Icon icon={Plus} size={14} className="mr-1.5" />New Service</Button>
             </div>
           ) : (
             <TableContainer>

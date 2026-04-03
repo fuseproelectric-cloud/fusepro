@@ -70,7 +70,7 @@ export function JobsToolbar({
         </SelectContent>
       </Select>
 
-      <Button onClick={onOpenCreate} className="ml-auto h-8 bg-orange-500 hover:bg-orange-600 text-white text-sm px-3">
+      <Button onClick={onOpenCreate} className="ml-auto h-8 bg-blue-500 hover:bg-blue-700 text-white text-sm px-3">
         <Icon icon={Plus} size={14} className="mr-1.5" /> New Job
       </Button>
     </div>

@@ -47,7 +47,7 @@ export function JobsDialogs({
               </Button>
               <Button
                 size="sm"
-                className="h-8 bg-orange-500 hover:bg-orange-600 text-white min-w-[100px]"
+                className="h-8 bg-blue-500 hover:bg-blue-700 text-white min-w-[100px]"
                 disabled={isSaving}
                 onClick={form.handleSubmit(onSubmit)}
               >

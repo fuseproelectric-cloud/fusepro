@@ -132,10 +132,10 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
                     >
                       {/* Icon */}
                       <div className={`mt-0.5 w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                        isMsg ? "bg-orange-100" : "bg-muted/40"
+                        isMsg ? "bg-blue-100" : "bg-muted/40"
                       }`}>
                         {isMsg
-                          ? <Icon icon={MessageSquare} size={16} className="text-orange-500" />
+                          ? <Icon icon={MessageSquare} size={16} className="text-blue-500" />
                           : <span className="text-base leading-none">{getActivityIcon(notif.entryType ?? "")}</span>
                         }
                       </div>
@@ -166,7 +166,7 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="flex items-center gap-2 px-2">
                 <Avatar className="w-7 h-7">
-                  <AvatarFallback className="bg-orange-100 text-orange-600 text-xs font-semibold">
+                  <AvatarFallback className="bg-blue-100 text-blue-700 text-xs font-semibold">
                     {user ? getInitials(user.name) : "?"}
                   </AvatarFallback>
                 </Avatar>
@@ -181,7 +181,7 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
                 <div>
                   <p className="font-medium truncate">{user?.name}</p>
                   <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
-                  <p className="text-xs text-orange-400 capitalize mt-0.5">{user?.role}</p>
+                  <p className="text-xs text-blue-400 capitalize mt-0.5">{user?.role}</p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />

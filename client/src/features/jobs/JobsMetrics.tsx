@@ -11,7 +11,7 @@ function MetricCard({ label, value, icon, color }: {
 }) {
   const bg = {
     yellow: "bg-amber-500",
-    orange: "bg-orange-500",
+    orange: "bg-blue-500",
     green:  "bg-emerald-500",
     slate:  "bg-muted-foreground/40",
   }[color];

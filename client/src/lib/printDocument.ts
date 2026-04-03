@@ -153,11 +153,11 @@ export function buildDocumentHtml(options: PrintDocumentOptions): string {
       align-items: flex-start;
       padding-bottom: 20px;
       margin-bottom: 24px;
-      border-bottom: 3px solid #f97316;
+      border-bottom: 3px solid #2563eb;
     }
     .co-block { display: flex; flex-direction: column; gap: 2px; }
     .logo { max-height: 60px; max-width: 180px; object-fit: contain; margin-bottom: 8px; display: block; }
-    .co-wordmark { font-size: 24px; font-weight: 900; color: #f97316; letter-spacing: -0.5px; margin-bottom: 6px; }
+    .co-wordmark { font-size: 24px; font-weight: 900; color: #2563eb; letter-spacing: -0.5px; margin-bottom: 6px; }
     .co-name-under { font-size: 12.5px; font-weight: 700; color: #222; margin-bottom: 4px; }
     .co-detail { font-size: 11px; color: #666; line-height: 1.8; }
 
@@ -209,7 +209,7 @@ export function buildDocumentHtml(options: PrintDocumentOptions): string {
     /* ── Line items ── */
     .items { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
     .items thead tr {
-      background: #f97316;
+      background: #2563eb;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
@@ -238,15 +238,15 @@ export function buildDocumentHtml(options: PrintDocumentOptions): string {
     .totals .sep td { border-top: 1px solid #e5e7eb; padding-top: 10px; }
     .totals .grand td {
       font-size: 17px; font-weight: 800; color: #111;
-      border-top: 2px solid #f97316; padding-top: 10px;
+      border-top: 2px solid #2563eb; padding-top: 10px;
     }
 
     /* ── Notes ── */
     .notes {
-      background: #fff8f5; border-left: 4px solid #f97316;
+      background: #fff8f5; border-left: 4px solid #2563eb;
       padding: 12px 16px; border-radius: 4px; margin-bottom: 32px;
     }
-    .notes-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #f97316; margin-bottom: 6px; }
+    .notes-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #2563eb; margin-bottom: 6px; }
     .notes p { font-size: 12px; color: #444; line-height: 1.7; }
 
     /* ── Footer ── */

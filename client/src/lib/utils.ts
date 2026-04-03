@@ -30,7 +30,7 @@ export function formatDateTime(date: string | Date | null | undefined): string {
 export const STATUS_COLORS: Record<string, string> = {
   pending: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
   assigned: "bg-blue-500/20 text-blue-400 border-blue-500/30",
-  in_progress: "bg-orange-500/20 text-orange-400 border-orange-500/30",
+  in_progress: "bg-blue-500/20 text-blue-400 border-blue-500/30",
   completed: "bg-green-500/20 text-green-400 border-green-500/30",
   cancelled: "bg-gray-500/20 text-gray-400 border-gray-500/30",
   draft: "bg-gray-500/20 text-gray-400 border-gray-500/30",
@@ -40,7 +40,7 @@ export const STATUS_COLORS: Record<string, string> = {
   paid: "bg-green-500/20 text-green-400 border-green-500/30",
   overdue: "bg-red-500/20 text-red-400 border-red-500/30",
   available: "bg-green-500/20 text-green-400 border-green-500/30",
-  on_job: "bg-orange-500/20 text-orange-400 border-orange-500/30",
+  on_job: "bg-blue-500/20 text-blue-400 border-blue-500/30",
   inactive: "bg-gray-500/20 text-gray-400 border-gray-500/30",
   active: "bg-green-500/20 text-green-400 border-green-500/30",
   // Estimate statuses (Jobber-style)
@@ -56,7 +56,7 @@ export const STATUS_COLORS: Record<string, string> = {
 export const PRIORITY_COLORS: Record<string, string> = {
   low: "bg-gray-500/20 text-gray-400 border-gray-500/30",
   normal: "bg-blue-500/20 text-blue-400 border-blue-500/30",
-  high: "bg-orange-500/20 text-orange-400 border-orange-500/30",
+  high: "bg-blue-500/20 text-blue-400 border-blue-500/30",
   emergency: "bg-red-500/20 text-red-400 border-red-500/30",
 };
 

@@ -102,8 +102,8 @@ const ENTRY_CONFIG: Record<string, { label: string; emoji: string; color: string
   day_end:      { label: "Day Ended",      emoji: "⏹",  color: "text-muted-foreground",  bg: "bg-muted/30 border-border" },
   travel_start: { label: "Travel Started", emoji: "🚗", color: "text-blue-700",   bg: "bg-blue-50 border-blue-200" },
   travel_end:   { label: "Arrived",        emoji: "📍", color: "text-blue-600",   bg: "bg-blue-50 border-blue-100" },
-  work_start:   { label: "Work Started",   emoji: "🔧", color: "text-orange-700", bg: "bg-orange-50 border-orange-200" },
-  work_end:     { label: "Work Completed", emoji: "✅", color: "text-orange-600", bg: "bg-orange-50 border-orange-100" },
+  work_start:   { label: "Work Started",   emoji: "🔧", color: "text-blue-800", bg: "bg-blue-50 border-blue-200" },
+  work_end:     { label: "Work Completed", emoji: "✅", color: "text-blue-700", bg: "bg-blue-50 border-blue-100" },
   break_start:  { label: "Break Started",  emoji: "☕", color: "text-yellow-700", bg: "bg-yellow-50 border-yellow-200" },
   break_end:    { label: "Break Ended",    emoji: "▶",  color: "text-yellow-600", bg: "bg-yellow-50 border-yellow-100" },
 };
@@ -151,7 +151,7 @@ function EditEntryModal({ entry, onClose, onSave }: {
           <Button type="button" variant="outline" className="flex-1 h-9" onClick={onClose}>Cancel</Button>
           <Button
             type="button"
-            className="flex-1 h-9 bg-orange-500 hover:bg-orange-600 text-white font-medium"
+            className="flex-1 h-9 bg-blue-500 hover:bg-blue-700 text-white font-medium"
             onClick={() => onSave(entry.id, { entryType, timestamp: new Date(datetime).toISOString(), notes })}
           >
             Save
@@ -181,7 +181,7 @@ function EntryRow({ entry, onEdit, onDelete }: {
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
           {onEdit && (
             <button onClick={() => onEdit(entry)}
-              className="w-6 h-6 flex items-center justify-center rounded text-muted-foreground/60 hover:text-orange-500 hover:bg-card/70">
+              className="w-6 h-6 flex items-center justify-center rounded text-muted-foreground/60 hover:text-blue-500 hover:bg-card/70">
               <Icon icon={Pencil} size={12} />
             </button>
           )}
@@ -240,11 +240,11 @@ function EntryGroups({ entries, onEdit, onDelete }: {
         return (
           <div key={jobId ?? "no-job"} className="space-y-1.5">
             <div className="flex items-center gap-2">
-              <Icon icon={Briefcase} size={14} className="text-orange-500 flex-shrink-0" />
+              <Icon icon={Briefcase} size={14} className="text-blue-500 flex-shrink-0" />
               <p className="text-xs font-semibold text-muted-foreground flex-1 truncate">{group.title ?? (jobId ? `Job #${jobId}` : "Unlinked")}</p>
               <div className="flex items-center gap-2 flex-shrink-0">
                 {travelMins > 0 && <span className="text-xs text-blue-500 font-medium flex items-center gap-1"><Icon icon={Car} size={12} />{fmtMins(travelMins)}</span>}
-                {workMins > 0 && <span className="text-xs text-orange-500 font-medium flex items-center gap-1"><Icon icon={Clock} size={12} />{fmtMins(workMins)}</span>}
+                {workMins > 0 && <span className="text-xs text-blue-500 font-medium flex items-center gap-1"><Icon icon={Clock} size={12} />{fmtMins(workMins)}</span>}
               </div>
             </div>
             {group.entries.map(e => <EntryRow key={e.id} entry={e} onEdit={onEdit} onDelete={onDelete} />)}
@@ -288,14 +288,14 @@ function TechCard({ tech, now }: { tech: TechTimesheetData; now: Date }) {
             </div>
           </div>
           <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
-            <Badge variant="outline" className="text-xs border-orange-200 text-orange-600 bg-orange-50"><Icon icon={Briefcase} size={12} className="mr-1" />{fmtMins(stats.workMinutes)}</Badge>
+            <Badge variant="outline" className="text-xs border-blue-200 text-blue-700 bg-blue-50"><Icon icon={Briefcase} size={12} className="mr-1" />{fmtMins(stats.workMinutes)}</Badge>
             <Badge variant="outline" className="text-xs border-blue-200 text-blue-600 bg-blue-50"><Icon icon={Car} size={12} className="mr-1" />{fmtMins(stats.travelMinutes)}</Badge>
             {stats.jobsCount > 0 && <Badge variant="outline" className="text-xs border-border text-muted-foreground">{stats.jobsCount} job{stats.jobsCount !== 1 ? "s" : ""}</Badge>}
           </div>
           <button className="ml-2 text-muted-foreground/60">{expanded ? <Icon icon={ChevronUp} size={16} /> : <Icon icon={ChevronDown} size={16} />}</button>
         </div>
         <div className="flex sm:hidden items-center gap-2 mt-2 flex-wrap">
-          <Badge variant="outline" className="text-xs border-orange-200 text-orange-600 bg-orange-50"><Icon icon={Briefcase} size={12} className="mr-1" /> {fmtMins(stats.workMinutes)}</Badge>
+          <Badge variant="outline" className="text-xs border-blue-200 text-blue-700 bg-blue-50"><Icon icon={Briefcase} size={12} className="mr-1" /> {fmtMins(stats.workMinutes)}</Badge>
           <Badge variant="outline" className="text-xs border-blue-200 text-blue-600 bg-blue-50"><Icon icon={Car} size={12} className="mr-1" /> {fmtMins(stats.travelMinutes)}</Badge>
         </div>
       </CardHeader>
@@ -373,7 +373,7 @@ function ReportView({ from, to }: { from: string; to: string }) {
     URL.revokeObjectURL(a.href);
   }
 
-  if (isLoading) return <div className="flex justify-center py-12"><div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" /></div>;
+  if (isLoading) return <div className="flex justify-center py-12"><div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" /></div>;
 
   return (
     <div className="space-y-4">
@@ -382,7 +382,7 @@ function ReportView({ from, to }: { from: string; to: string }) {
         <Card className="bg-card border-border">
           <CardContent className="p-4">
             <p className="text-xs text-muted-foreground">Total Work</p>
-            <p className="text-2xl font-bold text-orange-600">{fmtMins(totals.work)}</p>
+            <p className="text-2xl font-bold text-blue-700">{fmtMins(totals.work)}</p>
             <p className="text-xs text-muted-foreground/60">{rows.length} technicians</p>
           </CardContent>
         </Card>
@@ -438,7 +438,7 @@ function ReportRow({ tech, stats, byDate, now }: { tech: TechTimesheetData; stat
         </div>
         <span className="flex-1 text-sm font-medium text-foreground">{tech.technicianName}</span>
         <div className="flex items-center gap-3 text-xs text-muted-foreground flex-shrink-0">
-          <span className="text-orange-600 font-semibold">{fmtMins(stats.workMinutes)}</span>
+          <span className="text-blue-700 font-semibold">{fmtMins(stats.workMinutes)}</span>
           <span className="text-blue-600">{fmtMins(stats.travelMinutes)} travel</span>
           <span>{dates.length} day{dates.length !== 1 ? "s" : ""}</span>
         </div>
@@ -459,7 +459,7 @@ function ReportRow({ tech, stats, byDate, now }: { tech: TechTimesheetData; stat
                   <div className="flex items-center gap-3 text-xs text-muted-foreground">
                     {clockIn && <span>In: {formatTime(clockIn.timestamp)}</span>}
                     {clockOut && <span>Out: {formatTime(clockOut.timestamp)}</span>}
-                    <span className="text-orange-600 font-medium">{fmtMins(ds.workMinutes)}</span>
+                    <span className="text-blue-700 font-medium">{fmtMins(ds.workMinutes)}</span>
                     {ds.travelMinutes > 0 && <span className="text-blue-600">{fmtMins(ds.travelMinutes)} travel</span>}
                     {jobIds.size > 0 && <span>{jobIds.size} job{jobIds.size !== 1 ? "s" : ""}</span>}
                   </div>
@@ -575,7 +575,7 @@ function WeeklyView({ techs }: { techs: TechSummary[] }) {
             value={techSearch}
             onChange={e => setTechSearch(e.target.value)}
             placeholder="Search..."
-            className="w-full pl-8 pr-3 h-8 text-sm border border-border rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-400 bg-card"
+            className="w-full pl-8 pr-3 h-8 text-sm border border-border rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 bg-card"
           />
         </div>
         <div className="space-y-1 max-h-[70vh] overflow-y-auto">
@@ -586,7 +586,7 @@ function WeeklyView({ techs }: { techs: TechSummary[] }) {
               className={cn(
                 "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-sm transition",
                 selectedTechId === t.technicianId
-                  ? "bg-orange-50 border border-orange-300 text-orange-800 font-medium"
+                  ? "bg-blue-50 border border-blue-300 text-blue-900 font-medium"
                   : "bg-card border border-border text-muted-foreground hover:bg-muted/30"
               )}
             >
@@ -633,7 +633,7 @@ function WeeklyView({ techs }: { techs: TechSummary[] }) {
                   </button>
                   {!isCurrentWeek && (
                     <button onClick={() => { setWeekOffset(0); setSelectedDay(null); }}
-                      className="text-xs font-medium text-orange-500 px-1">Today</button>
+                      className="text-xs font-medium text-blue-500 px-1">Today</button>
                   )}
                   <button onClick={() => { setWeekOffset(w => Math.min(0, w + 1)); setSelectedDay(null); }}
                     disabled={isCurrentWeek}
@@ -667,9 +667,9 @@ function WeeklyView({ techs }: { techs: TechSummary[] }) {
                             : undefined}
                           className={cn(
                             "rounded-lg p-2 text-center transition-all relative",
-                            isSelected ? "ring-2 ring-orange-500 ring-offset-1" : "",
+                            isSelected ? "ring-2 ring-blue-500 ring-offset-1" : "",
                             isApproved ? "bg-green-50 border border-green-300" :
-                            isToday ? "bg-orange-100 border border-orange-300" :
+                            isToday ? "bg-blue-100 border border-blue-300" :
                             hasDayEnd ? "bg-muted/30 border border-border hover:border-border" :
                             hasData ? "bg-muted/30 border border-border hover:border-border" :
                             "bg-muted/30 border border-border/60 opacity-40"
@@ -681,12 +681,12 @@ function WeeklyView({ techs }: { techs: TechSummary[] }) {
                             </div>
                           )}
                           <p className={cn("text-xs font-semibold",
-                            isToday ? "text-orange-700" : isApproved ? "text-green-700" : "text-muted-foreground")}>
+                            isToday ? "text-blue-800" : isApproved ? "text-green-700" : "text-muted-foreground")}>
                             {fmtDayAbbr(day.date)}
                           </p>
                           {hasData ? (
                             <p className={cn("text-xs mt-1 font-medium leading-tight",
-                              isApproved ? "text-green-700" : isToday ? "text-orange-800" : "text-muted-foreground")}>
+                              isApproved ? "text-green-700" : isToday ? "text-blue-900" : "text-muted-foreground")}>
                               {fmtMins(day.workMinutes)}
                             </p>
                           ) : (
@@ -704,7 +704,7 @@ function WeeklyView({ techs }: { techs: TechSummary[] }) {
                         <div>
                           <p className="text-xs font-semibold text-muted-foreground">{fmtDateLabel(selectedDay)}</p>
                           <div className="flex items-center gap-3 mt-0.5 text-[10px] text-muted-foreground">
-                            {selectedDayData.workMinutes > 0 && <span className="text-orange-600 font-medium">Work: {fmtMins(selectedDayData.workMinutes)}</span>}
+                            {selectedDayData.workMinutes > 0 && <span className="text-blue-700 font-medium">Work: {fmtMins(selectedDayData.workMinutes)}</span>}
                             {selectedDayData.travelMinutes > 0 && <span className="text-blue-600 font-medium">Travel: {fmtMins(selectedDayData.travelMinutes)}</span>}
                             {selectedDayData.jobsCount > 0 && <span>{selectedDayData.jobsCount} job{selectedDayData.jobsCount !== 1 ? "s" : ""}</span>}
                           </div>
@@ -730,7 +730,7 @@ function WeeklyView({ techs }: { techs: TechSummary[] }) {
                             <button
                               onClick={() => approveMutation.mutate({ date: selectedDay })}
                               disabled={approveMutation.isPending}
-                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-orange-500 text-white hover:bg-orange-600 transition"
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-500 text-white hover:bg-blue-700 transition"
                             >
                               <Icon icon={CheckCircle2} size={14} />
                               Approve Day
@@ -857,19 +857,19 @@ export function AdminTimesheetPage() {
           <div className="flex rounded-lg border border-border bg-card overflow-hidden">
             <button
               onClick={() => setMode("daily")}
-              className={cn("px-3 py-1.5 text-sm font-medium transition", mode === "daily" ? "bg-orange-500 text-white" : "text-muted-foreground hover:bg-muted/30")}
+              className={cn("px-3 py-1.5 text-sm font-medium transition", mode === "daily" ? "bg-blue-500 text-white" : "text-muted-foreground hover:bg-muted/30")}
             >
               Daily
             </button>
             <button
               onClick={() => setMode("weekly")}
-              className={cn("px-3 py-1.5 text-sm font-medium transition", mode === "weekly" ? "bg-orange-500 text-white" : "text-muted-foreground hover:bg-muted/30")}
+              className={cn("px-3 py-1.5 text-sm font-medium transition", mode === "weekly" ? "bg-blue-500 text-white" : "text-muted-foreground hover:bg-muted/30")}
             >
               Weekly
             </button>
             <button
               onClick={() => setMode("report")}
-              className={cn("px-3 py-1.5 text-sm font-medium transition", mode === "report" ? "bg-orange-500 text-white" : "text-muted-foreground hover:bg-muted/30")}
+              className={cn("px-3 py-1.5 text-sm font-medium transition", mode === "report" ? "bg-blue-500 text-white" : "text-muted-foreground hover:bg-muted/30")}
             >
               Report
             </button>
@@ -883,13 +883,13 @@ export function AdminTimesheetPage() {
               <div className="flex items-center gap-2 px-3 py-1.5 bg-card border border-border rounded-lg">
                 <Icon icon={Calendar} size={16} className="text-muted-foreground/60" />
                 <span className="text-sm font-medium text-muted-foreground">{formatDateLabel(selectedDate)}</span>
-                {isToday && <Badge className="bg-orange-500 text-white text-xs ml-1">Today</Badge>}
+                {isToday && <Badge className="bg-blue-500 text-white text-xs ml-1">Today</Badge>}
               </div>
               <Button variant="outline" size="icon" onClick={() => shiftDay(1)} disabled={isToday}>
                 <Icon icon={ChevronRight} size={16} />
               </Button>
               {!isToday && (
-                <Button variant="ghost" size="sm" onClick={() => setSelectedDate(new Date())} className="text-orange-500">Today</Button>
+                <Button variant="ghost" size="sm" onClick={() => setSelectedDate(new Date())} className="text-blue-500">Today</Button>
               )}
             </>
           )}
@@ -900,10 +900,10 @@ export function AdminTimesheetPage() {
                 <Icon icon={Calendar} size={14} className="text-muted-foreground/60" />
                 <span className="text-xs text-muted-foreground/60">From</span>
                 <input type="date" value={reportFrom} max={reportTo} onChange={e => setReportFrom(e.target.value)}
-                  className="border border-border rounded-lg px-2 py-1 text-sm text-muted-foreground bg-card focus:outline-none focus:ring-1 focus:ring-orange-400" />
+                  className="border border-border rounded-lg px-2 py-1 text-sm text-muted-foreground bg-card focus:outline-none focus:ring-1 focus:ring-blue-400" />
                 <span className="text-xs text-muted-foreground/60">To</span>
                 <input type="date" value={reportTo} min={reportFrom} max={today} onChange={e => setReportTo(e.target.value)}
-                  className="border border-border rounded-lg px-2 py-1 text-sm text-muted-foreground bg-card focus:outline-none focus:ring-1 focus:ring-orange-400" />
+                  className="border border-border rounded-lg px-2 py-1 text-sm text-muted-foreground bg-card focus:outline-none focus:ring-1 focus:ring-blue-400" />
               </div>
             </div>
           )}
@@ -921,7 +921,7 @@ export function AdminTimesheetPage() {
                 />
               </div>
               <Button variant="outline" size="sm" onClick={() => setMapVisible(v => !v)}
-                className={cn(mapVisible ? "border-orange-300 text-orange-600 bg-orange-50" : "")}>
+                className={cn(mapVisible ? "border-blue-300 text-blue-700 bg-blue-50" : "")}>
                 <Icon icon={MapPin} size={14} className="mr-1.5" />
                 {mapVisible ? "Hide Map" : "Show Map"}
               </Button>
@@ -937,7 +937,7 @@ export function AdminTimesheetPage() {
       {mode === "weekly" && (
         allTechsData && allTechsData.length > 0
           ? <WeeklyView techs={allTechsData} />
-          : <div className="flex justify-center py-12"><div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" /></div>
+          : <div className="flex justify-center py-12"><div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" /></div>
       )}
 
       {/* Daily mode */}
@@ -946,7 +946,7 @@ export function AdminTimesheetPage() {
           {!isLoading && filteredData && (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <Card className="bg-card border-border"><CardContent className="p-4"><p className="text-xs text-muted-foreground">Active Today</p><p className="text-2xl font-bold text-green-600">{totals.active}</p><p className="text-xs text-muted-foreground/60">of {filteredData.length} techs</p></CardContent></Card>
-              <Card className="bg-card border-border"><CardContent className="p-4"><p className="text-xs text-muted-foreground">Total Work</p><p className="text-2xl font-bold text-orange-600">{fmtMins(totals.totalWork)}</p><p className="text-xs text-muted-foreground/60">all technicians</p></CardContent></Card>
+              <Card className="bg-card border-border"><CardContent className="p-4"><p className="text-xs text-muted-foreground">Total Work</p><p className="text-2xl font-bold text-blue-700">{fmtMins(totals.totalWork)}</p><p className="text-xs text-muted-foreground/60">all technicians</p></CardContent></Card>
               <Card className="bg-card border-border"><CardContent className="p-4"><p className="text-xs text-muted-foreground">Total Travel</p><p className="text-2xl font-bold text-blue-600">{fmtMins(totals.totalTravel)}</p><p className="text-xs text-muted-foreground/60">drive time</p></CardContent></Card>
               <Card className="bg-card border-border"><CardContent className="p-4"><p className="text-xs text-muted-foreground">Jobs Worked</p><p className="text-2xl font-bold text-muted-foreground">{totals.totalJobs}</p><p className="text-xs text-muted-foreground/60">unique jobs</p></CardContent></Card>
             </div>
@@ -956,7 +956,7 @@ export function AdminTimesheetPage() {
             <Card className="bg-card border-border">
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-semibold flex items-center gap-2"><Icon icon={MapPin} size={16} className="text-orange-500" />Technician Locations</CardTitle>
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2"><Icon icon={MapPin} size={16} className="text-blue-500" />Technician Locations</CardTitle>
                   {!isLoading && !hasGpsData && <span className="text-xs text-muted-foreground/60">No GPS data for this day</span>}
                   {hasGpsData && <span className="text-xs text-muted-foreground/60">{mapTracks.length} tech{mapTracks.length !== 1 ? "s" : ""} tracked</span>}
                 </div>
@@ -980,7 +980,7 @@ export function AdminTimesheetPage() {
                   <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-muted-foreground/40 flex-shrink-0" />Day End</span>
                   <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-blue-500 flex-shrink-0" />Travel Start</span>
                   <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-cyan-500 flex-shrink-0" />Arrived</span>
-                  <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-orange-500 flex-shrink-0" />Work Start</span>
+                  <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-blue-500 flex-shrink-0" />Work Start</span>
                   <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-emerald-500 flex-shrink-0" />Work End</span>
                   <span className="flex items-center gap-1 ml-auto text-muted-foreground/60">Dashed line = travel route</span>
                 </div>

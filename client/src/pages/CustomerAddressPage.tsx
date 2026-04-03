@@ -63,7 +63,7 @@ type InvoiceForm = z.infer<typeof invoiceSchema>;
 const JOB_STATUS: Record<string, { label: string; cls: string }> = {
   pending:     { label: "Pending",     cls: "bg-slate-100 text-slate-600" },
   assigned:    { label: "Assigned",    cls: "bg-blue-100 text-blue-700" },
-  in_progress: { label: "In Progress", cls: "bg-orange-100 text-orange-700" },
+  in_progress: { label: "In Progress", cls: "bg-blue-100 text-blue-800" },
   scheduled:   { label: "Scheduled",   cls: "bg-purple-100 text-purple-700" },
   completed:   { label: "Completed",   cls: "bg-emerald-100 text-emerald-700" },
   cancelled:   { label: "Cancelled",   cls: "bg-red-100 text-red-600" },
@@ -276,7 +276,7 @@ export function CustomerAddressPage() {
             <div className="flex items-start gap-4">
               <div className={cn(
                 "w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0",
-                addr.isPrimary ? "bg-orange-500" : "bg-muted"
+                addr.isPrimary ? "bg-blue-500" : "bg-muted"
               )}>
                 <Icon icon={MapPin} size={28} className={cn(addr.isPrimary ? "text-white" : "text-muted-foreground")} />
               </div>
@@ -284,7 +284,7 @@ export function CustomerAddressPage() {
                 <div className="flex items-center gap-2 flex-wrap">
                   <h1 className="text-2xl font-bold text-foreground">{addr.label}</h1>
                   {addr.isPrimary && (
-                    <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-bold bg-orange-100 text-orange-700">
+                    <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800">
                       Primary
                     </span>
                   )}
@@ -294,7 +294,7 @@ export function CustomerAddressPage() {
                     href={`https://maps.google.com/?q=${encodeURIComponent([addr.address, addr.city, addr.state, addr.zip].filter(Boolean).join(", "))}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block mt-1 hover:text-orange-500 transition-colors"
+                    className="block mt-1 hover:text-blue-500 transition-colors"
                   >
                     {addr.address && <p className="text-base text-muted-foreground">{addr.address}</p>}
                     {(addr.city || addr.state || addr.zip) && (
@@ -329,7 +329,7 @@ export function CustomerAddressPage() {
         <div className="border-t border-border bg-muted/30 px-6 py-3 flex flex-wrap items-center gap-4 rounded-b-xl">
           <button
             onClick={() => navigate(`/customers/${customerId}`)}
-            className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-orange-500 transition-colors"
+            className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-blue-500 transition-colors"
           >
             <Icon icon={Building2} size={16} className="text-muted-foreground" />
             {customer.name}
@@ -352,7 +352,7 @@ export function CustomerAddressPage() {
       <div className="flex flex-wrap gap-2">
         <Button
           type="button"
-          className="bg-orange-500 hover:bg-orange-600 text-white h-9"
+          className="bg-blue-500 hover:bg-blue-700 text-white h-9"
           onClick={() => setJobOpen(true)}
         >
           <Icon icon={Plus} size={14} className="mr-1.5" /> New Job
@@ -386,7 +386,7 @@ export function CustomerAddressPage() {
             <TabsTrigger
               key={tab.val}
               value={tab.val}
-              className="h-8 px-4 rounded-md text-sm font-medium data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-none text-muted-foreground gap-2"
+              className="h-8 px-4 rounded-md text-sm font-medium data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-none text-muted-foreground gap-2"
             >
               <Icon icon={tab.icon} size={14} />
               {tab.label}
@@ -409,7 +409,7 @@ export function CustomerAddressPage() {
               <button
                 type="button"
                 onClick={() => setJobOpen(true)}
-                className="text-xs text-orange-500 hover:text-orange-600 font-medium"
+                className="text-xs text-blue-500 hover:text-blue-700 font-medium"
               >
                 + Create first job
               </button>
@@ -462,7 +462,7 @@ export function CustomerAddressPage() {
               <button
                 type="button"
                 onClick={() => setEstOpen(true)}
-                className="text-xs text-orange-500 hover:text-orange-600 font-medium"
+                className="text-xs text-blue-500 hover:text-blue-700 font-medium"
               >
                 + Create first estimate
               </button>
@@ -507,7 +507,7 @@ export function CustomerAddressPage() {
               <button
                 type="button"
                 onClick={() => setInvOpen(true)}
-                className="text-xs text-orange-500 hover:text-orange-600 font-medium"
+                className="text-xs text-blue-500 hover:text-blue-700 font-medium"
               >
                 + Create first invoice
               </button>
@@ -543,9 +543,9 @@ export function CustomerAddressPage() {
                 </tbody>
               </table>
               {outstanding > 0 && (
-                <div className="px-4 py-2.5 border-t border-border bg-orange-50/50 flex items-center justify-between">
+                <div className="px-4 py-2.5 border-t border-border bg-blue-50/50 flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">Outstanding balance</span>
-                  <span className="text-sm font-bold text-orange-600">${outstanding.toFixed(2)}</span>
+                  <span className="text-sm font-bold text-blue-700">${outstanding.toFixed(2)}</span>
                 </div>
               )}
             </div>
@@ -612,7 +612,7 @@ export function CustomerAddressPage() {
           </form>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setEstOpen(false)} className="h-9">Cancel</Button>
-            <Button type="submit" form="new-est-form" className="h-9 bg-orange-500 hover:bg-orange-600 text-white" disabled={createEstMutation.isPending}>
+            <Button type="submit" form="new-est-form" className="h-9 bg-blue-500 hover:bg-blue-700 text-white" disabled={createEstMutation.isPending}>
               {createEstMutation.isPending ? "Creating…" : "Create Estimate"}
             </Button>
           </DialogFooter>
@@ -661,7 +661,7 @@ export function CustomerAddressPage() {
           </form>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setInvOpen(false)} className="h-9">Cancel</Button>
-            <Button type="submit" form="new-inv-form" className="h-9 bg-orange-500 hover:bg-orange-600 text-white" disabled={createInvMutation.isPending}>
+            <Button type="submit" form="new-inv-form" className="h-9 bg-blue-500 hover:bg-blue-700 text-white" disabled={createInvMutation.isPending}>
               {createInvMutation.isPending ? "Creating…" : "Create Invoice"}
             </Button>
           </DialogFooter>
@@ -720,13 +720,13 @@ export function CustomerAddressPage() {
               <Input {...form.register("notes")} placeholder="Gate code, floor, unit…" className="h-9" />
             </div>
             <label className="flex items-center gap-2 text-sm cursor-pointer">
-              <input type="checkbox" {...form.register("isPrimary")} className="w-4 h-4 accent-orange-500" />
+              <input type="checkbox" {...form.register("isPrimary")} className="w-4 h-4 accent-blue-500" />
               Set as primary address
             </label>
           </form>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setEditOpen(false)} className="h-9">Cancel</Button>
-            <Button type="submit" form="addr-edit-form" className="h-9 bg-orange-500 hover:bg-orange-600 text-white" disabled={updateMutation.isPending}>
+            <Button type="submit" form="addr-edit-form" className="h-9 bg-blue-500 hover:bg-blue-700 text-white" disabled={updateMutation.isPending}>
               {updateMutation.isPending ? "Saving…" : "Save Changes"}
             </Button>
           </DialogFooter>

@@ -81,7 +81,7 @@ export function ScheduleGrid({
                       key={dateStrCT(day)}
                       className={cn(
                         "text-center py-2 border-r border-border last:border-r-0",
-                        isToday && "bg-orange-500/10",
+                        isToday && "bg-blue-500/10",
                       )}
                     >
                       <p className="text-[10px] text-muted-foreground uppercase tracking-wide">
@@ -89,7 +89,7 @@ export function ScheduleGrid({
                       </p>
                       <p className={cn(
                         "text-base font-bold leading-tight",
-                        isToday ? "text-orange-500" : "text-foreground",
+                        isToday ? "text-blue-500" : "text-foreground",
                       )}>
                         {format(day, "d")}
                       </p>

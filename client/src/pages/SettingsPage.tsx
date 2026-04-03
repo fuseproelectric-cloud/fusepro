@@ -193,7 +193,7 @@ export function SettingsPage() {
   };
 
   const roleColors: Record<string, string> = {
-    admin: "bg-orange-500/20 text-orange-400 border-orange-500/30",
+    admin: "bg-blue-500/20 text-blue-400 border-blue-500/30",
     dispatcher: "bg-blue-500/20 text-blue-400 border-blue-500/30",
     technician: "bg-green-500/20 text-green-400 border-green-500/30",
   };
@@ -223,7 +223,7 @@ export function SettingsPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-4 p-4 bg-muted/30 rounded-lg">
-                <div className="w-14 h-14 rounded-full bg-orange-500/20 flex items-center justify-center text-xl font-bold text-orange-400">
+                <div className="w-14 h-14 rounded-full bg-blue-500/20 flex items-center justify-center text-xl font-bold text-blue-400">
                   {(user?.name ?? "?")[0].toUpperCase()}
                 </div>
                 <div>
@@ -355,7 +355,7 @@ export function SettingsPage() {
                 <div className="flex justify-end">
                   <Button
                     onClick={saveCompany}
-                    className="bg-orange-500 hover:bg-orange-600 text-white"
+                    className="bg-blue-500 hover:bg-blue-700 text-white"
                     disabled={saveSettingMutation.isPending}
                   >
                     Save Company Info
@@ -373,7 +373,7 @@ export function SettingsPage() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base">User Management</CardTitle>
-                  <Button size="sm" onClick={openCreateUser} className="bg-orange-500 hover:bg-orange-600 text-white">
+                  <Button size="sm" onClick={openCreateUser} className="bg-blue-500 hover:bg-blue-700 text-white">
                     <Icon icon={Plus} size={16} className="mr-2" />
                     Add User
                   </Button>
@@ -433,7 +433,7 @@ export function SettingsPage() {
                 <CardTitle className="text-base">Products & Services</CardTitle>
                 <Button
                   size="sm"
-                  className="bg-orange-500 hover:bg-orange-600 text-white"
+                  className="bg-blue-500 hover:bg-blue-700 text-white"
                   onClick={() => navigate("/services")}
                 >
                   <Icon icon={Tag} size={16} className="mr-2" />
@@ -493,7 +493,7 @@ export function SettingsPage() {
           <Button type="button" variant="outline" onClick={closeUserDialog}>Cancel</Button>
           <Button
             type="button"
-            className="bg-orange-500 hover:bg-orange-600 text-white"
+            className="bg-blue-500 hover:bg-blue-700 text-white"
             disabled={createUserMutation.isPending || updateUserMutation.isPending}
             onClick={userSubmit(onUserSubmit)}
           >

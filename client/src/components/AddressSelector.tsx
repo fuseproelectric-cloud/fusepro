@@ -141,7 +141,7 @@ export function AddressSelector({ customerId, value, onChange }: Props) {
           <button
             type="button"
             onClick={openAdd}
-            className="flex items-center gap-0.5 text-[11px] text-orange-500 hover:text-orange-600 font-medium"
+            className="flex items-center gap-0.5 text-[11px] text-blue-500 hover:text-blue-700 font-medium"
           >
             <Icon icon={Plus} size={12} /> Add
           </button>
@@ -149,7 +149,7 @@ export function AddressSelector({ customerId, value, onChange }: Props) {
 
         {addresses.length === 0 && (
           <div
-            className="flex items-center gap-2 rounded-md border border-dashed border-border bg-muted/30 px-3 py-2 cursor-pointer hover:border-orange-300 hover:bg-orange-50/30 transition-colors"
+            className="flex items-center gap-2 rounded-md border border-dashed border-border bg-muted/30 px-3 py-2 cursor-pointer hover:border-blue-300 hover:bg-blue-50/30 transition-colors"
             onClick={openAdd}
           >
             <Icon icon={MapPin} size={14} className="text-muted-foreground flex-shrink-0" />
@@ -159,7 +159,7 @@ export function AddressSelector({ customerId, value, onChange }: Props) {
 
         {addresses.length === 1 && (
           <div className="flex items-center gap-2 rounded-md border border-border bg-muted/20 px-3 py-2">
-            <Icon icon={MapPin} size={14} className="text-orange-500 flex-shrink-0" />
+            <Icon icon={MapPin} size={14} className="text-blue-500 flex-shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-foreground truncate">{addresses[0].label}</p>
               {(addresses[0].address || addresses[0].city) && (
@@ -257,7 +257,7 @@ export function AddressSelector({ customerId, value, onChange }: Props) {
             <Button
               type="submit"
               form="add-addr-selector-form"
-              className="h-9 bg-orange-500 hover:bg-orange-600 text-white"
+              className="h-9 bg-blue-500 hover:bg-blue-700 text-white"
               disabled={createMutation.isPending}
             >
               {createMutation.isPending ? "Adding…" : "Add Address"}

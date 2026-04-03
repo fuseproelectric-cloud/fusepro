@@ -27,7 +27,7 @@ class ErrorBoundary extends React.Component<
             <p className="text-lg font-semibold text-foreground">Something went wrong</p>
             <p className="text-sm text-muted-foreground font-mono break-all">{this.state.error.message}</p>
             <button
-              className="mt-4 px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium hover:bg-orange-600"
+              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-700"
               onClick={() => window.location.reload()}
             >
               Reload page
@@ -44,7 +44,7 @@ function LoadingScreen() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">
       <div className="text-center">
-        <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
         <p className="text-muted-foreground text-sm">Loading...</p>
       </div>
     </div>

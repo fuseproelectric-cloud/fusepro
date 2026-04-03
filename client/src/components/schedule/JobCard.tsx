@@ -9,7 +9,7 @@ import type { Job } from "@shared/schema";
 const STATUS_TINT: Record<string, string> = {
   pending:     "opacity-60",
   assigned:    "",
-  in_progress: "ring-1 ring-orange-400/40",
+  in_progress: "ring-1 ring-blue-400/40",
   completed:   "opacity-50",
   cancelled:   "opacity-30 line-through",
 };
@@ -17,7 +17,7 @@ const STATUS_TINT: Record<string, string> = {
 const STATUS_DOT: Record<string, string> = {
   pending:     "bg-gray-400",
   assigned:    "bg-blue-500",
-  in_progress: "bg-orange-500",
+  in_progress: "bg-blue-500",
   completed:   "bg-green-500",
   cancelled:   "bg-gray-300",
 };

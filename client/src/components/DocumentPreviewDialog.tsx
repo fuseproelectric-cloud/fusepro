@@ -30,7 +30,7 @@ export function DocumentPreviewDialog({ html, title = "Document Preview", onClos
           <div className="flex items-center gap-2">
             <Button
               onClick={handlePrint}
-              className="bg-orange-500 hover:bg-orange-600 text-white h-8 text-xs px-3"
+              className="bg-blue-500 hover:bg-blue-700 text-white h-8 text-xs px-3"
             >
               <Icon icon={Printer} size={14} className="mr-1.5" />
               Print / Save PDF

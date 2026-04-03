@@ -19,7 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 const STATUS_META: Record<string, { label: string; cls: string }> = {
   pending:     { label: "Pending",     cls: "bg-amber-100 text-amber-700" },
   assigned:    { label: "Assigned",    cls: "bg-blue-100 text-blue-700" },
-  in_progress: { label: "In Progress", cls: "bg-orange-100 text-orange-700" },
+  in_progress: { label: "In Progress", cls: "bg-blue-100 text-blue-800" },
   completed:   { label: "Completed",   cls: "bg-emerald-100 text-emerald-700" },
   cancelled:   { label: "Cancelled",   cls: "bg-muted/40 text-muted-foreground" },
 };
@@ -27,7 +27,7 @@ const STATUS_META: Record<string, { label: string; cls: string }> = {
 const PRIORITY_META: Record<string, { label: string; cls: string }> = {
   low:       { label: "Low",       cls: "bg-muted/40 text-muted-foreground" },
   normal:    { label: "Normal",    cls: "bg-blue-100 text-blue-600" },
-  high:      { label: "High",      cls: "bg-orange-100 text-orange-700" },
+  high:      { label: "High",      cls: "bg-blue-100 text-blue-800" },
   emergency: { label: "Emergency", cls: "bg-red-100 text-red-700" },
 };
 void PRIORITY_META; // defined for future use; currently only PriorityDot is used
@@ -52,7 +52,7 @@ function PriorityDot({ priority }: { priority: string }) {
   const colors: Record<string, string> = {
     low:       "bg-muted-foreground/40",
     normal:    "bg-blue-500",
-    high:      "bg-orange-500",
+    high:      "bg-blue-500",
     emergency: "bg-red-500",
   };
   return <span className={cn("inline-block w-2 h-2 rounded-full flex-shrink-0", colors[priority] ?? "bg-muted-foreground/40")} />;
@@ -102,7 +102,7 @@ export function JobsTable({
           <p className="empty-state__title">{hasFilters ? "No jobs match your filters" : "No jobs yet"}</p>
           <p className="empty-state__desc">{hasFilters ? "Try different search terms or clear filters." : "Create your first job to get started."}</p>
           {!hasFilters && (
-            <Button onClick={onOpenCreate} className="mt-4 h-8 bg-orange-500 hover:bg-orange-600 text-white text-sm">
+            <Button onClick={onOpenCreate} className="mt-4 h-8 bg-blue-500 hover:bg-blue-700 text-white text-sm">
               <Icon icon={Plus} size={14} className="mr-1.5" />New Job
             </Button>
           )}

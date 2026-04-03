@@ -13,7 +13,7 @@ const SECTIONS = [
 
 function Code({ children }: { children: string }) {
   return (
-    <code className="bg-muted/40 text-orange-700 px-1.5 py-0.5 rounded text-[13px] font-mono">
+    <code className="bg-muted/40 text-blue-800 px-1.5 py-0.5 rounded text-[13px] font-mono">
       {children}
     </code>
   );
@@ -111,7 +111,7 @@ export function DocsPage() {
               className={cn(
                 "block px-2 py-1.5 rounded-lg text-xs font-medium transition-colors",
                 activeSection === s.id
-                  ? "bg-orange-50 text-orange-600"
+                  ? "bg-blue-50 text-blue-700"
                   : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
               )}
             >
@@ -127,7 +127,7 @@ export function DocsPage() {
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
             <h1 className="text-2xl font-bold text-foreground">FusePro Cloud</h1>
-            <Badge color="bg-orange-100 text-orange-700">v1.0</Badge>
+            <Badge color="bg-blue-100 text-blue-800">v1.0</Badge>
           </div>
           <p className="text-muted-foreground text-sm">
             Field service management platform for electrical contractors — jobs, scheduling, timesheets, invoicing, and team chat.

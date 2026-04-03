@@ -50,7 +50,7 @@ type JobMaterial = {
 
 const STATUS_COLORS: Record<string, string> = {
   pending: "bg-muted/50 text-muted-foreground", assigned: "bg-blue-100 text-blue-700",
-  on_the_way: "bg-orange-100 text-orange-700", in_progress: "bg-orange-100 text-orange-700",
+  on_the_way: "bg-blue-100 text-blue-800", in_progress: "bg-blue-100 text-blue-800",
   completed: "bg-green-100 text-green-700", cancelled: "bg-red-100 text-red-700",
 };
 
@@ -276,11 +276,11 @@ function JobTimesheetControl({
     return (
       <div className="bg-card rounded-lg border border-border p-4 space-y-3">
         <h2 className="font-semibold text-foreground flex items-center gap-2">
-          <Icon icon={Clock} size={16} className="text-orange-500" /> Timesheet
+          <Icon icon={Clock} size={16} className="text-blue-500" /> Timesheet
         </h2>
         <p className="text-sm text-muted-foreground">You haven't clocked in yet today.</p>
         <Button
-          className="w-full h-11 bg-orange-500 hover:bg-orange-600 text-white font-semibold"
+          className="w-full h-11 bg-blue-500 hover:bg-blue-700 text-white font-semibold"
           onClick={onClockIn}
           disabled={clockInLoading}
         >
@@ -296,7 +296,7 @@ function JobTimesheetControl({
   return (
     <div className="bg-card rounded-lg border border-border p-4 space-y-3">
       <h2 className="font-semibold text-foreground flex items-center gap-2">
-        <Icon icon={Clock} size={16} className="text-orange-500" /> Timesheet
+        <Icon icon={Clock} size={16} className="text-blue-500" /> Timesheet
       </h2>
 
       {/* Time totals */}
@@ -309,9 +309,9 @@ function JobTimesheetControl({
             </div>
           )}
           {workMins > 0 && (
-            <div className="flex-1 bg-orange-50 rounded-lg px-3 py-2 text-center">
-              <p className="text-xs text-orange-500 font-medium">Work</p>
-              <p className="text-base font-bold text-orange-700">{formatDuration(workMins)}</p>
+            <div className="flex-1 bg-blue-50 rounded-lg px-3 py-2 text-center">
+              <p className="text-xs text-blue-500 font-medium">Work</p>
+              <p className="text-base font-bold text-blue-800">{formatDuration(workMins)}</p>
             </div>
           )}
         </div>
@@ -342,7 +342,7 @@ function JobTimesheetControl({
           className={
             nextAction === "travel_start" ? "w-full h-11 bg-blue-500 hover:bg-blue-600 text-white font-semibold" :
             nextAction === "travel_end"   ? "w-full h-11 bg-cyan-500 hover:bg-cyan-600 text-white font-semibold" :
-            nextAction === "work_start"   ? "w-full h-11 bg-orange-500 hover:bg-orange-600 text-white font-semibold" :
+            nextAction === "work_start"   ? "w-full h-11 bg-blue-500 hover:bg-blue-700 text-white font-semibold" :
                                             "w-full h-11 bg-green-600 hover:bg-green-700 text-white font-semibold"
           }
           onClick={() => handleAction(nextAction)}
@@ -501,7 +501,7 @@ function EditJobModal({ job, onClose, onSaved }: {
           <div className="flex gap-2 pt-1">
             <Button variant="outline" className="flex-1 h-10" onClick={onClose} disabled={saveMutation.isPending}>Cancel</Button>
             <Button
-              className="flex-1 h-10 bg-orange-500 hover:bg-orange-600 text-white font-semibold"
+              className="flex-1 h-10 bg-blue-500 hover:bg-blue-700 text-white font-semibold"
               onClick={() => saveMutation.mutate()}
               disabled={!title.trim() || saveMutation.isPending}
             >
@@ -651,7 +651,7 @@ export function JobDetailPage() {
   const isBusy = updateStatusMutation.isPending || gpsLoading;
 
   if (isLoading) {
-    return <div className="flex justify-center py-20"><Icon icon={Loader2} size={24} className="animate-spin text-orange-500" /></div>;
+    return <div className="flex justify-center py-20"><Icon icon={Loader2} size={24} className="animate-spin text-blue-500" /></div>;
   }
 
   if (!job) {
@@ -673,13 +673,13 @@ export function JobDetailPage() {
 
       {/* Live Work Timer */}
       {isTechnician && job.status === "in_progress" && workStartEntry && (
-        <div className="bg-orange-500 rounded-lg p-5 text-white text-center">
-          <p className="text-orange-100 text-sm font-medium mb-1">Working...</p>
+        <div className="bg-blue-500 rounded-lg p-5 text-white text-center">
+          <p className="text-blue-100 text-sm font-medium mb-1">Working...</p>
           <p className="text-4xl font-mono font-bold tracking-wider">
             <ElapsedTimer fromTs={workStartEntry.timestamp} />
           </p>
           {workStartEntry.address && (
-            <p className="text-orange-200 text-xs mt-2 flex items-center justify-center gap-1">
+            <p className="text-blue-200 text-xs mt-2 flex items-center justify-center gap-1">
               <Icon icon={MapPin} size={12} /> Started at: {workStartEntry.address}
             </p>
           )}
@@ -732,7 +732,7 @@ export function JobDetailPage() {
               <div className="flex gap-2 flex-wrap justify-end">
                 {job.status === "assigned" && (
                   <Button
-                    className="bg-orange-500 hover:bg-orange-600 text-white h-11 font-semibold disabled:opacity-40"
+                    className="bg-blue-500 hover:bg-blue-700 text-white h-11 font-semibold disabled:opacity-40"
                     onClick={() => handleStatusUpdate("on_the_way")}
                     disabled={isBusy || !timesheetData?.status?.isDayStarted}
                   >
@@ -913,14 +913,14 @@ export function JobDetailPage() {
                 {mapEntries.length > 0 && (
                   <div className="mt-3 rounded-lg overflow-hidden border border-border" style={{ isolation: "isolate" }}>
                     <p className="text-xs text-muted-foreground px-3 py-2 bg-muted/30 border-b border-border/60 flex items-center gap-1">
-                      <Icon icon={MapPin} size={12} className="text-orange-500" />
+                      <Icon icon={MapPin} size={12} className="text-blue-500" />
                       Route Map
                     </p>
                     <TechnicianMap
                       tracks={[{
                         technicianId: job.technicianId ?? 0,
                         technicianName: isTechnician ? (user?.name ?? "Me") : ((jobTimesheetHistory[0] as any)?.technicianName ?? "Technician"),
-                        technicianColor: "#f97316",
+                        technicianColor: "#2563eb",
                         entries: mapEntries,
                       }]}
                       className="h-48"
@@ -961,7 +961,7 @@ export function JobDetailPage() {
                       {/* Avatar */}
                       <div className={cn(
                         "w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mt-0.5",
-                        isOwn ? "bg-orange-500" : "bg-muted-foreground/40"
+                        isOwn ? "bg-blue-500" : "bg-muted-foreground/40"
                       )}>
                         {initials}
                       </div>
@@ -970,7 +970,7 @@ export function JobDetailPage() {
                         <div className={cn(
                           "px-3 py-2 rounded-xl text-sm leading-relaxed",
                           isOwn
-                            ? "bg-orange-500 text-white rounded-tr-sm"
+                            ? "bg-blue-500 text-white rounded-tr-sm"
                             : "bg-muted/50 text-foreground rounded-tl-sm"
                         )}>
                           {note.content}
@@ -1006,7 +1006,7 @@ export function JobDetailPage() {
                 />
                 <Button
                   size="icon"
-                  className="bg-orange-500 hover:bg-orange-600 text-white h-10 w-10 flex-shrink-0"
+                  className="bg-blue-500 hover:bg-blue-700 text-white h-10 w-10 flex-shrink-0"
                   onClick={() => noteContent.trim() && addNoteMutation.mutate(noteContent.trim())}
                   disabled={!noteContent.trim() || addNoteMutation.isPending}
                 >

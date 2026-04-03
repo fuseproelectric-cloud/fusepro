@@ -139,7 +139,7 @@ export function CustomerCombobox({ customers, value, onChange, placeholder = "Se
             <div className="border-t p-1">
               <button
                 type="button"
-                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-orange-600 hover:bg-orange-50 rounded cursor-pointer"
+                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-blue-700 hover:bg-blue-50 rounded cursor-pointer"
                 onClick={() => { setOpen(false); setNewName(search); setNewOpen(true); }}
               >
                 <Icon icon={Plus} size={14} />

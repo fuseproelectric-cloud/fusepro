@@ -4,7 +4,7 @@ export type TechWithUser = Technician & { user?: { id: number; name: string } };
 export type Customer = { id: number; name: string };
 
 export const TECH_COLORS = [
-  "#f97316", "#3b82f6", "#10b981", "#8b5cf6",
+  "#2563eb", "#3b82f6", "#10b981", "#8b5cf6",
   "#ef4444", "#f59e0b", "#06b6d4", "#ec4899",
 ] as const;
 

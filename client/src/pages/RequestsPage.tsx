@@ -116,7 +116,7 @@ const STATUS_META: Record<string, { label: string; cls: string }> = {
 
 const PRIORITY_META: Record<string, { label: string; cls: string }> = {
   emergency: { label: "Emergency", cls: "bg-red-100 text-red-700" },
-  high:      { label: "High",      cls: "bg-orange-100 text-orange-700" },
+  high:      { label: "High",      cls: "bg-blue-100 text-blue-800" },
   normal:    { label: "Normal",    cls: "bg-muted/40 text-muted-foreground" },
   low:       { label: "Low",       cls: "bg-sky-50 text-sky-600" },
 };
@@ -186,7 +186,7 @@ function MetricCard({ label, value, sub, icon, color }: {
   color: "orange" | "blue" | "yellow" | "purple" | "green" | "slate";
 }) {
   const colors = {
-    orange: "bg-orange-500 text-white",
+    orange: "bg-blue-500 text-white",
     blue:   "bg-blue-500 text-white",
     yellow: "bg-yellow-500 text-white",
     purple: "bg-purple-500 text-white",
@@ -498,7 +498,7 @@ export function RequestsPage() {
 
           <Button
             onClick={openCreate}
-            className="h-8 bg-orange-500 hover:bg-orange-600 text-white text-sm px-3 whitespace-nowrap"
+            className="h-8 bg-blue-500 hover:bg-blue-700 text-white text-sm px-3 whitespace-nowrap"
           >
             <Icon icon={Plus} size={14} className="mr-1.5" />
             New Request
@@ -524,7 +524,7 @@ export function RequestsPage() {
                 : "Create your first request to start the intake workflow."}
             </p>
             {!search && filterStatus === "active" && (
-              <Button onClick={openCreate} className="mt-4 h-8 bg-orange-500 hover:bg-orange-600 text-white text-sm">
+              <Button onClick={openCreate} className="mt-4 h-8 bg-blue-500 hover:bg-blue-700 text-white text-sm">
                 <Icon icon={Plus} size={14} className="mr-1.5" /> New Request
               </Button>
             )}
@@ -726,7 +726,7 @@ export function RequestsPage() {
                       <>
                         <Button
                           size="sm"
-                          className="h-8 bg-orange-500 hover:bg-orange-600 text-white text-xs"
+                          className="h-8 bg-blue-500 hover:bg-blue-700 text-white text-xs"
                           disabled={convertToEstimateMutation.isPending || convertToJobMutation.isPending}
                           onClick={() => { convertToEstimateMutation.mutate(req.id); setDetail(null); }}
                         >
@@ -778,7 +778,7 @@ export function RequestsPage() {
                     <div className="bg-muted/40 rounded-lg border border-border">
                       {customer ? (
                         <div className="flex items-center gap-3 px-4 py-3">
-                          <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-xs font-bold text-orange-600 flex-shrink-0">
+                          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-700 flex-shrink-0">
                             {customer.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
                           </div>
                           <div className="flex-1 min-w-0">
@@ -800,12 +800,12 @@ export function RequestsPage() {
                         {req.customerContactName && <DetailRow label="Contact">{req.customerContactName}</DetailRow>}
                         {req.customerPhone && (
                           <DetailRow label="Phone">
-                            <a href={`tel:${req.customerPhone}`} className="text-orange-600 hover:underline">{req.customerPhone}</a>
+                            <a href={`tel:${req.customerPhone}`} className="text-blue-700 hover:underline">{req.customerPhone}</a>
                           </DetailRow>
                         )}
                         {req.customerEmail && (
                           <DetailRow label="Email">
-                            <a href={`mailto:${req.customerEmail}`} className="text-orange-600 hover:underline">{req.customerEmail}</a>
+                            <a href={`mailto:${req.customerEmail}`} className="text-blue-700 hover:underline">{req.customerEmail}</a>
                           </DetailRow>
                         )}
                         {req.preferredContactMethod && <DetailRow label="Preferred">{req.preferredContactMethod.toUpperCase()}</DetailRow>}
@@ -1094,7 +1094,7 @@ export function RequestsPage() {
             <Button
               type="submit"
               form="create-request-form"
-              className="bg-orange-500 hover:bg-orange-600 text-white min-w-[120px]"
+              className="bg-blue-500 hover:bg-blue-700 text-white min-w-[120px]"
               disabled={createMutation.isPending}
             >
               {createMutation.isPending ? "Creating…" : "Create Request"}
@@ -1310,7 +1310,7 @@ export function RequestsPage() {
             <Button
               type="submit"
               form="edit-request-form"
-              className="bg-orange-500 hover:bg-orange-600 text-white min-w-[120px]"
+              className="bg-blue-500 hover:bg-blue-700 text-white min-w-[120px]"
               disabled={updateMutation.isPending}
             >
               {updateMutation.isPending ? "Saving…" : "Save Changes"}

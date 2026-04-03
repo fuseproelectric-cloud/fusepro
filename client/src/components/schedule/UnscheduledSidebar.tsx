@@ -53,7 +53,7 @@ export function UnscheduledSidebar({
               className={cn(
                 "rounded-lg border border-border p-2.5 space-y-1.5",
                 "cursor-grab active:cursor-grabbing select-none",
-                "hover:border-orange-300 hover:shadow-sm transition-all",
+                "hover:border-blue-300 hover:shadow-sm transition-all",
                 drag.dragJobId === job.id && "opacity-30 scale-95"
               )}
             >

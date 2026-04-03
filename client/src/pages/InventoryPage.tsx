@@ -201,7 +201,7 @@ export function InventoryPage() {
           />
         </div>
         {!isTechnician && (
-          <Button onClick={openCreate} className="bg-orange-500 hover:bg-orange-600 text-white ml-auto">
+          <Button onClick={openCreate} className="bg-blue-500 hover:bg-blue-700 text-white ml-auto">
             <Icon icon={Plus} size={16} className="mr-2" />
             Add Item
           </Button>
@@ -340,7 +340,7 @@ export function InventoryPage() {
           <Button
             type="submit"
             form="inventory-form"
-            className="bg-orange-500 hover:bg-orange-600 text-white"
+            className="bg-blue-500 hover:bg-blue-700 text-white"
             disabled={createMutation.isPending || updateMutation.isPending}
             onClick={handleSubmit(onSubmit)}
           >

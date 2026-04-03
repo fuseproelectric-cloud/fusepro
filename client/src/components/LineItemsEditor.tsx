@@ -51,14 +51,14 @@ export function LineItemsEditor({ items, onChange, taxRate }: Props) {
               value={item.description}
               onChange={e => update(i, "description", e.target.value)}
               placeholder="Describe the product or service…"
-              className="h-8 text-sm border-0 bg-transparent px-1 focus-visible:ring-1 focus-visible:ring-orange-400 rounded"
+              className="h-8 text-sm border-0 bg-transparent px-1 focus-visible:ring-1 focus-visible:ring-blue-400 rounded"
             />
             <Input
               type="number"
               min="0"
               value={item.quantity}
               onChange={e => update(i, "quantity", Number(e.target.value))}
-              className="h-8 text-sm text-center border-0 bg-transparent px-1 focus-visible:ring-1 focus-visible:ring-orange-400 rounded"
+              className="h-8 text-sm text-center border-0 bg-transparent px-1 focus-visible:ring-1 focus-visible:ring-blue-400 rounded"
             />
             <div className="relative">
               <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs pointer-events-none">$</span>
@@ -68,7 +68,7 @@ export function LineItemsEditor({ items, onChange, taxRate }: Props) {
                 min="0"
                 value={item.unitPrice}
                 onChange={e => update(i, "unitPrice", Number(e.target.value))}
-                className="h-8 text-sm text-right border-0 bg-transparent pl-5 pr-1 focus-visible:ring-1 focus-visible:ring-orange-400 rounded"
+                className="h-8 text-sm text-right border-0 bg-transparent pl-5 pr-1 focus-visible:ring-1 focus-visible:ring-blue-400 rounded"
               />
             </div>
             <span className="text-sm font-semibold text-foreground text-right pr-1 tabular-nums">
@@ -90,7 +90,7 @@ export function LineItemsEditor({ items, onChange, taxRate }: Props) {
         <button
           type="button"
           onClick={add}
-          className="flex items-center gap-1.5 text-sm font-medium text-orange-500 hover:text-orange-600 transition-colors py-1"
+          className="flex items-center gap-1.5 text-sm font-medium text-blue-500 hover:text-blue-700 transition-colors py-1"
         >
           <Icon icon={Plus} size={14} />
           Add Line Item

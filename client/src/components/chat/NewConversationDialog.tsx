@@ -73,8 +73,8 @@ export function NewConversationDialog({ open, onClose, currentUserId, onCreateDi
               onClick={() => setMode("group")}
               className="flex w-full items-center gap-3 p-3 rounded-xl border hover:bg-muted/30 text-left transition"
             >
-              <div className="w-9 h-9 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
-                <Icon icon={Users} size={16} className="text-orange-600" />
+              <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                <Icon icon={Users} size={16} className="text-blue-700" />
               </div>
               <div>
                 <p className="text-sm font-semibold">Group Chat</p>
@@ -120,7 +120,7 @@ export function NewConversationDialog({ open, onClose, currentUserId, onCreateDi
                     }}
                     className={cn(
                       "flex w-full items-center gap-3 px-3 py-2 rounded-lg text-left transition",
-                      sel ? "bg-orange-50" : "hover:bg-muted/30"
+                      sel ? "bg-blue-50" : "hover:bg-muted/30"
                     )}
                   >
                     <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0", ROLE_COLORS[u.role] ?? "bg-muted-foreground/40")}>
@@ -131,7 +131,7 @@ export function NewConversationDialog({ open, onClose, currentUserId, onCreateDi
                       <p className="text-xs text-muted-foreground truncate">{ROLE_LABELS[u.role] ?? u.role}</p>
                     </div>
                     {mode === "group" && sel && (
-                      <div className="w-4 h-4 rounded-full bg-orange-500 flex items-center justify-center flex-shrink-0">
+                      <div className="w-4 h-4 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
                         <span className="text-white text-[9px]">✓</span>
                       </div>
                     )}
@@ -146,7 +146,7 @@ export function NewConversationDialog({ open, onClose, currentUserId, onCreateDi
               <div className="flex gap-2 pt-1">
                 <Button variant="outline" className="flex-1" onClick={() => setMode("choose")}>Back</Button>
                 <Button
-                  className="flex-1 bg-orange-500 hover:bg-orange-600 text-white"
+                  className="flex-1 bg-blue-500 hover:bg-blue-700 text-white"
                   disabled={!groupName.trim() || selected.length === 0}
                   onClick={() => { onCreateGroup(groupName.trim(), selected); handleClose(); }}
                 >
