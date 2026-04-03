@@ -636,7 +636,7 @@ export function CustomerDetailPage() {
 
 
       {/* ── Edit Customer Dialog ── */}
-      <Dialog open={editOpen} onOpenChange={o => !o && setEditOpen(false)} maxWidth="md" fullWidth>
+      <Dialog open={editOpen} onOpenChange={o => !o && setEditOpen(false)}>
         <DialogTitle onClose={() => setEditOpen(false)}>Edit Client</DialogTitle>
         <DialogContent>
           <form onSubmit={editForm.handleSubmit(onEditSubmit)} noValidate className="space-y-3">

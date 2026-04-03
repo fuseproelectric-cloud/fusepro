@@ -30,11 +30,8 @@ export function JobsDialogs({
   const isSaving = isCreating || isUpdating;
 
   return (
-    <Dialog open={open} onOpenChange={o => !o && onClose()}>
-      <DialogContent
-        className="max-w-4xl w-full p-0 gap-0 bg-background overflow-hidden flex flex-col mx-2 sm:mx-auto"
-        style={{ maxHeight: "92vh" }}
-      >
+    <Dialog open={open} onOpenChange={o => !o && onClose()} maxWidth="md">
+      <DialogContent noPadding>
         <DialogDescription className="sr-only">Create or edit a job</DialogDescription>
         <DialogHeader className="px-6 py-4 bg-card border-b border-border flex-shrink-0">
           <div className="flex items-center justify-between">

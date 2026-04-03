@@ -314,8 +314,8 @@ export function InvoicesPage() {
       <DocumentPreviewDialog html={previewHtml} title="Invoice Preview" onClose={() => setPreviewHtml(null)} />
 
       {/* ── Create / Edit Dialog — two-panel ── */}
-      <Dialog open={dialogOpen} onOpenChange={o => !o && closeDialog()} maxWidth="xl" fullWidth>
-        <DialogContent className="max-w-4xl p-0 gap-0 bg-background overflow-hidden flex flex-col" style={{ maxHeight: "92vh" }}>
+      <Dialog open={dialogOpen} onOpenChange={o => !o && closeDialog()} maxWidth="md">
+        <DialogContent noPadding>
           <DialogDescription className="sr-only">Create or edit an invoice</DialogDescription>
           <DialogHeader className="px-6 py-4 bg-card border-b border-border flex-shrink-0">
             <div className="flex items-center justify-between">

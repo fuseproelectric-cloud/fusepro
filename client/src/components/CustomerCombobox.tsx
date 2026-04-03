@@ -152,7 +152,7 @@ export function CustomerCombobox({ customers, value, onChange, placeholder = "Se
 
       {/* Quick-add dialog */}
       <Dialog open={newOpen} onOpenChange={setNewOpen}>
-        <DialogContent className="max-w-sm bg-card">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>New Customer</DialogTitle>
           </DialogHeader>

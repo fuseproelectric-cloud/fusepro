@@ -671,7 +671,6 @@ export function CustomerAddressPage() {
       {/* ── Edit Address Dialog ── */}
       <Dialog open={editOpen} onOpenChange={o => !o && setEditOpen(false)}>
         <DialogContent
-          className="max-w-md bg-card"
           onPointerDownOutside={(e: Event) => { if ((e.target as HTMLElement)?.closest?.(".pac-container")) e.preventDefault(); }}
           onInteractOutside={(e: Event) => { if ((e.target as HTMLElement)?.closest?.(".pac-container")) e.preventDefault(); }}
         >

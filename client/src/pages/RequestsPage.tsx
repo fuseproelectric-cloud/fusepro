@@ -926,7 +926,7 @@ export function RequestsPage() {
           CREATE DIALOG (intake form — no status selector)
       ══════════════════════════════════════════════════════════════════ */}
       {dialogOpen && !editRequest && (
-        <Dialog open onOpenChange={o => !o && closeDialog()} maxWidth="md" fullWidth>
+        <Dialog open onOpenChange={o => !o && closeDialog()} >
           <DialogTitle onClose={closeDialog}>New Request</DialogTitle>
           <DialogContent>
             <form id="create-request-form" onSubmit={createForm.handleSubmit(onCreateSubmit)} className="space-y-5">
@@ -1106,7 +1106,7 @@ export function RequestsPage() {
           EDIT DIALOG (triage form — includes status + owner)
       ══════════════════════════════════════════════════════════════════ */}
       {dialogOpen && editRequest && (
-        <Dialog open onOpenChange={o => !o && closeDialog()} maxWidth="md" fullWidth>
+        <Dialog open onOpenChange={o => !o && closeDialog()} >
           <DialogTitle onClose={closeDialog}>Edit Request</DialogTitle>
           <DialogContent>
             <form id="edit-request-form" onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-5">

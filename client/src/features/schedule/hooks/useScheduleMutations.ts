@@ -114,7 +114,7 @@ export function useScheduleMutations(): ScheduleMutationsResult {
   const dayResizeMutation = useMutation<unknown, Error, DayResizeVars, { previous?: Job[] }>({
     mutationFn: async ({ jobId, newDurationMin, newStartTime }) => {
       const patch: Partial<Job> = { estimatedDuration: newDurationMin };
-      if (newStartTime) patch.scheduledAt = newStartTime as unknown as Date;
+      if (newStartTime) patch.scheduledAt = newStartTime;
       return jobsApi.update(jobId, patch as never);
     },
     onMutate: async ({ jobId, newDurationMin, newStartTime }) => {

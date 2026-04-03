@@ -18,9 +18,8 @@ export function DocumentPreviewDialog({ html, title = "Document Preview", onClos
   };
 
   return (
-    <Dialog open={!!html} onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent className="max-w-4xl w-full p-0 gap-0 overflow-hidden flex flex-col bg-gray-100"
-        style={{ height: "92vh" }}>
+    <Dialog open={!!html} onOpenChange={(o) => { if (!o) onClose(); }} maxWidth="lg">
+      <DialogContent noPadding>
         <DialogTitle className="sr-only">{title}</DialogTitle>
         <DialogDescription className="sr-only">Document preview</DialogDescription>
 

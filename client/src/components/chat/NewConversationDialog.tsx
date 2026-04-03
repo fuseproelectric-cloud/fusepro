@@ -48,7 +48,7 @@ export function NewConversationDialog({ open, onClose, currentUserId, onCreateDi
 
   return (
     <Dialog open={open} onOpenChange={v => !v && handleClose()}>
-      <DialogContent className="max-w-sm bg-card">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>
             {mode === "choose" ? "New Message" : mode === "direct" ? "Direct Message" : "New Group"}

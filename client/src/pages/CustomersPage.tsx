@@ -471,7 +471,7 @@ export function CustomersPage() {
       {/* ══════════════════════════════════════════════════════════════════
           NEW / EDIT CLIENT DIALOG — Jobber-style form sections
       ══════════════════════════════════════════════════════════════════ */}
-      <Dialog open={dialogOpen} onOpenChange={o => !o && closeDialog()} maxWidth="md" fullWidth>
+      <Dialog open={dialogOpen} onOpenChange={o => !o && closeDialog()}>
         <DialogTitle onClose={closeDialog}>{editCustomer ? "Edit Client" : "New Client"}</DialogTitle>
         <DialogContent>
           <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">

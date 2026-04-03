@@ -195,7 +195,6 @@ export function AddressSelector({ customerId, value, onChange }: Props) {
       {/* Add Address Dialog */}
       <Dialog open={addOpen} onOpenChange={open => { setAddOpen(open); if (!open) { setMapPin(null); } }}>
         <DialogContent
-          className="max-w-sm bg-card"
           onPointerDownOutside={(e: Event) => { if ((e.target as HTMLElement)?.closest?.(".pac-container")) e.preventDefault(); }}
           onInteractOutside={(e: Event) => { if ((e.target as HTMLElement)?.closest?.(".pac-container")) e.preventDefault(); }}
         >

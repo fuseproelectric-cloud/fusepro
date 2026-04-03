@@ -22,6 +22,7 @@ export function Dialog({ open, onOpenChange, maxWidth = "sm", fullWidth = true, 
       onClose={() => onOpenChange?.(false)}
       maxWidth={maxWidth}
       fullWidth={fullWidth}
+      PaperProps={{ sx: { borderRadius: "10px", maxHeight: "90vh" } }}
     >
       {children}
     </MuiDialog>
@@ -31,19 +32,22 @@ export function Dialog({ open, onOpenChange, maxWidth = "sm", fullWidth = true, 
 /* ─── DialogContent ────────────────────────────────────────────────────────── */
 export interface DialogContentProps {
   children?: React.ReactNode;
+  noPadding?: boolean;
   className?: string;
   style?: React.CSSProperties;
-  // absorb Radix-specific props that callers may still pass
   [key: string]: unknown;
 }
 
-export function DialogContent({ children, className: _c, style: _s, ...rest }: DialogContentProps) {
-  // filter out Radix/unknown event props before passing to MUI
+export function DialogContent({ children, noPadding, className: _c, style: _s, ...rest }: DialogContentProps) {
   const muiProps = Object.fromEntries(
     Object.entries(rest).filter(([k]) => !k.startsWith("on") || ["onScroll"].includes(k))
   );
   return (
-    <MuiDialogContent dividers={false} sx={{ pt: 1 }} {...muiProps as any}>
+    <MuiDialogContent
+      dividers={false}
+      sx={noPadding ? { p: 0, "&:first-of-type": { pt: 0 } } : { pt: 1 }}
+      {...muiProps as any}
+    >
       {children}
     </MuiDialogContent>
   );
@@ -77,12 +81,12 @@ export function DialogTitle({ children, onClose, className: _c, ...rest }: Dialo
   );
 }
 
-/* ─── DialogHeader — renders nothing extra, title is already in DialogTitle ── */
+/* ─── DialogHeader ─────────────────────────────────────────────────────────── */
 export function DialogHeader({ children, className: _c }: { children?: React.ReactNode; className?: string }) {
   return <>{children}</>;
 }
 
-/* ─── DialogFooter — maps to MUI DialogActions ─────────────────────────────── */
+/* ─── DialogFooter ─────────────────────────────────────────────────────────── */
 export function DialogFooter({ children, className: _className }: { children?: React.ReactNode; className?: string }) {
   return (
     <MuiDialogActions sx={{ px: 3, pb: 2 }}>
@@ -91,12 +95,12 @@ export function DialogFooter({ children, className: _className }: { children?: R
   );
 }
 
-/* ─── DialogDescription — plain paragraph ────────────────────────────────── */
+/* ─── DialogDescription ────────────────────────────────────────────────────── */
 export function DialogDescription({ children, className: _className }: { children?: React.ReactNode; className?: string }) {
   return <p style={{ fontSize: "0.875rem", color: "var(--muted-foreground)" }}>{children}</p>;
 }
 
-/* ─── Re-exports for any code still importing these ───────────────────────── */
+/* ─── Re-exports for Radix-compatible callers ──────────────────────────────── */
 export const DialogTrigger = (_props: { children?: React.ReactNode; asChild?: boolean }) => null;
 export const DialogPortal  = ({ children }: { children?: React.ReactNode }) => <>{children}</>;
 export const DialogOverlay = (_props: { className?: string }) => null;
