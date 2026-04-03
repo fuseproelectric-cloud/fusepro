@@ -1,13 +1,21 @@
-import { useState } from "react";
-import { Link, useLocation } from "wouter";
-import { cn } from "@/lib/utils";
+import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import { X, Plus, ChevronDown } from "lucide-react";
 import { Icon } from "@/components/ui/Icon";
-import { Button } from "@/components/ui/button";
+import {
+  Box,
+  Button,
+  Drawer,
+  IconButton,
+  List,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Typography,
+} from "@mui/material";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -71,65 +79,124 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
   const workflowItems = navItems.filter(i => i.section === "workflow");
   const manageItems   = navItems.filter(i => i.section === "manage");
 
+  const getUnreadCount = (item: SidebarNavItem) => {
+    if (totalUnread > 0 && (item.path === "/jobs" || item.path === "/my-jobs")) return totalUnread;
+    if (chatUnreadTotal > 0 && item.path === "/chat") return chatUnreadTotal;
+    return 0;
+  };
+
   const renderNavItem = (item: SidebarNavItem) => {
     const active = isActive(item.path);
+    const unread = getUnreadCount(item);
     return (
-      <Link
+      <ListItemButton
         key={item.path}
-        href={item.path}
-        onClick={onMobileClose}
-        className={cn(
-          "nav-item",
-          active && "active"
-        )}
+        onClick={() => { navigate(item.path); onMobileClose?.(); }}
+        selected={active}
+        sx={{
+          borderRadius: 1,
+          py: 0.875,
+          px: 1.25,
+          mb: 0.25,
+          gap: 1.25,
+          '&.Mui-selected': {
+            bgcolor: "rgba(37,99,235,0.12)",
+            '&:hover': { bgcolor: "rgba(37,99,235,0.18)" },
+          },
+        }}
       >
-        <Icon icon={item.icon} size={15} className="flex-shrink-0 opacity-90" />
-        <span className="flex-1 truncate">{item.label}</span>
-        {totalUnread > 0 && (item.path === "/jobs" || item.path === "/my-jobs") && (
-          <span className="min-w-[18px] h-[18px] rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center px-1">
-            {totalUnread > 99 ? "99+" : totalUnread}
-          </span>
+        <ListItemIcon sx={{ minWidth: 0, color: active ? "primary.main" : "text.secondary" }}>
+          <Icon icon={item.icon} size={15} />
+        </ListItemIcon>
+        <ListItemText
+          primary={item.label}
+          primaryTypographyProps={{
+            fontSize: 13.5,
+            fontWeight: active ? 600 : 500,
+            color: active ? "primary.main" : "text.secondary",
+            noWrap: true,
+          }}
+        />
+        {unread > 0 && (
+          <Box
+            sx={{
+              minWidth: 18,
+              height: 18,
+              borderRadius: "50%",
+              bgcolor: "error.main",
+              color: "white",
+              fontSize: 10,
+              fontWeight: 700,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              px: 0.5,
+            }}
+          >
+            {unread > 99 ? "99+" : unread}
+          </Box>
         )}
-        {chatUnreadTotal > 0 && item.path === "/chat" && (
-          <span className="min-w-[18px] h-[18px] rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center px-1">
-            {chatUnreadTotal > 99 ? "99+" : chatUnreadTotal}
-          </span>
-        )}
-      </Link>
+      </ListItemButton>
     );
   };
 
+  const renderSectionLabel = (label: string) => (
+    <Typography
+      variant="overline"
+      sx={{
+        display: "block",
+        fontSize: 10,
+        fontWeight: 700,
+        letterSpacing: "0.08em",
+        color: "text.disabled",
+        px: 1.25,
+        mb: 0.25,
+        mt: 1.5,
+      }}
+    >
+      {label}
+    </Typography>
+  );
+
   const content = (
-    <div className="sidebar-dark flex flex-col h-full">
+    <Box sx={{ display: "flex", flexDirection: "column", height: "100%", bgcolor: "background.paper" }}>
       {/* Logo */}
-      <div className="flex items-center gap-3 px-4 py-3.5 border-b border-border">
-        <img src="/logo.png" alt="Fuse Pro Electric" className="h-9 w-auto flex-shrink-0" />
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, px: 2, py: 1.75, borderBottom: 1, borderColor: "divider" }}>
+        <Box component="img" src="/logo.png" alt="Fuse Pro Electric" sx={{ height: 36, width: "auto", flexShrink: 0 }} />
         {onMobileClose && (
-          <button
+          <IconButton
             onClick={onMobileClose}
-            className="ml-auto opacity-50 hover:opacity-100 lg:hidden transition-opacity text-foreground"
+            size="small"
+            sx={{ ml: "auto", display: { lg: "none" }, opacity: 0.5, "&:hover": { opacity: 1 } }}
           >
             <Icon icon={X} size={20} />
-          </button>
+          </IconButton>
         )}
-      </div>
+      </Box>
 
       {/* Quick Create (admin/dispatcher only) */}
       {!isTechnician && (
-        <div className="px-3 pt-3 pb-1">
+        <Box sx={{ px: 1.5, pt: 1.5, pb: 0.5 }}>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="w-full flex items-center justify-between px-3 h-8 rounded-md text-sm font-semibold text-white transition-colors"
-                style={{ backgroundColor: "hsl(221,83%,53%)" }}
-                onMouseEnter={e => (e.currentTarget.style.backgroundColor = "hsl(221,83%,46%)")}
-                onMouseLeave={e => (e.currentTarget.style.backgroundColor = "hsl(221,83%,53%)")}
+              <Button
+                variant="contained"
+                fullWidth
+                size="small"
+                sx={{
+                  justifyContent: "space-between",
+                  fontWeight: 600,
+                  textTransform: "none",
+                  fontSize: 13.5,
+                  px: 1.5,
+                }}
               >
-                <span className="flex items-center gap-1.5">
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
                   <Icon icon={Plus} size={14} />
                   Quick Create
-                </span>
-                <Icon icon={ChevronDown} size={14} className="opacity-80" />
-              </button>
+                </Box>
+                <Box component="span" sx={{ opacity: 0.8, display: "flex" }}><Icon icon={ChevronDown} size={14} /></Box>
+              </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-48">
               <DropdownMenuItem onClick={() => { navigate("/requests?new=1"); onMobileClose?.(); }}>
@@ -149,11 +216,11 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        </div>
+        </Box>
       )}
 
       {/* Navigation */}
-      <nav className="flex-1 px-2 py-2 overflow-y-auto space-y-0.5">
+      <List dense disablePadding sx={{ flex: 1, px: 1, py: 1, overflowY: "auto" }}>
         {isTechnician ? (
           navItems.map(renderNavItem)
         ) : (
@@ -161,65 +228,80 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
             {mainItems.map(renderNavItem)}
             {workflowItems.length > 0 && (
               <>
-                <div className="sidebar-section-label">Workflow</div>
+                {renderSectionLabel("Workflow")}
                 {workflowItems.map(renderNavItem)}
               </>
             )}
             {manageItems.length > 0 && (
               <>
-                <div className="sidebar-section-label">Manage</div>
+                {renderSectionLabel("Manage")}
                 {manageItems.map(renderNavItem)}
               </>
             )}
           </>
         )}
-      </nav>
+      </List>
 
       {/* Footer */}
-      <div className="px-4 py-3 border-t border-border">
+      <Box sx={{ px: 2, py: 1.5, borderTop: 1, borderColor: "divider" }}>
         {isTechnician && techProfile && (
           // Shows the administrative availability label set by a dispatcher.
           // This is not a live operational status — real-time state is derived from timesheets.
-          <div className="flex items-center gap-2 mb-2 px-1">
-            <span
-              className={cn(
-                "w-2 h-2 rounded-full flex-shrink-0",
-                (techProfile as any).status === "inactive"
-                  ? "bg-muted-foreground/40"
-                  : "bg-emerald-400"
-              )}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1, px: 0.5 }}>
+            <Box
+              sx={{
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                flexShrink: 0,
+                bgcolor: techProfile.status === "inactive" ? "text.disabled" : "success.light",
+              }}
             />
-            <span className="text-xs opacity-60 capitalize">
-              {(techProfile as any).status ?? "available"}
-            </span>
-          </div>
+            <Typography variant="caption" sx={{ opacity: 0.6, textTransform: "capitalize" }}>
+              {techProfile.status ?? "available"}
+            </Typography>
+          </Box>
         )}
-        <p className="text-[11px] text-center opacity-30">
+        <Typography variant="caption" sx={{ display: "block", textAlign: "center", opacity: 0.3 }}>
           Fuse Pro Electric &copy; {new Date().getFullYear()}
-        </p>
-      </div>
-    </div>
+        </Typography>
+      </Box>
+    </Box>
   );
 
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex lg:flex-col lg:w-56 lg:fixed lg:inset-y-0 lg:z-50">
+      <Box
+        component="aside"
+        sx={{
+          display: { xs: "none", lg: "flex" },
+          flexDirection: "column",
+          width: 224,
+          position: "fixed",
+          top: 0,
+          bottom: 0,
+          left: 0,
+          zIndex: "appBar",
+          borderRight: 1,
+          borderColor: "divider",
+        }}
+      >
         {content}
-      </aside>
+      </Box>
 
       {/* Mobile overlay */}
-      {mobileOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 flex">
-          <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={onMobileClose}
-          />
-          <div className="relative flex flex-col w-60 z-10">
-            {content}
-          </div>
-        </div>
-      )}
+      <Drawer
+        open={!!mobileOpen}
+        onClose={onMobileClose}
+        variant="temporary"
+        sx={{
+          display: { lg: "none" },
+          "& .MuiDrawer-paper": { width: 240, boxSizing: "border-box" },
+        }}
+      >
+        {content}
+      </Drawer>
     </>
   );
 }

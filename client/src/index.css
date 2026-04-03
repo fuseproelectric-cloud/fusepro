@@ -474,50 +474,6 @@
   --color-interactive--active: hsl(221, 83%, 40%) !important;
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   SIDEBAR DARK THEME
-   ───────────────────────────────────────────────────────────────────────────── */
-.sidebar-dark {
-  background-color: hsl(var(--card));
-  color: hsl(var(--foreground));
-  border-right: 1px solid hsl(var(--border));
-}
-.sidebar-dark .nav-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 7px 10px;
-  border-radius: 6px;
-  font-size: 13.5px;
-  font-weight: 500;
-  color: hsl(var(--muted-foreground));
-  transition: background-color var(--timing-quick), color var(--timing-quick);
-  cursor: pointer;
-  text-decoration: none;
-}
-.sidebar-dark .nav-item:hover {
-  background-color: hsl(var(--muted));
-  color: hsl(var(--foreground));
-  text-decoration: none;
-}
-.sidebar-dark .nav-item.active {
-  background-color: hsl(221 83% 53% / 0.12);
-  color: hsl(221, 83%, 45%);
-  font-weight: 600;
-}
-.sidebar-dark .nav-item.active:hover {
-  background-color: hsl(221 83% 53% / 0.18);
-}
-.sidebar-dark .sidebar-section-label {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: hsl(var(--muted-foreground) / 0.6);
-  padding: 0 10px;
-  margin-bottom: 2px;
-  margin-top: 12px;
-}
 
 /* ─────────────────────────────────────────────────────────────────────────────
    CUSTOM DIALOG (Atlantis-styled, portal-based)
