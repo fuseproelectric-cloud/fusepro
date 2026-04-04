@@ -8,8 +8,7 @@ export default defineConfig({
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
       "@shared": path.resolve(import.meta.dirname, "shared"),
-      "@apollo/client": path.resolve(import.meta.dirname, "client", "src", "lib", "apollo-shim.ts"),
-    },
+},
   },
   root: path.resolve(import.meta.dirname, "client"),
   build: {
