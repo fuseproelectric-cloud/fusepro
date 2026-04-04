@@ -13,6 +13,9 @@ import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
 import { Textarea } from "@/components/ui/textarea";
 import Stack from "@mui/material/Stack";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
 
 type TimesheetEntry = {
   id: number;
@@ -146,11 +149,13 @@ function getJobNextAction(jobId: number, entries: TimesheetEntry[]): "travel_sta
 
 // ── Work Complete Modal ───────────────────────────────────────────────────────
 function WorkCompleteModal({
+  open,
   jobTitle,
   workMins,
   onConfirm,
   onClose,
 }: {
+  open: boolean;
   jobTitle: string;
   workMins: number;
   onConfirm: (notes: string, photoUrls: string[]) => void;
@@ -200,18 +205,15 @@ function WorkCompleteModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-card rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md shadow-high max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-card border-b border-border px-5 py-4 flex items-center justify-between">
-          <div>
-            <h2 className="text-base font-bold text-foreground">Complete Work</h2>
-            <p className="text-xs text-muted-foreground mt-0.5 truncate max-w-[260px]">{jobTitle} · {formatDuration(workMins)} logged</p>
-          </div>
-          <button onClick={onClose} className="text-muted-foreground hover:text-muted-foreground"><Icon icon={X} size={20} /></button>
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+      <DialogTitle sx={{ fontWeight: 700, fontSize: "1rem", pb: 0 }}>
+        Complete Work
+        <div style={{ fontSize: "0.75rem", color: "hsl(var(--muted-foreground))", fontWeight: 400, marginTop: 2 }}>
+          {jobTitle} · {formatDuration(workMins)} logged
         </div>
-
-        <div className="p-5 space-y-4 pb-safe">
+      </DialogTitle>
+      <DialogContent>
+        <div className="space-y-4 pb-safe">
           {/* Description */}
           <div>
             <label className="block text-xs font-medium text-muted-foreground mb-1.5">Work summary (optional)</label>
@@ -291,8 +293,8 @@ function WorkCompleteModal({
             }
           </Button>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -435,17 +437,16 @@ function JobTimesheetCard({
         </p>
       )}
 
-      {showCompleteModal && (
-        <WorkCompleteModal
-          jobTitle={job.title}
-          workMins={workMins}
-          onClose={() => setShowCompleteModal(false)}
-          onConfirm={(notes, photoUrls) => {
-            setShowCompleteModal(false);
-            onAction("work_end", job.id, notes, photoUrls);
-          }}
-        />
-      )}
+      <WorkCompleteModal
+        open={showCompleteModal}
+        jobTitle={job.title}
+        workMins={workMins}
+        onClose={() => setShowCompleteModal(false)}
+        onConfirm={(notes, photoUrls) => {
+          setShowCompleteModal(false);
+          onAction("work_end", job.id, notes, photoUrls);
+        }}
+      />
     </div>
   );
 }

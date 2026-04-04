@@ -11,7 +11,6 @@ import {
   TrendingUp,
   Plus,
   ArrowRight,
-  Circle,
   type LucideIcon,
 } from "lucide-react";
 import { Icon } from "@/components/ui/Icon";
@@ -25,10 +24,15 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { formatCurrency, STATUS_COLORS, PRIORITY_COLORS, formatStatus } from "@/lib/utils";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency, formatStatus, statusChipSx, priorityChipSx } from "@/lib/utils";
 import { Link } from "wouter";
 import Stack from "@mui/material/Stack";
+import Table from "@mui/material/Table";
+import TableHead from "@mui/material/TableHead";
+import TableBody from "@mui/material/TableBody";
+import TableRow from "@mui/material/TableRow";
+import TableCell from "@mui/material/TableCell";
+import Chip from "@mui/material/Chip";
 
 interface MetricProps {
   label: string;
@@ -183,49 +187,32 @@ export function DashboardPage() {
             {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
           </div>
         ) : stats?.recentJobs && stats.recentJobs.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-muted/40">
-                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Job</th>
-                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Customer</th>
-                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Technician</th>
-                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Status</th>
-                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Priority</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {stats.recentJobs.map((job) => (
-                  <tr key={job.id} className="hover:bg-muted/20 transition-colors">
-                    <td className="px-4 py-3 font-medium text-foreground">{job.title}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{job.customerName}</td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {job.technicianName ?? (
-                        <span className="text-xs text-amber-500 font-medium">Unassigned</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={cn(
-                        "inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full border",
-                        STATUS_COLORS[job.status]
-                      )}>
-                        <Icon icon={Circle} size={6} className="fill-current" />
-                        {formatStatus(job.status)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={cn(
-                        "inline-flex text-xs font-medium px-2 py-0.5 rounded-full border",
-                        PRIORITY_COLORS[job.priority]
-                      )}>
-                        {formatStatus(job.priority)}
-                      </span>
-                    </td>
-                  </tr>
+          <Table size="small">
+            <TableHead>
+              <TableRow sx={{ bgcolor: "hsl(var(--muted) / 0.4)" }}>
+                {["Job", "Customer", "Technician", "Status", "Priority"].map(h => (
+                  <TableCell key={h} sx={{ fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "hsl(var(--muted-foreground))", borderColor: "hsl(var(--border))" }}>{h}</TableCell>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {stats.recentJobs.map((job) => (
+                <TableRow key={job.id} hover sx={{ "&:last-child td": { borderBottom: 0 } }}>
+                  <TableCell sx={{ fontWeight: 500, color: "hsl(var(--foreground))", borderColor: "hsl(var(--border))" }}>{job.title}</TableCell>
+                  <TableCell sx={{ color: "hsl(var(--muted-foreground))", borderColor: "hsl(var(--border))" }}>{job.customerName}</TableCell>
+                  <TableCell sx={{ color: "hsl(var(--muted-foreground))", borderColor: "hsl(var(--border))" }}>
+                    {job.technicianName ?? <span style={{ fontSize: "0.75rem", color: "#f59e0b", fontWeight: 500 }}>Unassigned</span>}
+                  </TableCell>
+                  <TableCell sx={{ borderColor: "hsl(var(--border))" }}>
+                    <Chip size="small" label={formatStatus(job.status)} sx={statusChipSx(job.status)} />
+                  </TableCell>
+                  <TableCell sx={{ borderColor: "hsl(var(--border))" }}>
+                    <Chip size="small" label={formatStatus(job.priority)} sx={priorityChipSx(job.priority)} />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         ) : (
           <div className="py-12 text-center">
             <Icon icon={Briefcase} size={32} className="mx-auto text-muted-foreground/30 mb-2" />

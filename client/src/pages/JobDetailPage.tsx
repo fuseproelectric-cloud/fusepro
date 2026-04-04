@@ -18,11 +18,15 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { AddressAutocompleteInput } from "@/components/AddressAutocompleteInput";
-import { cn } from "@/lib/utils";
+import { cn, statusChipSx, priorityChipSx, formatStatus } from "@/lib/utils";
 import { getSocket } from "@/lib/socket";
 import { apiRequest } from "@/lib/queryClient";
 import { TechnicianMap } from "@/components/TechnicianMap";
 import Stack from "@mui/material/Stack";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import Chip from "@mui/material/Chip";
 
 type JobNote = { id: number; content: string; createdAt: string; user?: { id: number; name: string } | null };
 
@@ -48,16 +52,6 @@ type JobMaterial = {
   quantity: string | null; unit: string | null; unitCost: string | null; notes: string | null;
 };
 
-const STATUS_COLORS: Record<string, string> = {
-  pending: "bg-muted/50 text-muted-foreground", assigned: "bg-blue-100 text-blue-700",
-  on_the_way: "bg-blue-100 text-blue-800", in_progress: "bg-blue-100 text-blue-800",
-  completed: "bg-green-100 text-green-700", cancelled: "bg-red-100 text-red-700",
-};
-
-const PRIORITY_COLORS: Record<string, string> = {
-  low: "bg-muted/50 text-muted-foreground", normal: "bg-yellow-100 text-yellow-700",
-  high: "bg-red-100 text-red-700", emergency: "bg-red-200 text-red-800",
-};
 
 function formatDuration(minutes: number): string {
   if (minutes <= 0) return "0m";
@@ -90,8 +84,8 @@ const ENTRY_LABELS: Record<string, string> = {
   travel_start: "On the Way", travel_end: "Arrived", work_start: "Work Started", work_end: "Work Completed",
 };
 
-function CompletionModal({ job, timesheetEntries, onClose, onComplete }: {
-  job: Job; timesheetEntries: TimesheetEntry[];
+function CompletionModal({ open, job, timesheetEntries, onClose, onComplete }: {
+  open: boolean; job: Job; timesheetEntries: TimesheetEntry[];
   onClose: () => void; onComplete: (workSummary: string) => void;
 }) {
   const [workSummary, setWorkSummary] = useState("");
@@ -134,65 +128,59 @@ function CompletionModal({ job, timesheetEntries, onClose, onComplete }: {
   if (openWork) workMinutes += Math.floor((now.getTime() - openWork.getTime()) / 60000);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-card rounded-t-2xl sm:rounded-xl w-full sm:max-w-lg max-h-[90vh] overflow-y-auto shadow-high">
-        <div className="sticky top-0 bg-card border-b border-border/60 px-5 py-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-foreground">Complete Job</h2>
-          <button onClick={onClose} className="text-muted-foreground/60 hover:text-muted-foreground"><Icon icon={X} size={20} /></button>
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+      <DialogTitle sx={{ fontWeight: 700, fontSize: "1.0625rem", pb: 1 }}>Complete Job</DialogTitle>
+      <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+        <div>
+          <label className="block text-sm font-medium text-muted-foreground mb-1.5">Work Summary *</label>
+          <Textarea placeholder="Describe what was done..." value={workSummary} onChange={(e) => setWorkSummary(e.target.value)} className="resize-none" rows={4} />
         </div>
-        <div className="p-5 space-y-5">
-          <div>
-            <label className="block text-sm font-medium text-muted-foreground mb-1.5">Work Summary *</label>
-            <Textarea placeholder="Describe what was done..." value={workSummary} onChange={(e) => setWorkSummary(e.target.value)} className="resize-none" rows={4} />
+        <div className="bg-muted/30 rounded-lg p-3 space-y-1">
+          <p className="text-sm font-medium text-muted-foreground mb-2">Time Summary</p>
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Travel</span>
+            <span className="font-medium text-foreground">{formatDuration(travelMinutes)}</span>
           </div>
-          <div className="bg-muted/30 rounded-lg p-3 space-y-1">
-            <p className="text-sm font-medium text-muted-foreground mb-2">Time Summary</p>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Travel</span>
-              <span className="font-medium text-foreground">{formatDuration(travelMinutes)}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Work</span>
-              <span className="font-medium text-foreground">{formatDuration(workMinutes)}</span>
-            </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Work</span>
+            <span className="font-medium text-foreground">{formatDuration(workMinutes)}</span>
           </div>
-          <div>
-            <p className="text-sm font-medium text-muted-foreground mb-2">Materials Used</p>
-            {materials.length > 0 && (
-              <div className="space-y-2 mb-3">
-                {materials.map((mat) => (
-                  <div key={mat.id} className="flex items-center gap-2 bg-muted/30 rounded-lg px-3 py-2">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">{mat.name}</p>
-                      <p className="text-xs text-muted-foreground">{mat.quantity} {mat.unit} @ ${mat.unitCost} each</p>
-                    </div>
-                    <button onClick={() => deleteMatMutation.mutate(mat.id)} className="text-muted-foreground/60 hover:text-red-500 flex-shrink-0">
-                      <Icon icon={Trash2} size={16} />
-                    </button>
+        </div>
+        <div>
+          <p className="text-sm font-medium text-muted-foreground mb-2">Materials Used</p>
+          {materials.length > 0 && (
+            <div className="space-y-2 mb-3">
+              {materials.map((mat) => (
+                <div key={mat.id} className="flex items-center gap-2 bg-muted/30 rounded-lg px-3 py-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{mat.name}</p>
+                    <p className="text-xs text-muted-foreground">{mat.quantity} {mat.unit} @ ${mat.unitCost} each</p>
                   </div>
-                ))}
-              </div>
-            )}
-            <div className="border border-border rounded-lg p-3 space-y-2">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Add Material</p>
-              <Input placeholder="Material name" value={matName} onChange={(e) => setMatName(e.target.value)} className="h-9 text-sm" />
-              <div className="grid grid-cols-3 gap-2">
-                <Input placeholder="Qty" value={matQty} onChange={(e) => setMatQty(e.target.value)} className="h-9 text-sm" />
-                <Input placeholder="Unit" value={matUnit} onChange={(e) => setMatUnit(e.target.value)} className="h-9 text-sm" />
-                <Input placeholder="Cost $" value={matCost} onChange={(e) => setMatCost(e.target.value)} className="h-9 text-sm" />
-              </div>
-              <Button variant="outline" size="sm" className="w-full h-9" onClick={() => matName.trim() && addMatMutation.mutate()} disabled={!matName.trim() || addMatMutation.isPending}>
-                {addMatMutation.isPending ? <Icon icon={Loader2} size={16} className="animate-spin mr-1" /> : <Icon icon={Plus} size={16} className="mr-1" />} Add
-              </Button>
+                  <button onClick={() => deleteMatMutation.mutate(mat.id)} className="text-muted-foreground/60 hover:text-red-500 flex-shrink-0">
+                    <Icon icon={Trash2} size={16} />
+                  </button>
+                </div>
+              ))}
             </div>
+          )}
+          <div className="border border-border rounded-lg p-3 space-y-2">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Add Material</p>
+            <Input placeholder="Material name" value={matName} onChange={(e) => setMatName(e.target.value)} className="h-9 text-sm" />
+            <div className="grid grid-cols-3 gap-2">
+              <Input placeholder="Qty" value={matQty} onChange={(e) => setMatQty(e.target.value)} className="h-9 text-sm" />
+              <Input placeholder="Unit" value={matUnit} onChange={(e) => setMatUnit(e.target.value)} className="h-9 text-sm" />
+              <Input placeholder="Cost $" value={matCost} onChange={(e) => setMatCost(e.target.value)} className="h-9 text-sm" />
+            </div>
+            <Button variant="outline" size="sm" className="w-full h-9" onClick={() => matName.trim() && addMatMutation.mutate()} disabled={!matName.trim() || addMatMutation.isPending}>
+              {addMatMutation.isPending ? <Icon icon={Loader2} size={16} className="animate-spin mr-1" /> : <Icon icon={Plus} size={16} className="mr-1" />} Add
+            </Button>
           </div>
-          <Button className="w-full bg-green-600 hover:bg-green-700 text-white h-12 text-base font-bold" onClick={() => workSummary.trim() && onComplete(workSummary)} disabled={!workSummary.trim()}>
-            <Icon icon={CheckCircle2} size={20} className="mr-2" /> Mark as Completed
-          </Button>
         </div>
-      </div>
-    </div>
+        <Button className="w-full bg-green-600 hover:bg-green-700 text-white h-12 text-base font-bold" onClick={() => workSummary.trim() && onComplete(workSummary)} disabled={!workSummary.trim()}>
+          <Icon icon={CheckCircle2} size={20} className="mr-2" /> Mark as Completed
+        </Button>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -368,8 +356,8 @@ function JobTimesheetControl({
 }
 
 // ── Edit Job Modal ─────────────────────────────────────────────────────────
-function EditJobModal({ job, onClose, onSaved }: {
-  job: Job; onClose: () => void; onSaved: () => void;
+function EditJobModal({ open, job, onClose, onSaved }: {
+  open: boolean; job: Job; onClose: () => void; onSaved: () => void;
 }) {
   const qc = useQueryClient();
   const [title, setTitle] = useState(job.title);
@@ -416,14 +404,9 @@ function EditJobModal({ job, onClose, onSaved }: {
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-card rounded-t-2xl sm:rounded-xl w-full sm:max-w-md shadow-high max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-card border-b border-border/60 px-5 py-4 flex items-center justify-between">
-          <h2 className="text-base font-bold text-foreground">Edit Job</h2>
-          <button onClick={onClose} className="text-muted-foreground/60 hover:text-muted-foreground"><Icon icon={X} size={20} /></button>
-        </div>
-        <div className="p-5 space-y-3">
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
+      <DialogTitle sx={{ fontWeight: 700, fontSize: "1rem", pb: 1 }}>Edit Job</DialogTitle>
+      <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">{error}</div>
           )}
@@ -508,9 +491,8 @@ function EditJobModal({ job, onClose, onSaved }: {
               {saveMutation.isPending ? <><Icon icon={Loader2} size={16} className="animate-spin mr-2" />Saving...</> : "Save"}
             </Button>
           </div>
-        </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -709,13 +691,9 @@ export function JobDetailPage() {
         <div className="flex-1 min-w-0">
           <h1 className="text-2xl font-bold text-foreground">{job.title}</h1>
           <div className="flex flex-wrap items-center gap-2 mt-2">
-            <span className={cn("text-sm font-medium px-2.5 py-1 rounded-full", STATUS_COLORS[job.status] ?? "bg-muted/50 text-muted-foreground")}>
-              {job.status.replace(/_/g, " ")}
-            </span>
+            <Chip size="small" label={formatStatus(job.status)} sx={statusChipSx(job.status)} />
             {job.priority && (
-              <span className={cn("text-sm px-2.5 py-1 rounded-full", PRIORITY_COLORS[job.priority] ?? "bg-muted/50 text-muted-foreground")}>
-                {job.priority} priority
-              </span>
+              <Chip size="small" label={`${formatStatus(job.priority)} priority`} sx={priorityChipSx(job.priority)} />
             )}
           </div>
         </div>
@@ -1023,23 +1001,21 @@ export function JobDetailPage() {
       </div>
 
       {/* Completion Modal */}
-      {showCompletionModal && (
-        <CompletionModal
-          job={job}
-          timesheetEntries={timesheetData?.entries ?? []}
-          onClose={() => setShowCompletionModal(false)}
-          onComplete={(workSummary) => handleStatusUpdate("completed", workSummary)}
-        />
-      )}
+      <CompletionModal
+        open={showCompletionModal}
+        job={job}
+        timesheetEntries={timesheetData?.entries ?? []}
+        onClose={() => setShowCompletionModal(false)}
+        onComplete={(workSummary) => handleStatusUpdate("completed", workSummary)}
+      />
 
       {/* Edit Modal */}
-      {showEditModal && (
-        <EditJobModal
-          job={job}
-          onClose={() => setShowEditModal(false)}
-          onSaved={() => qc.invalidateQueries({ queryKey: [`/api/jobs/${jobId}`] })}
-        />
-      )}
+      <EditJobModal
+        open={showEditModal}
+        job={job}
+        onClose={() => setShowEditModal(false)}
+        onSaved={() => qc.invalidateQueries({ queryKey: [`/api/jobs/${jobId}`] })}
+      />
     </Stack>
   );
 }

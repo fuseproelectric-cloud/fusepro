@@ -14,9 +14,9 @@ import {
 } from "date-fns";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { Icon } from "@/components/ui/Icon";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn, statusChipSx, formatStatus } from "@/lib/utils";
+import Chip from "@mui/material/Chip";
 
 type Job = {
   id: number;
@@ -24,14 +24,6 @@ type Job = {
   status: string;
   scheduledAt: string | null;
   customerName?: string | null;
-};
-
-const STATUS_COLORS: Record<string, string> = {
-  pending: "bg-muted/40 text-foreground",
-  assigned: "bg-blue-100 text-blue-700",
-  in_progress: "bg-blue-100 text-blue-800",
-  completed: "bg-green-100 text-green-700",
-  cancelled: "bg-red-100 text-red-700",
 };
 
 export function MySchedulePage() {
@@ -168,14 +160,7 @@ export function MySchedulePage() {
                               </p>
                             )}
                           </div>
-                          <span
-                            className={cn(
-                              "text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0",
-                              STATUS_COLORS[job.status] ?? "bg-muted/40 text-muted-foreground"
-                            )}
-                          >
-                            {job.status.replace(/_/g, " ")}
-                          </span>
+                          <Chip size="small" label={formatStatus(job.status)} sx={{ ...statusChipSx(job.status), flexShrink: 0 }} />
                         </div>
                       </button>
                     ))}

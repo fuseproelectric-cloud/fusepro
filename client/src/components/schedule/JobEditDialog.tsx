@@ -9,7 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CustomerCombobox } from "@/components/CustomerCombobox";
 import { AddressSelector } from "@/components/AddressSelector";
-import { cn, formatStatus, STATUS_COLORS } from "@/lib/utils";
+import { cn, formatStatus, statusChipSx, priorityChipSx } from "@/lib/utils";
+import Chip from "@mui/material/Chip";
 import { getTechName } from "@/lib/schedule/job-utils";
 import type { Job } from "@shared/schema";
 import type { TechWithUser, Customer } from "@/lib/schedule/job-utils";
@@ -65,12 +66,6 @@ function InlineText({
 }
 
 // ── Main dialog ──────────────────────────────────────────────────────────────
-const PRIORITY_COLORS: Record<string, string> = {
-  low:       "bg-muted/50 text-muted-foreground",
-  normal:    "bg-blue-100 text-blue-700",
-  high:      "bg-blue-100 text-blue-800",
-  emergency: "bg-red-200 text-red-800 font-bold",
-};
 
 interface JobEditDialogProps {
   job: Job;
@@ -124,13 +119,9 @@ export function JobEditDialog({ job, technicians, customers, onClose, onSave }: 
               <InlineText value={job.title} onSave={v => save({ title: v })} placeholder="Job title" className="font-bold" />
             </h2>
             <div className="flex flex-wrap gap-1.5 mt-1.5">
-              <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium", STATUS_COLORS[job.status] ?? "bg-muted/50 text-muted-foreground")}>
-                {formatStatus(job.status)}
-              </span>
+              <Chip size="small" label={formatStatus(job.status)} sx={statusChipSx(job.status)} />
               {job.priority && (
-                <span className={cn("text-xs px-2 py-0.5 rounded-full", PRIORITY_COLORS[job.priority] ?? "bg-muted/50 text-muted-foreground")}>
-                  {job.priority}
-                </span>
+                <Chip size="small" label={formatStatus(job.priority)} sx={priorityChipSx(job.priority)} />
               )}
               {saving && <Icon icon={Loader2} size={14} className="animate-spin text-muted-foreground/60 mt-0.5" />}
             </div>

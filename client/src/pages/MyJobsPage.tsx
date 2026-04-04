@@ -8,7 +8,8 @@ import { fmtTime, fmtDateFull, fmtCompletedAt, dayBoundsCT, todayStrCT } from "@
 import { MapPin, Clock, ChevronRight, Loader2, Truck, CheckCircle2 } from "lucide-react";
 import { Icon } from "@/components/ui/Icon";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn, statusChipSx, priorityChipSx, formatStatus } from "@/lib/utils";
+import Chip from "@mui/material/Chip";
 
 type Job = {
   id: number;
@@ -32,21 +33,6 @@ type TimesheetEntry = {
   timestamp: string;
 };
 
-const STATUS_COLORS: Record<string, string> = {
-  pending: "bg-muted/40 text-foreground",
-  assigned: "bg-blue-100 text-blue-700",
-  on_the_way: "bg-blue-100 text-blue-800",
-  in_progress: "bg-blue-100 text-blue-800",
-  completed: "bg-green-100 text-green-700",
-  cancelled: "bg-red-100 text-red-700",
-};
-
-const PRIORITY_COLORS: Record<string, string> = {
-  low: "bg-muted/40 text-muted-foreground",
-  medium: "bg-yellow-100 text-yellow-700",
-  high: "bg-red-100 text-red-700",
-  urgent: "bg-red-200 text-red-800",
-};
 
 type FilterTab = "today" | "upcoming" | "all" | "completed";
 
@@ -301,13 +287,9 @@ function JobCard({
           )}
         </div>
         <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-          <span className={cn("text-xs font-medium px-2 py-0.5 rounded-full", STATUS_COLORS[job.status] ?? "bg-muted/40 text-muted-foreground")}>
-            {job.status.replace(/_/g, " ")}
-          </span>
+          <Chip size="small" label={formatStatus(job.status)} sx={statusChipSx(job.status)} />
           {job.priority && (
-            <span className={cn("text-xs px-2 py-0.5 rounded-full", PRIORITY_COLORS[job.priority] ?? "bg-muted/40 text-muted-foreground")}>
-              {job.priority}
-            </span>
+            <Chip size="small" label={formatStatus(job.priority)} sx={priorityChipSx(job.priority)} />
           )}
         </div>
       </div>

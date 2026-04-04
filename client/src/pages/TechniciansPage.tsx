@@ -7,7 +7,7 @@ import { techniciansApi, usersApi } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/apiError";
 import { apiRequest } from "@/lib/queryClient";
 import type { Technician, User } from "@shared/schema";
-import { cn, formatStatus, STATUS_COLORS } from "@/lib/utils";
+import { formatStatus, statusChipSx } from "@/lib/utils";
 import {
   Plus, Pencil, Trash2, MoreVertical, Wrench, Users, UserCheck, XCircle,
   type LucideIcon,
@@ -15,7 +15,7 @@ import {
 import { Icon } from "@/components/ui/Icon";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import Chip from "@mui/material/Chip";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import Stack from "@mui/material/Stack";
@@ -234,9 +234,7 @@ export function TechniciansPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Badge variant="outline" className={cn("text-xs border", STATUS_COLORS[tech.status])}>
-                    {formatStatus(tech.status)}
-                  </Badge>
+                  <Chip size="small" label={formatStatus(tech.status)} sx={statusChipSx(tech.status)} />
                   {tech.phone && (
                     <p className="text-xs text-muted-foreground">{tech.phone}</p>
                   )}

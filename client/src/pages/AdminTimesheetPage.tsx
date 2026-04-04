@@ -53,6 +53,9 @@ interface TechTimesheetData {
 
 import { fmtTime, fmtDateFull, dateStrCT, todayStrCT } from "@/lib/time";
 import Stack from "@mui/material/Stack";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
 
 function formatTime(ts: string) { return fmtTime(ts); }
 function formatDateISO(d: Date) { return dateStrCT(d); }
@@ -111,7 +114,8 @@ const ENTRY_CONFIG: Record<string, { label: string; emoji: string; color: string
 // ── Edit Entry Modal ──────────────────────────────────────────────────────────
 const ENTRY_TYPES = ["day_start","day_end","travel_start","travel_end","work_start","work_end","break_start","break_end"];
 
-function EditEntryModal({ entry, onClose, onSave }: {
+function EditEntryModal({ open, entry, onClose, onSave }: {
+  open: boolean;
   entry: TimesheetEntry;
   onClose: () => void;
   onSave: (id: number, data: { entryType: string; timestamp: string; notes: string }) => void;
@@ -124,10 +128,9 @@ function EditEntryModal({ entry, onClose, onSave }: {
   const [notes, setNotes] = useState(entry.notes ?? "");
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="fixed inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-card rounded-lg shadow-high w-full max-w-sm mx-4 p-5 space-y-4">
-        <h3 className="font-semibold text-foreground">Edit Entry</h3>
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
+      <DialogTitle sx={{ fontWeight: 600, fontSize: "1rem", pb: 1 }}>Edit Entry</DialogTitle>
+      <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
         <SelectInput
           label="Entry Type"
           options={ENTRY_TYPES.map(t => ({ value: t, label: ENTRY_CONFIG[t]?.label ?? t }))}
@@ -157,8 +160,8 @@ function EditEntryModal({ entry, onClose, onSave }: {
             Save
           </Button>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -758,13 +761,12 @@ function WeeklyView({ techs }: { techs: TechSummary[] }) {
         )}
       </div>
     </div>
-    {editingEntry && (
-      <EditEntryModal
-        entry={editingEntry}
-        onClose={() => setEditingEntry(null)}
-        onSave={(id, data) => editMutation.mutate({ id, data })}
-      />
-    )}
+    <EditEntryModal
+      open={!!editingEntry}
+      entry={editingEntry ?? { id: 0, technicianId: 0, jobId: null, entryType: "day_start", timestamp: new Date().toISOString(), notes: null }}
+      onClose={() => setEditingEntry(null)}
+      onSave={(id, data) => editMutation.mutate({ id, data })}
+    />
     </>
   );
 }
