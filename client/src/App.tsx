@@ -2,7 +2,7 @@ import { Switch, Route, Redirect } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
-import React from "react";
+import React, { Suspense } from "react";
 import { LoginPage } from "@/pages/LoginPage";
 import { Toaster } from "@/components/ui/toaster";
 import { ProtectedRoute } from "@/components/routing/ProtectedRoute";
@@ -61,24 +61,26 @@ function AppRoutes() {
   const homeRedirect = user ? getHomeRoute(user.role as UserRole) : "/login";
 
   return (
-    <Switch>
-      {/* Login: authenticated users are redirected to their role-appropriate home */}
-      <Route path="/login">
-        {isAuthenticated ? <Redirect to={homeRedirect} /> : <LoginPage />}
-      </Route>
-
-      {/* All protected routes are generated from the centralized route config */}
-      {APP_ROUTES.map(({ path, component, allowedRoles }) => (
-        <Route key={path} path={path}>
-          <ProtectedRoute component={component} allowedRoles={allowedRoles} />
+    <Suspense fallback={<LoadingScreen />}>
+      <Switch>
+        {/* Login: authenticated users are redirected to their role-appropriate home */}
+        <Route path="/login">
+          {isAuthenticated ? <Redirect to={homeRedirect} /> : <LoginPage />}
         </Route>
-      ))}
 
-      {/* Catch-all: redirect to role-appropriate home (or login if not authenticated) */}
-      <Route>
-        <Redirect to={homeRedirect} />
-      </Route>
-    </Switch>
+        {/* All protected routes are generated from the centralized route config */}
+        {APP_ROUTES.map(({ path, component, allowedRoles }) => (
+          <Route key={path} path={path}>
+            <ProtectedRoute component={component} allowedRoles={allowedRoles} />
+          </Route>
+        ))}
+
+        {/* Catch-all: redirect to role-appropriate home (or login if not authenticated) */}
+        <Route>
+          <Redirect to={homeRedirect} />
+        </Route>
+      </Switch>
+    </Suspense>
   );
 }
 

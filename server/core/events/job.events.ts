@@ -1,4 +1,3 @@
-import type { Server as SocketServer } from "socket.io";
 import type { Job } from "@shared/schema";
 
 // ─── Event name ───────────────────────────────────────────────────────────────
@@ -12,7 +11,7 @@ export const JOB_STATUS_CHANGED = "job.status_changed";
  * Covers both technician-initiated transitions and admin/dispatcher overrides.
  *
  * Side effects that subscribe to this event:
- *   - Realtime: `job:updated` socket emits (always, when io is present)
+ *   - Realtime: `job:updated` socket emits — handler resolves io from socket-registry
  *   - Notification: activity notification (only for technician transitions
  *     where `notificationEntryType` is defined)
  */
@@ -29,6 +28,4 @@ export interface JobStatusChanged {
   technicianName?: string;
   /** User ID of the technician — required when notificationEntryType is set. */
   technicianUserId?: number;
-  /** Socket.IO server instance for realtime delivery (optional / best-effort). */
-  io?: SocketServer;
 }

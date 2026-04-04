@@ -8,14 +8,18 @@ import { NOTIFY_TIMESHEET_ACTIVITY } from "../../queue/job-types";
  *
  * Side effects are enqueued as background jobs so notification fan-out
  * (DB writes + socket emit) runs outside the request hot path.
+ *
+ * The timestamp is serialized to an ISO string at enqueue time — BullMQ
+ * stores payloads as JSON and Date objects are not safely round-tripped.
  */
 export function handleTimesheetEntryCreated(event: TimesheetEntryCreated): void {
   jobQueue.enqueue(NOTIFY_TIMESHEET_ACTIVITY, {
     entryType: event.entryType,
     user:      event.user,
-    timestamp: event.timestamp,
+    timestamp: event.timestamp instanceof Date
+      ? event.timestamp.toISOString()
+      : String(event.timestamp),
     notes:     event.notes ?? null,
-    io:        event.io,
   });
 }
 

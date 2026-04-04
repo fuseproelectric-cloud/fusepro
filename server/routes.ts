@@ -1,8 +1,8 @@
 import express from "express";
 import type { Express } from "express";
 import type { Server } from "http";
-import { Server as SocketServer } from "socket.io";
 import { createSocketServer } from "./core/realtime/socket";
+import { setSocketServer } from "./core/realtime/socket-registry";
 import { authRouter } from "./modules/auth/auth.routes";
 import { settingsRouter } from "./modules/settings/settings.routes";
 import { connecteamRouter } from "./modules/integrations/connecteam/connecteam.routes";
@@ -108,6 +108,7 @@ export async function registerRoutes(httpServer: Server, app: Express) {
   app.use(sessionMiddleware);
 
   const io = createSocketServer(httpServer, app, sessionMiddleware);
+  setSocketServer(io);
 
   app.use(authRouter);
   app.use(settingsRouter);
@@ -146,7 +147,6 @@ export async function registerRoutes(httpServer: Server, app: Express) {
       const { status, notes, lat, lng, address } = req.body;
       if (!status) return next(new ValidationError("status is required"));
 
-      const io: SocketServer = (req.app as any).io;
       const latNum = Number(lat);
       const lngNum = Number(lng);
       const gps = (lat != null && lng != null && Number.isFinite(latNum) && Number.isFinite(lngNum))
@@ -165,14 +165,20 @@ export async function registerRoutes(httpServer: Server, app: Express) {
           newStatus: status,
           notes,
           gps,
-          io,
+          traceId: req.requestId,
         });
         return res.json(result.job);
       }
 
       // Admin / dispatcher — override path, no timesheet side effects
       if (!canOverrideJobStatus(user)) return next(new ForbiddenError());
-      const result = await jobExecutionService.adminOverride({ jobId, newStatus: status, notes, io });
+      const result = await jobExecutionService.adminOverride({
+        jobId,
+        newStatus: status,
+        notes,
+        performedBy: user.id,
+        traceId: req.requestId,
+      });
       return res.json(result.job);
     } catch (err) {
       // TransitionError extends AppError — handled by error middleware

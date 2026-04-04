@@ -479,3 +479,32 @@ export const insertServiceSchema = createInsertSchema(services).omit({ id: true,
 export const selectServiceSchema = createSelectSchema(services);
 export type Service = typeof services.$inferSelect;
 export type InsertService = typeof services.$inferInsert;
+
+// ─── Audit Logs ───────────────────────────────────────────────────────────────
+// Append-only log of important business mutations.
+// Designed to answer: who changed what, on which entity, when, and why.
+//
+// action:      dot-notation verb, e.g. "job.status_changed", "request.converted_to_estimate"
+// entity_type: domain noun, e.g. "job", "request", "estimate", "invoice"
+// metadata:    action-specific context (old/new status, target entity, etc.)
+//
+// performed_by_user_id is nullable — system-initiated writes (scheduled tasks,
+// background jobs) may have no user. entity_id is nullable for entity-agnostic
+// actions (e.g. bulk settings flushes).
+export const auditLogs = pgTable("audit_logs", {
+  id:                  serial("id").primaryKey(),
+  requestId:           text("request_id"),
+  performedByUserId:   integer("performed_by_user_id").references(() => users.id, { onDelete: "set null" }),
+  action:              varchar("action", { length: 100 }).notNull(),
+  entityType:          varchar("entity_type", { length: 100 }).notNull(),
+  entityId:            integer("entity_id"),
+  metadata:            json("metadata").$type<Record<string, unknown>>(),
+  createdAt:           timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("idx_audit_logs_entity").on(table.entityType, table.entityId),
+  index("idx_audit_logs_user").on(table.performedByUserId),
+  index("idx_audit_logs_created_at").on(table.createdAt),
+]);
+
+export type AuditLog = typeof auditLogs.$inferSelect;
+export type InsertAuditLog = typeof auditLogs.$inferInsert;

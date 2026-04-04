@@ -18,7 +18,6 @@
  */
 
 import { eq, and, sql } from "drizzle-orm";
-import type { Server as SocketServer } from "socket.io";
 import { db } from "../db";
 import { storage } from "../storage";
 import { jobs, timesheets } from "@shared/schema";
@@ -32,6 +31,7 @@ import {
 } from "../modules/jobs/job-status.lifecycle";
 import { domainEventBus } from "../core/events/domain-event-bus";
 import { JOB_STATUS_CHANGED } from "../core/events/job.events";
+import { auditLog } from "../core/audit/audit.service";
 
 // ─── Error ────────────────────────────────────────────────────────────────────
 
@@ -58,14 +58,18 @@ export interface TransitionParams {
   newStatus: string;
   notes?: string;
   gps?: { lat: number; lng: number; address?: string | null };
-  io?: SocketServer;
+  /** HTTP request correlation ID for audit log. */
+  traceId?: string;
 }
 
 export interface AdminOverrideParams {
   jobId: number;
   newStatus: string;
   notes?: string;
-  io?: SocketServer;
+  /** Authenticated user performing the override. */
+  performedBy?: number;
+  /** HTTP request correlation ID for audit log. */
+  traceId?: string;
 }
 
 export interface TransitionResult {
@@ -101,7 +105,7 @@ export const jobExecutionService = {
    *   - admin reopens completed job → goes through adminOverride, no entries created
    */
   async transition(params: TransitionParams): Promise<TransitionResult> {
-    const { userId, userName, technicianId, jobId, newStatus, notes, gps, io } = params;
+    const { userId, userName, technicianId, jobId, newStatus, notes, gps, traceId } = params;
 
     // ── Pre-flight (outside transaction, low-contention reads) ────────────────
     if (newStatus === "on_the_way") {
@@ -125,6 +129,7 @@ export const jobExecutionService = {
     }
 
     let committedJob!: Job;
+    let fromStatusForAudit: string | undefined;
     const committedEntries: Timesheet[] = [];
 
     // ── Atomic transaction ────────────────────────────────────────────────────
@@ -161,6 +166,7 @@ export const jobExecutionService = {
       }
 
       const fromStatus = job.status as JobStatus;
+      fromStatusForAudit = fromStatus; // captured for post-commit audit
       const toStatus   = newStatus as JobStatus;
 
       // Reject terminal statuses before the transition check for a clearer message
@@ -283,7 +289,15 @@ export const jobExecutionService = {
       notificationEntryType:  TRANSITION_NOTIFICATION_ENTRY[newStatus as JobStatus],
       technicianName:         userName,
       technicianUserId:       userId,
-      io,
+    });
+
+    auditLog.record({
+      requestId:          traceId,
+      performedByUserId:  userId,
+      action:             "job.status_changed",
+      entityType:         "job",
+      entityId:           jobId,
+      metadata:           { from: fromStatusForAudit, to: newStatus, technicianId },
     });
 
     return { job: committedJob, timesheetEntries: committedEntries };
@@ -302,7 +316,7 @@ export const jobExecutionService = {
    *   - Any status correction
    */
   async adminOverride(params: AdminOverrideParams): Promise<TransitionResult> {
-    const { jobId, newStatus, notes, io } = params;
+    const { jobId, newStatus, notes, performedBy, traceId } = params;
 
     const patch: Record<string, unknown> = { status: newStatus };
     if (notes !== undefined) patch.notes = notes;
@@ -319,9 +333,17 @@ export const jobExecutionService = {
     // ── Post-commit: publish domain event (socket emits only — no notification) ─
     await domainEventBus.emit(JOB_STATUS_CHANGED, {
       job: updated as Job,
-      io,
       // notificationEntryType intentionally absent: admin overrides do not
       // generate activity notifications
+    });
+
+    auditLog.record({
+      requestId:          traceId,
+      performedByUserId:  performedBy,
+      action:             "job.status_overridden",
+      entityType:         "job",
+      entityId:           jobId,
+      metadata:           { to: newStatus },
     });
 
     return { job: updated as Job, timesheetEntries: [] };

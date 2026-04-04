@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
-import { Server as SocketServer } from "socket.io";
+import type { Server as SocketServer } from "socket.io";
 import { insertJobNoteSchema } from "@shared/schema";
 import { requireAuth, requireJobAccess } from "../../../core/middleware/auth.middleware";
 import { parseId } from "../../../core/utils/parse-id";
@@ -56,7 +56,6 @@ jobNotesRouter.post("/api/jobs/:id/notes", requireAuth, requireJobAccess, async 
       noteId:  note.id,
       content: data.content as string,
       sender:  sender ? { id: sender.id, name: sender.name } : null,
-      io,
     });
 
     res.status(201).json(enriched);

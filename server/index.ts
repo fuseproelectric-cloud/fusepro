@@ -4,6 +4,7 @@ import { serveStatic } from "./static";
 import { createServer } from "http";
 import { log, logger } from "./core/utils/logger";
 import { errorMiddleware } from "./core/middleware/error.middleware";
+import { requestIdMiddleware } from "./core/middleware/request-id.middleware";
 import { runMigrations } from "./lib/run-migrations";
 import { startHealthMonitor } from "./core/health/health.monitor";
 
@@ -12,6 +13,11 @@ const httpServer = createServer(app);
 
 app.disable("x-powered-by");
 app.set("trust proxy", 1);
+
+// Assign a correlation ID to every request before any other middleware runs.
+// This makes req.requestId available in all downstream middleware, route handlers,
+// and the response finish listener below.
+app.use(requestIdMiddleware);
 
 declare module "http" {
   interface IncomingMessage {
@@ -79,9 +85,12 @@ app.use((req, res, next) => {
     const duration_ms = Date.now() - start;
     const ctx = {
       source:      "http",
+      request_id:  req.requestId,
       method:      req.method,
       status,
       duration_ms,
+      // user_id is available by finish time — session middleware has already run
+      ...(req.session?.userId ? { user_id: req.session.userId } : {}),
       ...(errorCode ? { error_code: errorCode } : {}),
     };
     const level = status >= 500 ? "error" : status >= 400 ? "warn" : "info";

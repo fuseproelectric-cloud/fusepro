@@ -4,10 +4,6 @@ export { FormSection } from "./FormSection";
 export { FormRow }     from "./FormRow";
 export { FormActions } from "./FormActions";
 
-// Schema-driven (простые формы)
-export { SchemaForm }  from "./SchemaForm";
-export type { SectionConfig, FieldConfig } from "./SchemaForm";
-
 // Готовые input-компоненты
 export { TextInput }     from "./inputs/TextInput";
 export type { TextInputProps } from "./inputs/TextInput";

@@ -12,7 +12,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState, TableSkeleton, TableFooter, StatusBadge } from "@/components/page";
 
 /* ─── helpers ──────────────────────────────────────────────────────────────── */
 
@@ -35,18 +35,6 @@ void PRIORITY_META; // defined for future use; currently only PriorityDot is use
 const nextStatus: Record<string, string> = {
   pending: "assigned", assigned: "in_progress", in_progress: "completed",
 };
-
-function StatusBadge({ status }: { status: string }) {
-  const m = STATUS_META[status] ?? { label: formatStatus(status), cls: "bg-muted/40 text-muted-foreground" };
-  return (
-    <span className={cn(
-      "inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wide whitespace-nowrap",
-      m.cls,
-    )}>
-      {m.label}
-    </span>
-  );
-}
 
 function PriorityDot({ priority }: { priority: string }) {
   const colors: Record<string, string> = {
@@ -85,9 +73,7 @@ export function JobsTable({
   if (isLoading) {
     return (
       <div className="bg-card rounded-lg border border-border overflow-hidden" style={{ boxShadow: "var(--shadow-low)" }}>
-        <div className="p-6 space-y-3">
-          {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
-        </div>
+        <TableSkeleton count={5} />
       </div>
     );
   }
@@ -97,16 +83,16 @@ export function JobsTable({
   if (filtered.length === 0) {
     return (
       <div className="bg-card rounded-lg border border-border overflow-hidden" style={{ boxShadow: "var(--shadow-low)" }}>
-        <div className="empty-state">
-          <div className="empty-state__icon"><Icon icon={Briefcase} size={28} /></div>
-          <p className="empty-state__title">{hasFilters ? "No jobs match your filters" : "No jobs yet"}</p>
-          <p className="empty-state__desc">{hasFilters ? "Try different search terms or clear filters." : "Create your first job to get started."}</p>
-          {!hasFilters && (
+        <EmptyState
+          icon={Briefcase}
+          title={hasFilters ? "No jobs match your filters" : "No jobs yet"}
+          description={hasFilters ? "Try different search terms or clear filters." : "Create your first job to get started."}
+          action={!hasFilters && (
             <Button onClick={onOpenCreate} className="mt-4 h-8 bg-blue-500 hover:bg-blue-700 text-white text-sm">
               <Icon icon={Plus} size={14} className="mr-1.5" />New Job
             </Button>
           )}
-        </div>
+        />
       </div>
     );
   }
@@ -159,7 +145,7 @@ export function JobsTable({
                       ? <div className="flex items-center gap-1.5"><Icon icon={UserCheck} size={12} className="text-muted-foreground/60" /><span className="text-sm text-foreground">{tech.user.name}</span></div>
                       : <span className="text-xs text-amber-600 font-medium">Unassigned</span>}
                   </td>
-                  <td className="px-4 py-3"><StatusBadge status={job.status} /></td>
+                  <td className="px-4 py-3"><StatusBadge status={job.status} map={STATUS_META} /></td>
                   <td className="px-4 py-3 hidden md:table-cell">
                     <div className="flex items-center gap-1.5">
                       <PriorityDot priority={job.priority} />
@@ -214,9 +200,7 @@ export function JobsTable({
           </tbody>
         </table>
       </div>
-      <div className="px-4 py-2.5 border-t border-border bg-muted/30">
-        <p className="text-xs text-muted-foreground">Showing {filtered.length} of {jobs.length} jobs</p>
-      </div>
+      <TableFooter filtered={filtered.length} total={jobs.length} label="jobs" />
     </div>
   );
 }

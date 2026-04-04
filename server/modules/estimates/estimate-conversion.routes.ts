@@ -22,6 +22,7 @@ estimateConversionRouter.post("/api/estimates/:id/convert-invoice", requireRole(
       performedBy: req.session.userId!,
       paymentTerms: req.body?.paymentTerms,
       io,
+      traceId: req.requestId,
     });
     return res.status(201).json(result.invoice);
   } catch (err) {

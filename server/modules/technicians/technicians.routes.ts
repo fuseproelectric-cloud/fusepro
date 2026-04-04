@@ -21,7 +21,7 @@ techniciansRouter.get("/api/technicians/me", requireAuth, async (req, res) => {
   }
 });
 
-techniciansRouter.get("/api/technicians", requireAuth, async (_req, res) => {
+techniciansRouter.get("/api/technicians", requireRole("admin", "dispatcher"), async (_req, res) => {
   try {
     const data = await techniciansRepository.getAll();
     res.json(data);
@@ -30,7 +30,7 @@ techniciansRouter.get("/api/technicians", requireAuth, async (_req, res) => {
   }
 });
 
-techniciansRouter.get("/api/technicians/:id", requireAuth, async (req, res) => {
+techniciansRouter.get("/api/technicians/:id", requireRole("admin", "dispatcher"), async (req, res) => {
   try {
     const id = parseId(req.params.id);
     if (!id) return res.status(400).json({ message: "Invalid id" });

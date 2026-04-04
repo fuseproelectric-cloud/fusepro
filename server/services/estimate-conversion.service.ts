@@ -34,6 +34,7 @@ import {
   type EstimateStatus,
   isConvertibleToInvoice,
 } from "../modules/estimates/estimate-conversion.lifecycle";
+import { auditLog } from "../core/audit/audit.service";
 
 // ─── Error ────────────────────────────────────────────────────────────────────
 
@@ -65,6 +66,8 @@ export interface EstimateConversionParams {
   /** Defaults to "due_on_receipt" if omitted. */
   paymentTerms?: string;
   io?: SocketServer;
+  /** HTTP request correlation ID for audit log. */
+  traceId?: string;
 }
 
 /**
@@ -126,7 +129,7 @@ export const estimateConversionService = {
    *   8. Emit estimate:converted to staff:notifications (post-commit)
    */
   async toInvoice(params: EstimateConversionParams): Promise<EstimateConversionResult> {
-    const { estimateId, performedBy, paymentTerms = "due_on_receipt", io } = params;
+    const { estimateId, performedBy, paymentTerms = "due_on_receipt", io, traceId } = params;
 
     let committedEstimate!: Estimate;
     let committedInvoice!: Invoice;
@@ -235,6 +238,15 @@ export const estimateConversionService = {
         performedBy,
       });
     }
+
+    auditLog.record({
+      requestId:          traceId,
+      performedByUserId:  performedBy,
+      action:             "estimate.converted_to_invoice",
+      entityType:         "estimate",
+      entityId:           estimateId,
+      metadata:           { invoiceId: committedInvoice.id, invoiceNumber: committedInvoice.invoiceNumber, paymentTerms },
+    });
 
     return { estimate: committedEstimate, invoice: committedInvoice };
   },

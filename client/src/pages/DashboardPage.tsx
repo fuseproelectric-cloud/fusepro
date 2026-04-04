@@ -189,24 +189,24 @@ export function DashboardPage() {
         ) : stats?.recentJobs && stats.recentJobs.length > 0 ? (
           <Table size="small">
             <TableHead>
-              <TableRow sx={{ bgcolor: "hsl(var(--muted) / 0.4)" }}>
+              <TableRow>
                 {["Job", "Customer", "Technician", "Status", "Priority"].map(h => (
-                  <TableCell key={h} sx={{ fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "hsl(var(--muted-foreground))", borderColor: "hsl(var(--border))" }}>{h}</TableCell>
+                  <TableCell key={h}>{h}</TableCell>
                 ))}
               </TableRow>
             </TableHead>
             <TableBody>
               {stats.recentJobs.map((job) => (
                 <TableRow key={job.id} hover sx={{ "&:last-child td": { borderBottom: 0 } }}>
-                  <TableCell sx={{ fontWeight: 500, color: "hsl(var(--foreground))", borderColor: "hsl(var(--border))" }}>{job.title}</TableCell>
-                  <TableCell sx={{ color: "hsl(var(--muted-foreground))", borderColor: "hsl(var(--border))" }}>{job.customerName}</TableCell>
-                  <TableCell sx={{ color: "hsl(var(--muted-foreground))", borderColor: "hsl(var(--border))" }}>
+                  <TableCell sx={{ fontWeight: 500 }}>{job.title}</TableCell>
+                  <TableCell sx={{ color: "text.secondary" }}>{job.customerName}</TableCell>
+                  <TableCell sx={{ color: "text.secondary" }}>
                     {job.technicianName ?? <span style={{ fontSize: "0.75rem", color: "#f59e0b", fontWeight: 500 }}>Unassigned</span>}
                   </TableCell>
-                  <TableCell sx={{ borderColor: "hsl(var(--border))" }}>
+                  <TableCell>
                     <Chip size="small" label={formatStatus(job.status)} sx={statusChipSx(job.status)} />
                   </TableCell>
-                  <TableCell sx={{ borderColor: "hsl(var(--border))" }}>
+                  <TableCell>
                     <Chip size="small" label={formatStatus(job.priority)} sx={priorityChipSx(job.priority)} />
                   </TableCell>
                 </TableRow>

@@ -1,9 +1,29 @@
 import { Router } from "express";
+import type { Request, Response, NextFunction } from "express";
 import { Server as SocketServer } from "socket.io";
-import { requireAuth } from "../../core/middleware/auth.middleware";
+import { requireAuth, requireRole } from "../../core/middleware/auth.middleware";
 import { parseId } from "../../core/utils/parse-id";
 import { conversationsRepository } from "./conversations.repository";
 import { usersRepository } from "../users/users.repository";
+import {
+  canRenameConversation,
+  canManageConversationMembers,
+  canCreateConversationType,
+} from "../../core/policies/conversations.policy";
+
+/**
+ * Verifies the authenticated user is a member of the conversation in :id.
+ * Returns 403 if not a member, 400 if the conversation id is invalid.
+ */
+async function requireConvMembership(req: Request, res: Response, next: NextFunction) {
+  const convId = parseId(req.params.id);
+  if (!convId) return res.status(400).json({ message: "Invalid conversation id" });
+  const members = await conversationsRepository.getConvMembers(convId);
+  if (!members.some(m => m.id === req.session.userId)) {
+    return res.status(403).json({ message: "Forbidden" });
+  }
+  next();
+}
 
 export const conversationsRouter = Router();
 
@@ -36,6 +56,11 @@ conversationsRouter.post("/api/conversations", requireAuth, async (req, res) => 
   try {
     const { type, name, memberIds, jobId } = req.body;
     if (!type) return res.status(400).json({ message: "type required" });
+    const user = await usersRepository.getById(req.session.userId!);
+    if (!user) return res.status(401).json({ message: "Unauthorized" });
+    if (!canCreateConversationType(user, type)) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
     const conv = await conversationsRepository.createConversation({
       type, name, jobId, createdBy: req.session.userId!, memberIds: memberIds ?? [],
     });
@@ -57,7 +82,7 @@ conversationsRouter.post("/api/conversations/direct/:userId", requireAuth, async
   }
 });
 
-conversationsRouter.get("/api/conversations/:id/messages", requireAuth, async (req, res) => {
+conversationsRouter.get("/api/conversations/:id/messages", requireAuth, requireConvMembership, async (req, res) => {
   try {
     const convId = parseId(req.params.id);
     if (!convId) return res.status(400).json({ message: "Invalid conversation id" });
@@ -70,7 +95,7 @@ conversationsRouter.get("/api/conversations/:id/messages", requireAuth, async (r
   }
 });
 
-conversationsRouter.post("/api/conversations/:id/messages", requireAuth, async (req, res) => {
+conversationsRouter.post("/api/conversations/:id/messages", requireAuth, requireConvMembership, async (req, res) => {
   try {
     const convId = parseId(req.params.id);
     if (!convId) return res.status(400).json({ message: "Invalid conversation id" });
@@ -92,7 +117,7 @@ conversationsRouter.post("/api/conversations/:id/messages", requireAuth, async (
   }
 });
 
-conversationsRouter.put("/api/conversations/:id/read", requireAuth, async (req, res) => {
+conversationsRouter.put("/api/conversations/:id/read", requireAuth, requireConvMembership, async (req, res) => {
   try {
     const convId = parseId(req.params.id);
     if (!convId) return res.status(400).json({ message: "Invalid conversation id" });
@@ -104,7 +129,7 @@ conversationsRouter.put("/api/conversations/:id/read", requireAuth, async (req, 
   }
 });
 
-conversationsRouter.put("/api/conversations/:id/name", requireAuth, async (req, res) => {
+conversationsRouter.put("/api/conversations/:id/name", requireRole("admin", "dispatcher"), async (req, res) => {
   try {
     const convId = parseId(req.params.id);
     if (!convId) return res.status(400).json({ message: "Invalid conversation id" });
@@ -117,7 +142,7 @@ conversationsRouter.put("/api/conversations/:id/name", requireAuth, async (req, 
   }
 });
 
-conversationsRouter.post("/api/conversations/:id/members", requireAuth, async (req, res) => {
+conversationsRouter.post("/api/conversations/:id/members", requireRole("admin", "dispatcher"), async (req, res) => {
   try {
     const convId = parseId(req.params.id);
     const userId = parseId(req.body.userId);
@@ -129,7 +154,7 @@ conversationsRouter.post("/api/conversations/:id/members", requireAuth, async (r
   }
 });
 
-conversationsRouter.delete("/api/conversations/:id/members/:userId", requireAuth, async (req, res) => {
+conversationsRouter.delete("/api/conversations/:id/members/:userId", requireRole("admin", "dispatcher"), async (req, res) => {
   try {
     const convId = parseId(req.params.id);
     const userId = parseId(req.params.userId);

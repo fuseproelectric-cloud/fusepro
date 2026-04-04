@@ -1,6 +1,5 @@
 import { Router } from "express";
 import type { NextFunction, Request, Response } from "express";
-import { Server as SocketServer } from "socket.io";
 import { storage } from "../../storage";
 import { weekBoundsCT, dayBoundsCT, todayStrCT } from "../../lib/time";
 import { parseId } from "../../core/utils/parse-id";
@@ -148,13 +147,11 @@ timesheetsRouter.post("/api/timesheet", requireAuth, async (req: Request, res: R
 
     // Publish domain event — side effects (notification + realtime) are
     // handled by the registered handler in core/events/handlers/.
-    const io: SocketServer = (req.app as any).io;
     await domainEventBus.emit(TIMESHEET_ENTRY_CREATED, {
       entryType: data.entryType,
       user,
       timestamp: entry.timestamp,
       notes:     data.notes ?? null,
-      io,
     });
 
     res.status(201).json(entry);

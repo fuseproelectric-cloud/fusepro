@@ -50,7 +50,7 @@ export function LoginPage() {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        bgcolor: "hsl(var(--background))",
+        bgcolor: "background.default",
         p: 3,
       }}
     >
@@ -58,10 +58,11 @@ export function LoginPage() {
         sx={{
           width: "100%",
           maxWidth: 420,
-          bgcolor: "hsl(var(--card))",
-          borderRadius: "var(--radius-lg)",
-          border: "1px solid hsl(var(--border))",
-          boxShadow: "var(--shadow-high)",
+          bgcolor: "background.paper",
+          borderRadius: 2,
+          border: "1px solid",
+          borderColor: "divider",
+          boxShadow: 24,
           p: "2.5rem 2.25rem",
         }}
       >
@@ -73,10 +74,10 @@ export function LoginPage() {
             alt="Fuse Pro Electric"
             sx={{ height: "3rem", width: "auto", mx: "auto", mb: 2.5, display: "block" }}
           />
-          <Box component="h1" sx={{ fontSize: "1.375rem", fontWeight: 700, color: "hsl(var(--foreground))", m: 0 }}>
+          <Box component="h1" sx={{ fontSize: "1.375rem", fontWeight: 700, color: "text.primary", m: 0 }}>
             Sign in to FusePro
           </Box>
-          <Box component="p" sx={{ fontSize: "0.875rem", color: "hsl(var(--muted-foreground))", mt: 0.5 }}>
+          <Box component="p" sx={{ fontSize: "0.875rem", color: "text.secondary", mt: 0.5 }}>
             Welcome back — enter your credentials
           </Box>
         </Box>
@@ -142,7 +143,7 @@ export function LoginPage() {
         </Box>
       </Box>
 
-      <Box component="p" sx={{ mt: 3, fontSize: "0.75rem", color: "hsl(var(--muted-foreground))" }}>
+      <Box component="p" sx={{ mt: 3, fontSize: "0.75rem", color: "text.secondary" }}>
         Fuse Pro Electric &copy; {new Date().getFullYear()}
       </Box>
     </Box>

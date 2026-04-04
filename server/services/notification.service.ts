@@ -15,6 +15,12 @@
  * Socket delivery is best-effort transport; a missed emit never creates a
  * missing notification.
  *
+ * ── Socket.IO access ──────────────────────────────────────────────────────────
+ * The Socket.IO server is resolved from the socket-registry singleton rather
+ * than being passed as a parameter. This keeps notification job payloads
+ * JSON-serializable (required for BullMQ / Redis storage) while still
+ * delivering realtime events when the server is available.
+ *
  * ── What this service owns ────────────────────────────────────────────────────
  *   notifyJobNote()     — job note created (message notification)
  *   notifyJobActivity() — job status transition (activity notification)
@@ -26,11 +32,11 @@
  *   - low-level DB accessors (storage.ts: getUnreadNotifications, markNotificationRead, etc.)
  */
 
-import type { Server as SocketServer } from "socket.io";
 import { jobsRepository } from "../modules/jobs/jobs.repository";
 import { notificationsRepository } from "../modules/notifications/notifications.repository";
 import { techniciansRepository } from "../modules/technicians/technicians.repository";
 import { usersRepository } from "../modules/users/users.repository";
+import { getSocketServer } from "../core/realtime/socket-registry";
 
 // ─── Label maps (canonical, single definition) ────────────────────────────────
 
@@ -60,7 +66,6 @@ export interface NotifyJobNoteParams {
   content: string;
   /** The user who created the note — excluded from recipient list. */
   sender: { id: number; name: string } | null | undefined;
-  io?: SocketServer;
 }
 
 export interface NotifyJobActivityParams {
@@ -70,7 +75,6 @@ export interface NotifyJobActivityParams {
   jobTitle: string | null;
   technicianName: string;
   technicianUserId: number;
-  io?: SocketServer;
 }
 
 export interface NotifyDayActivityParams {
@@ -80,7 +84,6 @@ export interface NotifyDayActivityParams {
   /** ISO string or Date — normalized to Date before DB write. */
   timestamp: Date | string;
   notes?: string | null;
-  io?: SocketServer;
 }
 
 // ─── Service ──────────────────────────────────────────────────────────────────
@@ -102,7 +105,7 @@ export const notificationService = {
    *   - `notification:new_message` → staff:notifications (admin/dispatcher)
    *   - `notification:new_message` → user:{technicianUserId} (assigned technician)
    */
-  async notifyJobNote({ jobId, noteId, content, sender, io }: NotifyJobNoteParams): Promise<void> {
+  async notifyJobNote({ jobId, noteId, content, sender }: NotifyJobNoteParams): Promise<void> {
     const senderId = sender?.id ?? null;
     const senderName = sender?.name ?? "Unknown";
 
@@ -120,6 +123,7 @@ export const notificationService = {
     const timestamp = new Date();
 
     // ── Realtime delivery ──────────────────────────────────────────────────────
+    const io = getSocketServer();
     if (io) {
       const socketPayload = {
         jobId,
@@ -177,13 +181,13 @@ export const notificationService = {
     jobTitle,
     technicianName,
     technicianUserId,
-    io,
   }: NotifyJobActivityParams): Promise<void> {
     const label   = ACTIVITY_ENTRY_LABEL[entryType] ?? entryType.replace(/_/g, " ");
     const jobPart = jobTitle ? ` — ${jobTitle}` : "";
     const timestamp = new Date();
 
     // ── Realtime delivery ──────────────────────────────────────────────────────
+    const io = getSocketServer();
     if (io) {
       io.to("staff:notifications").emit("notification:activity", {
         entryType,
@@ -229,12 +233,12 @@ export const notificationService = {
     user,
     timestamp,
     notes,
-    io,
   }: NotifyDayActivityParams): Promise<void> {
-    const label     = ACTIVITY_ENTRY_LABEL[entryType] ?? entryType.replace(/_/g, " ");
-    const ts        = timestamp instanceof Date ? timestamp : new Date(timestamp);
+    const label = ACTIVITY_ENTRY_LABEL[entryType] ?? entryType.replace(/_/g, " ");
+    const ts    = timestamp instanceof Date ? timestamp : new Date(timestamp);
 
     // ── Realtime delivery ──────────────────────────────────────────────────────
+    const io = getSocketServer();
     if (io) {
       io.to("staff:notifications").emit("notification:activity", {
         entryType,

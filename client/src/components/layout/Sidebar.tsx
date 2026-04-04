@@ -5,6 +5,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import { X, Plus, ChevronDown } from "lucide-react";
 import { Icon } from "@/components/ui/Icon";
+import { SIDEBAR_W } from "@/lib/layout";
 import {
   Box,
   Button,
@@ -94,15 +95,10 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
         onClick={() => { navigate(item.path); onMobileClose?.(); }}
         selected={active}
         sx={{
-          borderRadius: 1,
           py: 0.875,
           px: 1.25,
           mb: 0.25,
           gap: 1.25,
-          '&.Mui-selected': {
-            bgcolor: "rgba(37,99,235,0.12)",
-            '&:hover': { bgcolor: "rgba(37,99,235,0.18)" },
-          },
         }}
       >
         <ListItemIcon sx={{ minWidth: 0, color: active ? "primary.main" : "text.secondary" }}>
@@ -277,7 +273,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
         sx={{
           display: { xs: "none", lg: "flex" },
           flexDirection: "column",
-          width: 224,
+          width: SIDEBAR_W,
           position: "fixed",
           top: 0,
           bottom: 0,

@@ -36,6 +36,7 @@ import type {
   Job,
   Request as ServiceRequest,
 } from "@shared/schema";
+import { auditLog } from "../core/audit/audit.service";
 
 // ─── Error ────────────────────────────────────────────────────────────────────
 
@@ -65,6 +66,8 @@ export interface ConversionParams {
   /** ID of the dispatcher initiating the conversion — used for post-commit events. */
   performedBy: number;
   io?: SocketServer;
+  /** HTTP request correlation ID for audit log. */
+  traceId?: string;
 }
 
 /**
@@ -142,7 +145,7 @@ export const requestConversionService = {
    *   6. Emit request:converted to staff:notifications
    */
   async toEstimate(params: ConversionParams): Promise<ConversionResult<Estimate>> {
-    const { requestId, performedBy, io } = params;
+    const { requestId, performedBy, io, traceId } = params;
 
     let committedRequest!: ServiceRequest;
     let committedEstimate!: Estimate;
@@ -203,6 +206,15 @@ export const requestConversionService = {
       });
     }
 
+    auditLog.record({
+      requestId:          traceId,
+      performedByUserId:  performedBy,
+      action:             "request.converted_to_estimate",
+      entityType:         "request",
+      entityId:           requestId,
+      metadata:           { estimateId: committedEstimate.id },
+    });
+
     return { request: committedRequest, entity: committedEstimate, entityType: "estimate" };
   },
 
@@ -221,7 +233,7 @@ export const requestConversionService = {
    * On unique constraint violation for job_number: surfaces as retryable HTTP 500.
    */
   async toJob(params: ConversionParams): Promise<ConversionResult<Job>> {
-    const { requestId, performedBy, io } = params;
+    const { requestId, performedBy, io, traceId } = params;
 
     let committedRequest!: ServiceRequest;
     let committedJob!: Job;
@@ -294,6 +306,15 @@ export const requestConversionService = {
         performedBy,
       });
     }
+
+    auditLog.record({
+      requestId:          traceId,
+      performedByUserId:  performedBy,
+      action:             "request.converted_to_job",
+      entityType:         "request",
+      entityId:           requestId,
+      metadata:           { jobId: committedJob.id, jobNumber: committedJob.jobNumber },
+    });
 
     return { request: committedRequest, entity: committedJob, entityType: "job" };
   },

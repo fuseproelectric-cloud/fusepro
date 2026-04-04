@@ -1,5 +1,3 @@
-import type { Server as SocketServer } from "socket.io";
-
 // ─── Event name ───────────────────────────────────────────────────────────────
 
 export const TIMESHEET_ENTRY_CREATED = "timesheet.entry_created";
@@ -12,6 +10,9 @@ export const TIMESHEET_ENTRY_CREATED = "timesheet.entry_created";
  *
  * Job-lifecycle entries (travel_start/end, work_start/end) are published as
  * part of JobStatusChanged — not here.
+ *
+ * Socket.IO delivery is handled by the event handler via the socket-registry;
+ * io is not part of the event payload.
  */
 export interface TimesheetEntryCreated {
   /** Entry type: day_start | day_end | break_start | break_end */
@@ -22,6 +23,4 @@ export interface TimesheetEntryCreated {
   timestamp: Date;
   /** Optional notes attached to the entry. */
   notes?: string | null;
-  /** Socket.IO server instance for realtime delivery (optional / best-effort). */
-  io?: SocketServer;
 }

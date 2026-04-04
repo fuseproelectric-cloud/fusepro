@@ -76,7 +76,8 @@ describe("JobQueue", () => {
 
     vi.runAllTimers();
     await Promise.resolve(); // flush microtask
-    expect(dispatchSpy).toHaveBeenCalledWith("sched.job", { v: 1 });
+    // enqueue now passes a generated job_id as the third arg for log correlation
+    expect(dispatchSpy).toHaveBeenCalledWith("sched.job", { v: 1 }, expect.any(String));
 
     vi.useRealTimers();
   });

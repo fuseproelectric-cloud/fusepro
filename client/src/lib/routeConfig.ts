@@ -9,9 +9,12 @@
  * App.tsx generates <Route> elements from APP_ROUTES.
  * Sidebar.tsx derives nav items via getNavItems(role).
  * ProtectedRoute checks allowedRoles before rendering a page.
+ *
+ * All page components are lazy-loaded so they are only fetched when first
+ * visited. The shell (AppLayout: sidebar + header) is always eager.
  */
 
-import type { ComponentType } from "react";
+import { lazy, type ComponentType } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
   LayoutDashboard, Briefcase, Calendar, Users, UserCheck,
@@ -19,27 +22,31 @@ import {
   ClipboardList, MessageSquare, BookOpen, Inbox, Zap,
 } from "lucide-react";
 
-import { DashboardPage }        from "@/pages/DashboardPage";
-import { JobsPage }             from "@/pages/JobsPage";
-import { SchedulePage }         from "@/pages/SchedulePage";
-import { TechniciansPage }      from "@/pages/TechniciansPage";
-import { CustomersPage }        from "@/pages/CustomersPage";
-import { CustomerDetailPage }   from "@/pages/CustomerDetailPage";
-import { CustomerAddressPage }  from "@/pages/CustomerAddressPage";
-import { EstimatesPage }        from "@/pages/EstimatesPage";
-import { InvoicesPage }         from "@/pages/InvoicesPage";
-import { InventoryPage }        from "@/pages/InventoryPage";
-import { SettingsPage }         from "@/pages/SettingsPage";
-import { MyJobsPage }           from "@/pages/MyJobsPage";
-import { MySchedulePage }       from "@/pages/MySchedulePage";
-import { JobDetailPage }        from "@/pages/JobDetailPage";
-import { TimesheetPage }        from "@/pages/TimesheetPage";
-import { AdminTimesheetPage }   from "@/pages/AdminTimesheetPage";
-import { ChatPage }             from "@/pages/ChatPage";
-import { DocsPage }             from "@/pages/DocsPage";
-import { RequestsPage }         from "@/pages/RequestsPage";
-import { ServicesPage }         from "@/pages/ServicesPage";
-import { ConnecteamPage }       from "@/pages/ConnecteamPage";
+// ── Lazy page components ──────────────────────────────────────────────────────
+// Each page is a separate async chunk. The shell loads eagerly; page content
+// fetches on first visit.
+
+const DashboardPage       = lazy(() => import("@/pages/DashboardPage").then(m => ({ default: m.DashboardPage })));
+const JobsPage            = lazy(() => import("@/pages/JobsPage").then(m => ({ default: m.JobsPage })));
+const SchedulePage        = lazy(() => import("@/pages/SchedulePage").then(m => ({ default: m.SchedulePage })));
+const TechniciansPage     = lazy(() => import("@/pages/TechniciansPage").then(m => ({ default: m.TechniciansPage })));
+const CustomersPage       = lazy(() => import("@/pages/CustomersPage").then(m => ({ default: m.CustomersPage })));
+const CustomerDetailPage  = lazy(() => import("@/pages/CustomerDetailPage").then(m => ({ default: m.CustomerDetailPage })));
+const CustomerAddressPage = lazy(() => import("@/pages/CustomerAddressPage").then(m => ({ default: m.CustomerAddressPage })));
+const EstimatesPage       = lazy(() => import("@/pages/EstimatesPage").then(m => ({ default: m.EstimatesPage })));
+const InvoicesPage        = lazy(() => import("@/pages/InvoicesPage").then(m => ({ default: m.InvoicesPage })));
+const InventoryPage       = lazy(() => import("@/pages/InventoryPage").then(m => ({ default: m.InventoryPage })));
+const SettingsPage        = lazy(() => import("@/pages/SettingsPage").then(m => ({ default: m.SettingsPage })));
+const MyJobsPage          = lazy(() => import("@/pages/MyJobsPage").then(m => ({ default: m.MyJobsPage })));
+const MySchedulePage      = lazy(() => import("@/pages/MySchedulePage").then(m => ({ default: m.MySchedulePage })));
+const JobDetailPage       = lazy(() => import("@/pages/JobDetailPage").then(m => ({ default: m.JobDetailPage })));
+const TimesheetPage       = lazy(() => import("@/pages/TimesheetPage").then(m => ({ default: m.TimesheetPage })));
+const AdminTimesheetPage  = lazy(() => import("@/pages/AdminTimesheetPage").then(m => ({ default: m.AdminTimesheetPage })));
+const ChatPage            = lazy(() => import("@/pages/ChatPage").then(m => ({ default: m.ChatPage })));
+const DocsPage            = lazy(() => import("@/pages/DocsPage").then(m => ({ default: m.DocsPage })));
+const RequestsPage        = lazy(() => import("@/pages/RequestsPage").then(m => ({ default: m.RequestsPage })));
+const ServicesPage        = lazy(() => import("@/pages/ServicesPage").then(m => ({ default: m.ServicesPage })));
+const ConnecteamPage      = lazy(() => import("@/pages/ConnecteamPage").then(m => ({ default: m.ConnecteamPage })));
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

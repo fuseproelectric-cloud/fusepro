@@ -20,6 +20,7 @@ requestConversionRouter.post("/api/requests/:id/convert-estimate", requireRole("
       requestId,
       performedBy: req.session.userId!,
       io,
+      traceId: req.requestId,
     });
     return res.status(201).json(result.entity);
   } catch (err) {
@@ -37,6 +38,7 @@ requestConversionRouter.post("/api/requests/:id/convert-job", requireRole("admin
       requestId,
       performedBy: req.session.userId!,
       io,
+      traceId: req.requestId,
     });
     return res.status(201).json(result.entity);
   } catch (err) {

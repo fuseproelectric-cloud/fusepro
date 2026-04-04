@@ -1,10 +1,10 @@
-import { Search, X, SlidersHorizontal, Plus } from "lucide-react";
+import { SlidersHorizontal, Plus } from "lucide-react";
 import { Icon } from "@/components/ui/Icon";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { SearchInput } from "@/components/page";
 
 interface JobsToolbarProps {
   search: string;
@@ -24,23 +24,7 @@ export function JobsToolbar({
 }: JobsToolbarProps) {
   return (
     <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
-      <div className="relative flex-1 max-w-sm">
-        <Icon icon={Search} size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-        <Input
-          placeholder="Search jobs…"
-          value={search}
-          onChange={e => onSearchChange(e.target.value)}
-          className="pl-8 h-8 text-sm bg-card"
-        />
-        {search && (
-          <button
-            onClick={() => onSearchChange("")}
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-          >
-            <Icon icon={X} size={14} />
-          </button>
-        )}
-      </div>
+      <SearchInput value={search} onChange={onSearchChange} placeholder="Search jobs…" />
 
       <Select value={filterStatus} onValueChange={onFilterStatusChange}>
         <SelectTrigger className="h-8 w-36 text-sm bg-card">

@@ -11,6 +11,7 @@ import { usersRepository } from "../users/users.repository";
 import { techniciansRepository } from "../technicians/technicians.repository";
 import { storage } from "../../storage"; // for getTimesheetEntriesByJob (not yet extracted)
 import { ValidationError, NotFoundError } from "../../core/errors/app-error";
+import { auditLog } from "../../core/audit/audit.service";
 
 // Fields a technician is permitted to update on their own jobs.
 const technicianJobUpdateSchema = z.object({
@@ -66,6 +67,14 @@ jobsRouter.post("/api/jobs", requireRole("admin", "dispatcher"), async (req: Req
     const job = await jobsRepository.create({ ...data, jobNumber });
     const io: SocketServer = (req.app as any).io;
     io?.to("staff:notifications").emit("job:created", job);
+    auditLog.record({
+      requestId:         req.requestId,
+      performedByUserId: req.session.userId,
+      action:            "job.created",
+      entityType:        "job",
+      entityId:          job.id,
+      metadata:          { jobNumber: job.jobNumber, status: job.status },
+    });
     res.status(201).json(job);
   } catch (err) {
     next(err);
@@ -98,6 +107,13 @@ jobsRouter.put("/api/jobs/:id", requireAuth, async (req: Request, res: Response,
       const io: SocketServer = (req.app as any).io;
       io?.to("staff:notifications").emit("job:updated", updated);
       io?.to(`job:${updated.id}`).emit("job:updated", updated);
+      auditLog.record({
+        requestId:         req.requestId,
+        performedByUserId: req.session.userId,
+        action:            "job.updated",
+        entityType:        "job",
+        entityId:          id,
+      });
       return res.json(updated);
     }
 
@@ -110,6 +126,13 @@ jobsRouter.put("/api/jobs/:id", requireAuth, async (req: Request, res: Response,
     const io: SocketServer = (req.app as any).io;
     io?.to("staff:notifications").emit("job:updated", job);
     io?.to(`job:${job.id}`).emit("job:updated", job);
+    auditLog.record({
+      requestId:         req.requestId,
+      performedByUserId: req.session.userId,
+      action:            "job.updated",
+      entityType:        "job",
+      entityId:          id,
+    });
     res.json(job);
   } catch (err) {
     next(err);
@@ -121,6 +144,13 @@ jobsRouter.delete("/api/jobs/:id", requireRole("admin", "dispatcher"), async (re
     const id = parseId(req.params.id);
     if (!id) return next(new ValidationError("Invalid job id"));
     await jobsRepository.delete(id);
+    auditLog.record({
+      requestId:         req.requestId,
+      performedByUserId: req.session.userId,
+      action:            "job.deleted",
+      entityType:        "job",
+      entityId:          id,
+    });
     res.json({ message: "Job deleted" });
   } catch (err) {
     next(err);
