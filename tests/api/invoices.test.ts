@@ -34,6 +34,20 @@ const sm = vi.hoisted(() => {
 vi.mock("../../server/index", () => ({ log: vi.fn() }));
 vi.mock("../../server/db", () => ({ pool: { query: vi.fn(), end: vi.fn() }, db: {} }));
 vi.mock("../../server/storage", () => ({ storage: sm }));
+
+// Repository mocks — invoices routes now call invoicesRepository directly
+vi.mock("../../server/modules/invoices/invoices.repository", () => ({
+  invoicesRepository: {
+    getAll:               (...a: any[]) => sm.getAllInvoices(...a),
+    getById:              (...a: any[]) => sm.getInvoiceById(...a),
+    getByEstimateId:      (...a: any[]) => sm.getInvoiceByEstimateId?.(...a),
+    create:               (...a: any[]) => sm.createInvoice(...a),
+    update:               (...a: any[]) => sm.updateInvoice(...a),
+    delete:               (...a: any[]) => sm.deleteInvoice(...a),
+    getNextInvoiceNumber: (...a: any[]) => sm.getNextInvoiceNumber(...a),
+  },
+}));
+
 vi.mock("connect-pg-simple", () => {
   const sessions = new Map<string, any>();
   return {
@@ -206,6 +220,7 @@ describe("Invoices API", () => {
   describe("PUT /api/invoices/:id", () => {
     it("marks invoice as paid", async () => {
       const agent = await loginAs(app, adminUser);
+      sm.getInvoiceById.mockResolvedValue({ ...sampleInvoice, status: "sent" });
       sm.updateInvoice.mockResolvedValue({ ...sampleInvoice, status: "paid", paidAt: new Date() });
 
       const res = await agent.put("/api/invoices/200").send({ status: "paid" });

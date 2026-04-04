@@ -32,6 +32,31 @@ const sm = vi.hoisted(() => {
 vi.mock("../../server/index", () => ({ log: vi.fn() }));
 vi.mock("../../server/db", () => ({ pool: { query: vi.fn(), end: vi.fn() }, db: {} }));
 vi.mock("../../server/storage", () => ({ storage: sm }));
+
+// Repository mocks — routes now call repositories directly, not via storage
+vi.mock("../../server/modules/customers/customers.repository", () => ({
+  customersRepository: {
+    getAll:             (...a: any[]) => sm.getAllCustomers(...a),
+    getById:            (...a: any[]) => sm.getCustomerById(...a),
+    getJobsByCustomer:  (...a: any[]) => sm.getJobsByCustomer(...a),
+    create:             (...a: any[]) => sm.createCustomer(...a),
+    update:             (...a: any[]) => sm.updateCustomer(...a),
+    delete:             (...a: any[]) => sm.deleteCustomer(...a),
+  },
+}));
+
+vi.mock("../../server/services/customer-address.service", () => ({
+  customerAddressService: {
+    getByCustomer: (...a: any[]) => sm.getAddressesByCustomer(...a),
+    create:        (...a: any[]) => sm.createCustomerAddress(...a),
+    update:        (...a: any[]) => sm.updateCustomerAddress(...a),
+    delete:        (...a: any[]) => sm.deleteCustomerAddress(...a),
+  },
+  AddressError: class AddressError extends Error {
+    constructor(message: string, public statusCode: number) { super(message); }
+  },
+}));
+
 vi.mock("connect-pg-simple", () => {
   const sessions = new Map();
   return {

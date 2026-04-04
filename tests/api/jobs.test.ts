@@ -28,9 +28,87 @@ const sm = vi.hoisted(() => {
   };
 });
 
+const jobExecMock = vi.hoisted(() => ({
+  transition:    vi.fn(),
+  adminOverride: vi.fn(),
+}));
+
 vi.mock("../../server/index", () => ({ log: vi.fn() }));
 vi.mock("../../server/db", () => ({ pool: { query: vi.fn(), end: vi.fn() }, db: {} }));
 vi.mock("../../server/storage", () => ({ storage: sm }));
+
+// Repository mocks — job routes call repositories directly, not via storage
+vi.mock("../../server/modules/jobs/jobs.repository", () => ({
+  jobsRepository: {
+    getAll:                       (...a) => sm.getAllJobs(...a),
+    getById:                      (...a) => sm.getJobById(...a),
+    getByIdWithCustomerSummary:   (...a) => sm.getJobById(...a),
+    getByRequestId:               (...a) => sm.getJobByRequestId?.(...a),
+    getByCustomer:                (...a) => sm.getJobsByCustomer(...a),
+    getByTechnician:              (...a) => sm.getAllJobs(...a),
+    getByTechnicianWithCustomer:  (...a) => sm.getJobsByTechnicianWithCustomer(...a),
+    create:                       (...a) => sm.createJob(...a),
+    update:                       (...a) => sm.updateJob(...a),
+    delete:                       (...a) => sm.deleteJob(...a),
+    getNextJobNumber:             (...a) => sm.getNextJobNumber(...a),
+  },
+}));
+
+vi.mock("../../server/modules/jobs/notes/job-notes.repository", () => ({
+  jobNotesRepository: {
+    getJobNotes:      (...a) => sm.getJobNotes(...a),
+    createJobNote:    (...a) => sm.createJobNote(...a),
+    markJobNoteRead:  (...a) => sm.markJobNoteRead(...a),
+  },
+}));
+
+vi.mock("../../server/modules/jobs/materials/job-materials.repository", () => ({
+  jobMaterialsRepository: {
+    getJobMaterials:    (...a) => sm.getJobMaterials(...a),
+    createJobMaterial:  (...a) => sm.createJobMaterial(...a),
+    deleteJobMaterial:  (...a) => sm.deleteJobMaterial(...a),
+  },
+}));
+
+vi.mock("../../server/modules/users/users.repository", () => ({
+  usersRepository: {
+    getById:                      (...a) => sm.getUserById(...a),
+    getByEmail:                   (...a) => sm.getUserByEmail(...a),
+    getAll:                       (...a) => sm.getAllUsers(...a),
+    create:                       (...a) => sm.createUser(...a),
+    update:                       (...a) => sm.updateUser(...a),
+    delete:                       (...a) => sm.deleteUser(...a),
+    getAdminAndDispatcherUserIds: (...a) => sm.getAdminAndDispatcherUserIds(...a),
+  },
+}));
+
+vi.mock("../../server/modules/technicians/technicians.repository", () => ({
+  techniciansRepository: {
+    getAll:        (...a) => sm.getAllTechnicians(...a),
+    getById:       (...a) => sm.getTechnicianById(...a),
+    getByUserId:   (...a) => sm.getTechnicianByUserId(...a),
+    create:        (...a) => sm.createTechnician(...a),
+    update:        (...a) => sm.updateTechnician(...a),
+    delete:        (...a) => sm.deleteTechnician(...a),
+  },
+}));
+
+// Service mocks — job-execution.service and notification.service use db.transaction / storage internally
+vi.mock("../../server/services/job-execution.service", async () => {
+  const { AppError } = await import("../../server/core/errors/app-error");
+  class TransitionError extends AppError {
+    constructor(message: string, statusCode: number) {
+      super(message, statusCode, "JOB_TRANSITION_ERROR");
+      this.name = "TransitionError";
+    }
+  }
+  return { jobExecutionService: jobExecMock, TransitionError };
+});
+
+vi.mock("../../server/services/notification.service", () => ({
+  notificationService: { notifyJobNote: vi.fn(), notifyJobActivity: vi.fn() },
+}));
+
 vi.mock("connect-pg-simple", () => {
   const sessions = new Map();
   return {
@@ -99,7 +177,10 @@ async function loginAs(app, user) {
 describe("Jobs API", () => {
   let app;
   beforeAll(async () => { ({ app } = await createTestApp()); });
-  beforeEach(() => { Object.values(sm).forEach((fn) => fn.mockReset()); });
+  beforeEach(() => {
+    Object.values(sm).forEach((fn) => fn.mockReset());
+    Object.values(jobExecMock).forEach((fn) => fn.mockReset());
+  });
 
   describe("GET /api/jobs", () => {
     it("returns 401 when not authenticated", async () => {
@@ -118,6 +199,7 @@ describe("Jobs API", () => {
     it("returns job by id", async () => {
       const agent = await loginAs(app, adminUser);
       sm.getJobById.mockResolvedValue(sampleJob);
+      sm.getJobNotes.mockResolvedValue([]);
       const res = await agent.get("/api/jobs/100");
       expect(res.status).toBe(200);
       expect(res.body).toMatchObject({ id: 100, title: "Fix HVAC" });
@@ -192,46 +274,37 @@ describe("Jobs API", () => {
   });
 
   describe("PUT /api/jobs/:id/status — state machine", () => {
-    it("on_the_way → creates travel_start timesheet entry", async () => {
+    it("on_the_way → calls transition and returns job", async () => {
       const agent = await loginAs(app, technicianUser);
       sm.getTechnicianByUserId.mockResolvedValue(sampleTechnician);
-      sm.getJobById.mockResolvedValue({ ...sampleJob, technicianId: sampleTechnician.id });
-      sm.updateJob.mockResolvedValue({ ...sampleJob, status: "on_the_way" });
-      sm.createTimesheetEntry.mockResolvedValue({});
-      sm.getAdminAndDispatcherUserIds.mockResolvedValue([1]);
-      sm.createActivityNotification.mockResolvedValue(undefined);
-      await agent.put("/api/jobs/100/status").send({ status: "on_the_way" });
-      expect(sm.createTimesheetEntry).toHaveBeenCalledWith(expect.objectContaining({ entryType: "travel_start", jobId: 100 }));
+      const updatedJob = { ...sampleJob, status: "on_the_way" };
+      jobExecMock.transition.mockResolvedValue({ job: updatedJob, timesheetEntries: [{ entryType: "travel_start", jobId: 100 }] });
+      const res = await agent.put("/api/jobs/100/status").send({ status: "on_the_way" });
+      expect(res.status).toBe(200);
+      expect(res.body).toMatchObject({ id: 100, status: "on_the_way" });
+      expect(jobExecMock.transition).toHaveBeenCalledWith(expect.objectContaining({ jobId: 100, newStatus: "on_the_way" }));
     });
-    it("on_the_way → in_progress creates travel_end + work_start", async () => {
+    it("on_the_way → in_progress calls transition", async () => {
       const agent = await loginAs(app, technicianUser);
       sm.getTechnicianByUserId.mockResolvedValue(sampleTechnician);
-      sm.getJobById.mockResolvedValue({ ...sampleJob, technicianId: sampleTechnician.id, status: "on_the_way" });
-      sm.updateJob.mockResolvedValue({ ...sampleJob, status: "in_progress" });
-      sm.createTimesheetEntry.mockResolvedValue({});
-      sm.getAdminAndDispatcherUserIds.mockResolvedValue([1]);
-      sm.createActivityNotification.mockResolvedValue(undefined);
-      await agent.put("/api/jobs/100/status").send({ status: "in_progress" });
-      const entries = sm.createTimesheetEntry.mock.calls.map(([c]) => c.entryType);
-      expect(entries).toContain("travel_end");
-      expect(entries).toContain("work_start");
+      const updatedJob = { ...sampleJob, status: "in_progress" };
+      jobExecMock.transition.mockResolvedValue({ job: updatedJob, timesheetEntries: [{ entryType: "travel_end" }, { entryType: "work_start" }] });
+      const res = await agent.put("/api/jobs/100/status").send({ status: "in_progress" });
+      expect(res.status).toBe(200);
+      expect(res.body).toMatchObject({ status: "in_progress" });
     });
-    it("completed → sets completedAt and creates work_end", async () => {
+    it("completed → calls transition with completed status", async () => {
       const agent = await loginAs(app, technicianUser);
       sm.getTechnicianByUserId.mockResolvedValue(sampleTechnician);
-      sm.getJobById.mockResolvedValue({ ...sampleJob, technicianId: sampleTechnician.id, status: "in_progress" });
-      sm.updateJob.mockImplementation(async (_id, data) => ({ ...sampleJob, ...data }));
-      sm.createTimesheetEntry.mockResolvedValue({});
-      sm.getAdminAndDispatcherUserIds.mockResolvedValue([1]);
-      sm.createActivityNotification.mockResolvedValue(undefined);
+      const completedJob = { ...sampleJob, status: "completed", completedAt: new Date() };
+      jobExecMock.transition.mockResolvedValue({ job: completedJob, timesheetEntries: [{ entryType: "work_end" }] });
       const res = await agent.put("/api/jobs/100/status").send({ status: "completed" });
       expect(res.status).toBe(200);
-      expect(sm.updateJob).toHaveBeenCalledWith(100, expect.objectContaining({ status: "completed", completedAt: expect.any(Date) }));
-      expect(sm.createTimesheetEntry.mock.calls.map(([c]) => c.entryType)).toContain("work_end");
+      expect(res.body).toMatchObject({ status: "completed" });
+      expect(jobExecMock.transition).toHaveBeenCalledWith(expect.objectContaining({ newStatus: "completed" }));
     });
     it("returns 400 when status is missing", async () => {
       const agent = await loginAs(app, adminUser);
-      sm.getJobById.mockResolvedValue(sampleJob);
       expect((await agent.put("/api/jobs/100/status").send({})).status).toBe(400);
     });
   });

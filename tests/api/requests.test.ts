@@ -31,9 +31,39 @@ const sm = vi.hoisted(() => {
   };
 });
 
+const conversionSvcMock = vi.hoisted(() => ({
+  toEstimate: vi.fn(),
+  toJob:      vi.fn(),
+}));
+
 vi.mock("../../server/index", () => ({ log: vi.fn() }));
 vi.mock("../../server/db", () => ({ pool: { query: vi.fn(), end: vi.fn() }, db: {} }));
 vi.mock("../../server/storage", () => ({ storage: sm }));
+
+// Repository mocks — requests routes now call requestsRepository directly
+vi.mock("../../server/modules/requests/requests.repository", () => ({
+  requestsRepository: {
+    getAll:          (...a: any[]) => sm.getAllRequests(...a),
+    getById:         (...a: any[]) => sm.getRequestById(...a),
+    getByCustomerId: (...a: any[]) => sm.getRequestsByCustomerId?.(...a),
+    create:          (...a: any[]) => sm.createRequest(...a),
+    update:          (...a: any[]) => sm.updateRequest(...a),
+    delete:          (...a: any[]) => sm.deleteRequest(...a),
+  },
+}));
+
+// Conversion service mock — toEstimate/toJob use db.transaction internally
+vi.mock("../../server/services/request-conversion.service", async () => {
+  const { AppError } = await import("../../server/core/errors/app-error");
+  class ConversionError extends AppError {
+    constructor(message: string, statusCode: number) {
+      super(message, statusCode, "CONVERSION_ERROR");
+      this.name = "ConversionError";
+    }
+  }
+  return { requestConversionService: conversionSvcMock, ConversionError };
+});
+
 vi.mock("connect-pg-simple", () => {
   const sessions = new Map<string, any>();
   return {
@@ -187,6 +217,7 @@ describe("Requests API", () => {
   describe("PUT /api/requests/:id", () => {
     it("updates request status", async () => {
       const agent = await loginAs(app, adminUser);
+      sm.getRequestById.mockResolvedValue(sampleRequest);
       sm.updateRequest.mockResolvedValue({ ...sampleRequest, status: "assessment_scheduled" });
 
       const res = await agent.put("/api/requests/300").send({ status: "assessment_scheduled" });
@@ -217,43 +248,22 @@ describe("Requests API", () => {
   describe("POST /api/requests/:id/convert-estimate", () => {
     it("creates estimate from request and marks request as converted", async () => {
       const agent = await loginAs(app, adminUser);
-      sm.getRequestById.mockResolvedValue(sampleRequest);
-      sm.createEstimate.mockResolvedValue({
-        id: 50,
-        customerId: 10,
-        requestId: 300,
-        title: "Need AC tune-up",
-        status: "draft",
-        lineItems: [],
-        subtotal: "0",
-        tax: "0",
-        total: "0",
-        deposit: null,
-        depositPaid: false,
-        notes: "Customer called in",
-        clientMessage: null,
-        validUntil: null,
-        jobId: null,
-        createdAt: new Date(),
-      });
-      sm.updateRequest.mockResolvedValue({ ...sampleRequest, status: "converted" });
+      const createdEstimate = { id: 50, customerId: 10, requestId: 300, title: "Need AC tune-up", status: "draft" };
+      conversionSvcMock.toEstimate.mockResolvedValue({ entity: createdEstimate, request: { ...sampleRequest, status: "converted" }, entityType: "estimate" });
 
       const res = await agent.post("/api/requests/300/convert-estimate");
       expect(res.status).toBe(201);
-      expect(sm.createEstimate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          customerId: 10,
-          title: "Need AC tune-up",
-          requestId: 300,
-          status: "draft",
-        })
-      );
-      expect(sm.updateRequest).toHaveBeenCalledWith(300, { status: "converted" });
+      expect(res.body).toMatchObject({ id: 50, status: "draft" });
+      expect(conversionSvcMock.toEstimate).toHaveBeenCalledWith(expect.objectContaining({ requestId: 300 }));
     });
 
     it("returns 404 when request not found", async () => {
       const agent = await loginAs(app, adminUser);
-      sm.getRequestById.mockResolvedValue(undefined);
+      const { AppError } = await import("../../server/core/errors/app-error");
+      class ConversionError extends AppError {
+        constructor(message: string, statusCode: number) { super(message, statusCode, "CONVERSION_ERROR"); }
+      }
+      conversionSvcMock.toEstimate.mockRejectedValue(new ConversionError("Request not found.", 404));
 
       const res = await agent.post("/api/requests/999/convert-estimate");
       expect(res.status).toBe(404);
@@ -263,50 +273,22 @@ describe("Requests API", () => {
   describe("POST /api/requests/:id/convert-job", () => {
     it("creates job from request and marks request as converted", async () => {
       const agent = await loginAs(app, adminUser);
-      sm.getRequestById.mockResolvedValue(sampleRequest);
-      sm.getNextJobNumber.mockResolvedValue("JOB-00001");
-      sm.createJob.mockResolvedValue({
-        id: 100,
-        jobNumber: "JOB-00001",
-        title: "Need AC tune-up",
-        customerId: 10,
-        status: "pending",
-        priority: "normal",
-        notes: "Customer called in",
-        description: null,
-        instructions: null,
-        technicianId: null,
-        invoicingType: "fixed",
-        billingSchedule: "on_completion",
-        scheduledAt: null,
-        estimatedDuration: null,
-        address: null,
-        city: null,
-        state: null,
-        zip: null,
-        completedAt: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-      sm.updateRequest.mockResolvedValue({ ...sampleRequest, status: "converted" });
+      const createdJob = { id: 100, jobNumber: "JOB-00001", title: "Need AC tune-up", customerId: 10, status: "pending" };
+      conversionSvcMock.toJob.mockResolvedValue({ entity: createdJob, request: { ...sampleRequest, status: "converted" }, entityType: "job" });
 
       const res = await agent.post("/api/requests/300/convert-job");
       expect(res.status).toBe(201);
-      expect(sm.getNextJobNumber).toHaveBeenCalledOnce();
-      expect(sm.createJob).toHaveBeenCalledWith(
-        expect.objectContaining({
-          title: "Need AC tune-up",
-          customerId: 10,
-          status: "pending",
-          jobNumber: "JOB-00001",
-        })
-      );
-      expect(sm.updateRequest).toHaveBeenCalledWith(300, { status: "converted" });
+      expect(res.body).toMatchObject({ id: 100, jobNumber: "JOB-00001", status: "pending" });
+      expect(conversionSvcMock.toJob).toHaveBeenCalledWith(expect.objectContaining({ requestId: 300 }));
     });
 
     it("returns 404 when request not found", async () => {
       const agent = await loginAs(app, adminUser);
-      sm.getRequestById.mockResolvedValue(undefined);
+      const { AppError } = await import("../../server/core/errors/app-error");
+      class ConversionError extends AppError {
+        constructor(message: string, statusCode: number) { super(message, statusCode, "CONVERSION_ERROR"); }
+      }
+      conversionSvcMock.toJob.mockRejectedValue(new ConversionError("Request not found.", 404));
 
       const res = await agent.post("/api/requests/999/convert-job");
       expect(res.status).toBe(404);

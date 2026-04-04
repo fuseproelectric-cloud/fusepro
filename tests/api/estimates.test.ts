@@ -34,6 +34,19 @@ const sm = vi.hoisted(() => {
 vi.mock("../../server/index", () => ({ log: vi.fn() }));
 vi.mock("../../server/db", () => ({ pool: { query: vi.fn(), end: vi.fn() }, db: {} }));
 vi.mock("../../server/storage", () => ({ storage: sm }));
+
+// Repository mocks — estimates routes now call estimatesRepository directly
+vi.mock("../../server/modules/estimates/estimates.repository", () => ({
+  estimatesRepository: {
+    getAll:          (...a: any[]) => sm.getAllEstimates(...a),
+    getById:         (...a: any[]) => sm.getEstimateById(...a),
+    getByRequestId:  (...a: any[]) => sm.getEstimateByRequestId?.(...a),
+    create:          (...a: any[]) => sm.createEstimate(...a),
+    update:          (...a: any[]) => sm.updateEstimate(...a),
+    delete:          (...a: any[]) => sm.deleteEstimate(...a),
+  },
+}));
+
 vi.mock("connect-pg-simple", () => {
   const sessions = new Map<string, any>();
   return {
@@ -204,6 +217,7 @@ describe("Estimates API", () => {
   describe("PUT /api/estimates/:id", () => {
     it("updates estimate status", async () => {
       const agent = await loginAs(app, adminUser);
+      sm.getEstimateById.mockResolvedValue(sampleEstimate);
       sm.updateEstimate.mockResolvedValue({ ...sampleEstimate, status: "awaiting_response" });
 
       const res = await agent.put("/api/estimates/50").send({ status: "awaiting_response" });
